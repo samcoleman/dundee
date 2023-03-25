@@ -20,15 +20,75 @@ ws.on('open', () => {
   });
 });
 
+
+type source = {
+    link: string;
+    symbols?: string[],
+    price?:   number[],
+}
+
+type direct = {
+    body: string;
+    icon: string;
+    link: string;
+    image?: string;
+}
+
+
+const handleDirect = (obj) => {
+    const symbol = "BTC"
+    const source = "DIRECT"
+    const title = encodeURIComponent(obj["title"] as string)
+    const time  = encodeURIComponent(obj["time"]  as string)
+    const payload = {
+        body: obj["body"] as string,
+        icon: obj["icon"] as string,
+        link: obj["link"] as string,
+        image: "image" in obj ? obj["image"] as string : undefined 
+    } as direct
+    const url = `http://localhost:4000/dash\&symbol=${symbol}s\&source=${source}\&title=${title}\&time=${time}\&payload_direct=${encodeURIComponent(JSON.stringify(payload))}`
+    notifier.notify({
+        title: title,
+        message: payload.body,
+        icon: payload.icon,
+        open: url,
+    })
+}
+
+const handleSource = (obj) => {
+    const symbol = "BTC"
+    const source = "SOURCE"
+    const title = encodeURIComponent(obj["title"] as string) 
+    const time  = encodeURIComponent(obj["time"] as string)
+    const payload = {
+        link: obj["link"] as string,
+    } as source
+
+    const url = `http://localhost:4000/dash\&symbol=${symbol}s\&source=${source}\&title=${title}\&time=${time}\&payload_source=${encodeURIComponent(JSON.stringify(payload))}`
+    notifier.notify({
+        title: title,
+        open: url,
+    })
+}
+
+const handleUnknown = (obj) => {
+    console.log("Unknown message")
+    console.log(obj)
+}
+
 ws.on('message', (data) => {
   try {
     const obj = JSON.parse(data.toString())
-    // Object
-    notifier.notify({
-      title: 'Message',
-      message: data.toString(),
-        open: `http://localhost:4000?data=${data}`,
-    });
+
+    if ("type" in obj && obj["type"] === "direct") {
+        handleDirect(obj)
+    }else if ("source" in obj) {
+        handleSource(obj)
+    }else{
+        handleUnknown(obj)
+    }
+
+
   }catch(err) {
     console.log(err)
   }
