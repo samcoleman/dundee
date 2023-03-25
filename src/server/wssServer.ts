@@ -46,7 +46,7 @@ const handleDirect = (obj) => {
         link: obj["link"] as string,
         image: "image" in obj ? obj["image"] as string : undefined 
     } as direct
-    const url = `http://localhost:4000/dash\&symbol=${symbol}s\&source=${source}\&title=${title}\&time=${time}\&payload_direct=${encodeURIComponent(JSON.stringify(payload))}`
+    const url = `http://localhost:3000/dash\?symbol=${symbol}s\&source=${source}\&title=${title}\&time=${time}\&payload=${encodeURIComponent(JSON.stringify(payload))}`
     notifier.notify({
         title: title,
         message: payload.body,
@@ -64,7 +64,7 @@ const handleSource = (obj) => {
         link: obj["link"] as string,
     } as source
 
-    const url = `http://localhost:4000/dash\&symbol=${symbol}s\&source=${source}\&title=${title}\&time=${time}\&payload_source=${encodeURIComponent(JSON.stringify(payload))}`
+    const url = `http://localhost:3000/dash\?symbol=${symbol}\&source=${source}\&title=${title}\&time=${time}\&payload=${encodeURIComponent(JSON.stringify(payload))}`
     notifier.notify({
         title: title,
         open: url,

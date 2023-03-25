@@ -46,13 +46,15 @@ const DashPage = () => {
         const time    = urlParams.get('time');
         const payload   = urlParams.get('payload');
 
+
         let payloadObj : source | direct | undefined;
         try {
             if (payload) {
                 payloadObj = JSON.parse(decodeURIComponent(payload)) as source | direct;
-                
             }
-        }catch{}
+        } catch(err) {
+            console.log(err);
+        }
 
         if (source && title && time) {
             setPageData({
@@ -62,7 +64,7 @@ const DashPage = () => {
                 payload_source:   source === "SOURCE" && payloadObj ? payloadObj as source : undefined,
                 payload_direct:   source === "DIRECT" && payloadObj ? payloadObj as direct : undefined,
                 unknown_payload:  source === "UNKNOWN" && payload ? payload : undefined,
-                time:             parseInt(time),
+                time:             parseInt(decodeURIComponent(time)),
             });
         }
     }, []);
@@ -100,14 +102,12 @@ const DashPage = () => {
                         </div>
                         : null
                         }
-                        <Link href={pageData.payload_source.link}>Goto Blog</Link>
+                        <a href={pageData.payload_source.link} rel="noopener noreferrer" target="_blank">Goto Source</a>
                     </div>
                     : pageData.payload_direct ?
                     <div className='flex flex-col gap-2'>
                         <p className='flex text-lg'>{pageData.payload_direct.body}</p>
-                        <Image src={pageData.payload_direct.icon} width={100} alt=''/>
-                        {pageData.payload_direct.image ? <Image src={pageData.payload_direct.image} width={100} alt=''/> : null}
-                        <Link href={pageData.payload_direct.link}>Goto Direct</Link>
+                        <a href={pageData.payload_direct.link} rel="noopener noreferrer" target="_blank">Goto Direct</a>
                     </div>
                     :  
                     <p className='flex text-2xl font-bold'>{pageData.unknown_payload ? pageData.unknown_payload : null }</p>
