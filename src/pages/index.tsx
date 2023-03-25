@@ -20,8 +20,6 @@ function AddMessageForm({ onMessagePost }: { onMessagePost: () => void }) {
     } catch {}
   }
 
-  const isTyping = trpc.post.isTyping.useMutation();
-
   const userName = session?.user?.name;
   if (!userName) {
     return (
