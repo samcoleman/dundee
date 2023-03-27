@@ -24,6 +24,7 @@ specifiers:
   eslint-plugin-prettier: ^4.2.1
   eslint-plugin-react: ^7.31.11
   eslint-plugin-react-hooks: ^4.6.0
+  handy-storage: ^2.1.6
   next: ^13.2.1
   next-auth: ^4.14.0
   node-notifier: ^10.0.1
@@ -51,6 +52,7 @@ dependencies:
   '@trpc/react-query': 10.18.0_rcvfzig2xktluz4p7kugxqlbwi
   '@trpc/server': 10.18.0
   clsx: 1.2.1
+  handy-storage: 2.1.6
   next: 13.2.4_biqbaboplfbrettd7655fr4n2y
   next-auth: 4.20.1_ld2jel3hspngo3u5lti2kgl2sq
   node-notifier: 10.0.1
@@ -2096,6 +2098,12 @@ packages:
     resolution: {integrity: sha512-+xGQY0YyAWCnqy7Cd++hc2JqMYzlm0dG30Jd0beaA64sROr8C4nt8Yc9V5Ro3avlSUDTN0ulqP/VBKi1/lLygw==}
     dev: false
 
+  /handy-storage/2.1.6:
+    resolution: {integrity: sha512-N+3LQjiOAUOtBYqOY8oBwo/S5t/dsiq+U72BEUp+DC0hxLsSuSyEXGekXLJm6O8cjZJe3W3RnH1x1Ym/n+HHXA==}
+    dependencies:
+      json-beautify: 1.1.1
+    dev: false
+
   /has-bigints/1.0.2:
     resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
     dev: true
@@ -2398,6 +2406,11 @@ packages:
     dependencies:
       argparse: 2.0.1
     dev: true
+
+  /json-beautify/1.1.1:
+    resolution: {integrity: sha512-17j+Hk2lado0xqKtUcyAjK0AtoHnPSIgktWRsEXgdFQFG9UnaGw6CHa0J7xsvulxRpFl6CrkDFHght1p5ZJc4A==}
+    hasBin: true
+    dev: false
 
   /json-parse-better-errors/1.0.2:
     resolution: {integrity: sha512-mrqyZKfX5EhL7hvqcV6WG1yYjnjeuYDzDhhcAAUrq8Po85NBQBJP+ZDUT75qZQ98IkUoBqdkExkukOU7Ts2wrw==}

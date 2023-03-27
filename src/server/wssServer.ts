@@ -1,5 +1,9 @@
 import WebSocket from 'ws';
 import notifier from 'node-notifier';
+import HandyStorage from "handy-storage";
+
+const local = new HandyStorage<string>();
+local.connect('/keys.json')
 
 const url = 'wss://news.treeofalpha.com/ws';
 
@@ -12,6 +16,8 @@ const ws = new WebSocket(url, {
 
 ws.on('open', () => {
   console.log('connected');
+  local.setState('ws')
+
   // Object
   notifier.notify({
     title: 'Connected',

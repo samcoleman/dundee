@@ -2,22 +2,19 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 import { IoIosArrowBack } from 'react-icons/io';
-import Link from 'next/link';
-import Image from 'next/image';
 
 type source = {
-    link: string;
+    link:     string;
     symbols?: string[],
     price?:   number[],
 }
 
 type direct = {
-    body: string;
-    icon: string;
-    link: string;
+    body:   string;
+    icon:   string;
+    link:   string;
     image?: string;
 }
-
 
 type pageData = {
     symbol: string;
@@ -105,6 +102,7 @@ const DashPage = () => {
                         <a href={pageData.payload_source.link} rel="noopener noreferrer" target="_blank">Goto Source</a>
                     </div>
                     : pageData.payload_direct ?
+
                     <div className='flex flex-col gap-2'>
                         <p className='flex text-lg'>{pageData.payload_direct.body}</p>
                         <a href={pageData.payload_direct.link} rel="noopener noreferrer" target="_blank">Goto Direct</a>
