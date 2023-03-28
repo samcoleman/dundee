@@ -1,24 +1,19 @@
 import '../styles/global.css';
-import type { Session } from 'next-auth';
-import { getSession, SessionProvider } from 'next-auth/react';
 import type { AppType } from 'next/app';
-import { trpc } from 'utils/trpc';
+import { api } from '../utils/api';
 
-const MyApp: AppType<{ session: Session | null }> = ({
+const MyApp: AppType = ({
   Component,
   pageProps,
 }) => {
   return (
-    <SessionProvider session={pageProps.session}>
+   
       <Component {...pageProps} />
-    </SessionProvider>
   );
 };
 
-MyApp.getInitialProps = async ({ ctx }) => {
-  return {
-    session: await getSession(ctx),
-  };
+MyApp.getInitialProps = ({ ctx }) => {
+  return {};
 };
 
-export default trpc.withTRPC(MyApp);
+export default api.withTRPC(MyApp);

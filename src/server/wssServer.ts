@@ -1,28 +1,27 @@
 import WebSocket from 'ws';
 import notifier from 'node-notifier';
-import HandyStorage from "handy-storage";
+import { appRouter } from './api/root';
+import express from 'express';
 
-const local = new HandyStorage<string>();
-local.connect('/keys.json')
 
+const caller = appRouter.createCaller({session: null});
 const url = 'wss://news.treeofalpha.com/ws';
 
 const ws = new WebSocket(url, {
   headers: {
     Cookie:
-      'tree_login_cookie=s%3AkT_W-vPFN1oEgl2LER1tOIICWOxw3Ral.gL6yrs9481uvZA33BP%2FlMheSbgZIX97SialIk%2FhWYMU',
+      `tree_login_cookie=${process.env.TREE_COOKIE}`
   },
 });
 
 ws.on('open', () => {
   console.log('connected');
-  local.setState('ws')
 
   // Object
   notifier.notify({
     title: 'Connected',
     message: 'Successfully connected to websocket server',
-    open: `http://localhost:4000`,
+    open: `http://localhost:3000`,
   });
 });
 
@@ -52,7 +51,7 @@ const handleDirect = (obj) => {
         link: obj["link"] as string,
         image: "image" in obj ? obj["image"] as string : undefined 
     } as direct
-    const url = `http://localhost:3000/dash\?symbol=${symbol}s\&source=${source}\&title=${title}\&time=${time}\&payload=${encodeURIComponent(JSON.stringify(payload))}`
+    const url = `http://localhost:3000/dash\?symbol=${symbol}\&source=${source}\&title=${title}\&time=${time}\&payload=${encodeURIComponent(JSON.stringify(payload))}`
     notifier.notify({
         title: title,
         message: payload.body,
@@ -114,26 +113,24 @@ ws.on('error', (err) => {
     });
 })
 
+const app = express();
 
-
-
-/*
-const wss = new ws.Server({
-  port: 3001,
+app.get('/reload', (req, res) => {
+  console.log('Express + TypeScript Server');
 });
-const handler = applyWSSHandler({ wss, router: appRouter, createContext });
 
-wss.on('connection', (ws) => {
-  console.log(` Connection (${wss.clients.size})`);
-  ws.once('close', () => {
-    console.log(` Connection (${wss.clients.size})`);
-  });
+app.get('/restart', (req, res) => {
+    console.log('Express + TypeScript Server');
 });
-console.log('✅ WebSocket Server listening on ws://localhost:3001');
 
-process.on('SIGTERM', () => {
-  console.log('SIGTERM');
-  handler.broadcastReconnectNotification();
-  wss.close();
+app.get('/status', (req, res) => {
+    if (ws.OPEN) {
+        res.send(true)
+    }else{
+        res.send(false)
+    }
 });
-*/
+
+app.listen(6000, () => {
+  console.log(`[node]: Server is running at http://localhost:6000`);
+});

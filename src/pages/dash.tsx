@@ -37,12 +37,11 @@ const DashPage = () => {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        const symbol  = urlParams.get('symbol');
-        const source  = urlParams.get('source');
-        const title   = urlParams.get('title');
-        const time    = urlParams.get('time');
+        const symbol    = urlParams.get('symbol');
+        const source    = urlParams.get('source');
+        const title     = urlParams.get('title');
+        const time      = urlParams.get('time');
         const payload   = urlParams.get('payload');
-
 
         let payloadObj : source | direct | undefined;
         try {
@@ -69,18 +68,16 @@ const DashPage = () => {
     return (
     <>
         <Head>
-        <title>{pageData.symbol.toUpperCase()} / USDT</title>
+        <title>{pageData.symbol.toUpperCase()}</title>
         <link rel="icon" href="/favicon.ico" />
         </Head>
         <div className="flex flex-col h-screen bg-slate-900 p-5 gap-5 ">
-        <AdvancedRealTimeChart  symbol="btcusdt" theme="dark"  autosize/>
         <div className='flex flex-row gap-5 text-white'>
             <div className='flex flex-col flex-1 bg-white/5 rounded-md p-5 gap-2'>
                 <div className='flex flex-row gap-10'>
                     <button className='flex justify-center h-full aspect-square text-2xl  p-2 items-center rounded-md hover:bg-white/5'>
                         <IoIosArrowBack />
                     </button>
-                    
                     <div className='flex-1'/>
                     <h1 className='flex text-2xl'>{new Date(pageData.time).toISOString()}</h1>
                     <h1 className='flex text-2xl'>{pageData.source}</h1>
@@ -141,6 +138,7 @@ const DashPage = () => {
                 <button className="flex bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-4xl font-bold">Sell All</button>
             </div>
         </div>
+        <AdvancedRealTimeChart  symbol="btcusdt" theme="dark"  autosize/>
         </div>
     </>
   );

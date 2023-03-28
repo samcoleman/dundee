@@ -1,0 +1,23 @@
+TELEGRAM
+
+{
+  title: 'Ninja News (t.me/ninjanewstr)',
+  body: '[Flare (FLR) has been added to the Coinbase listing roadmap.]\n' +
+    '\n' +
+    'Flare (FLR) , Coinbase listeleme yol haritasına eklendi.',
+  icon: 'https://cdn4.telegram-cdn.org/file/uQTkCcknMYDbR_jApEJJU-mH2NOKt5bTbtLwZctGH3BAbMfDAj0v_z5C3EOGullpG2k7tzT1DCLzcVRJcbSbEY7W_WBHS0m42O9AWg5Uwc2u3yTFYMbozrbUqZds35KMxYiMOrgbUfwQ6ZY_xS6as4KgOggSb50N5qgOLbvSt_To3Wo9I2Hm4cJvjvaMMgP0qan__v0z2c4mDzwhQlUkyaiZ4GYZYIhqHIYybJUYvXXv2jxyn4BqwRkJ_0Xx4eqrjgQ57UsXD_rmlvqdggmgqCwvl3LcQrcfpu5_9xeh47yCOUVqfk8cFZ88hlJMU5pU57BjImNgQ3_99Dcf13Nxzg.jpg',
+  image: null,
+  requireInteraction: true,
+  type: 'telegram',
+  link: 'https://t.me/ninjanewstr/4822',
+  telegramId: 'ninjanewstr',
+  actions: [
+    {
+      action: 'BYBIT_FLRUSDT',
+      title: 'FLRUSDT PERP',
+      icon: 'https://news.treeofalpha.com/static/images/bybit.png'
+    }
+  ],
+  time: 1679950937515,
+  _id: '1679950937515FFhbattClrFClyh'
+}
