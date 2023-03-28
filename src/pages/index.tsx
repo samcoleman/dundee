@@ -4,19 +4,94 @@ import { useEffect, useState } from 'react';
 import { api } from '../utils/api'
 import { GiWillowTree } from 'react-icons/gi';
 import { GoTerminal, GoSearch } from 'react-icons/go';
+import { feeds } from 'server/api/routers/settings';
 
 const IndexPage = () => {
     const status  = api.settings.status.useMutation()
-    const { data: settings }  = api.settings.getSettings.useQuery();
+
+    const { data: settings, refetch: settingsRefetch }  = api.settings.getSettings.useQuery();
 
     const [keywordCount, setKeywordCount]   = useState(0);
 
-
     const [socketStatus, setSocketStatus]   = useState(true);
     const [ichibotStatus, setIchibotStatus] = useState(true);
-    
 
-  // create a timer for ever 10 seconds in useEffect
+
+    const [symbolInput, setSymbolInput] = useState('');
+    const symbolUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSymbolInput(e.target.value)
+    }
+
+    const [keywordInput, setKeywordInput] = useState('');
+    const keywordUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setKeywordInput(e.target.value)
+    }
+
+    const [negativeKeywordInput, setNegativeKeywordInput] = useState('');
+    const negativeKeywordUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNegativeKeywordInput(e.target.value)
+    }
+
+    const addFeed    = api.settings.addFeed.useMutation()
+    const removeFeed = api.settings.removeFeed.useMutation()
+    const toggleFeed = async (feed: feeds) => {
+        if (settings?.feeds.includes(feed)) {
+            const res = await removeFeed.mutateAsync({feed})
+        }else{
+            const res = await addFeed.mutateAsync({feed})
+        }
+        void settingsRefetch()
+    }
+
+
+    const addSym    = api.settings.addSymbol.useMutation()
+    const addSymbol = async (symbol: string) => {
+        if (symbol === '') return
+
+        const res = await addSym.mutateAsync({symbol})
+        void settingsRefetch()
+    }
+
+    const removeSym = api.settings.removeSymbol.useMutation()
+    const removeSymbol = async (symbol: string) => {
+        if (symbol === '') return
+
+        const res = await removeSym.mutateAsync({symbol})
+        void settingsRefetch()
+    }
+
+    const addKey    = api.settings.addKeyword.useMutation()
+    const addKeyword = async (symbol: string, keyword: string) => {
+        if (symbol === '' || symbol === '') return
+
+        const res = await addKey.mutateAsync({symbol, keyword})
+        void settingsRefetch()
+    }
+
+    const removeKey = api.settings.removeKeyword.useMutation()
+    const removeKeyword = async (symbol: string, keyword: string) => {
+        if (symbol === '' || keyword === '') return
+
+        const res = await removeKey.mutateAsync({symbol, keyword})
+        void settingsRefetch()
+    }
+
+    const addNegativeKey    = api.settings.addNegativeKeyword.useMutation()
+    const addNegativeKeyword = async (negativeKeyword: string) => {
+        if (negativeKeyword === '') return
+
+        const res = await addNegativeKey.mutateAsync({negativeKeyword})
+        void settingsRefetch()
+    }
+    const removeNegativeKey = api.settings.removeNegativeKeyword.useMutation()
+    const removeNegativeKeyword = async (negativeKeyword: string) => {
+        if (negativeKeyword === '') return
+
+        const res = await removeNegativeKey.mutateAsync({negativeKeyword})
+        void settingsRefetch()
+    }
+
+    // create a timer for ever 10 seconds in useEffect
     useEffect(() => {
         const checkStatus = async () => {
             const res = await status.mutateAsync()
@@ -72,19 +147,19 @@ const IndexPage = () => {
                 <div className='flex flex-row text-lg gap-5'>
                     <h1 className='font-bold'>Notification Feeds</h1>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={settings?.feeds.includes("BLOGS")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" onClick={() => void toggleFeed("BLOGS")} checked={settings?.feeds.includes("BLOGS")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Blogs</p>
                     </label>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={settings?.feeds.includes("TWITTER")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" onClick={() => void toggleFeed("TWITTER")} checked={settings?.feeds.includes("TWITTER")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Twitter</p>
                     </label>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={settings?.feeds.includes("TELEGRAM")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" onClick={() => void toggleFeed("TELEGRAM")} checked={settings?.feeds.includes("TELEGRAM")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Telegram</p>
                     </label>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={settings?.feeds.includes("UNKNOWN")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" onClick={() => void toggleFeed("UNKNOWN")} checked={settings?.feeds.includes("UNKNOWN")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Unknown</p>
                     </label>
                 <div/>
@@ -95,8 +170,8 @@ const IndexPage = () => {
                     <div className='flex flex-row items-center gap-5'>
                         <h1 className='text-lg font-bold'>Symbols</h1>
                         <GoSearch className='text-2xl ml-5'/>
-                        <input className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
-                        <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
+                        <input onChange={symbolUpdate} className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
+                        <button onClick={() => void addSymbol(symbolInput)} className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
                     </div>
                     <div className='flex flex-1 flex-col h-full'>
                             <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
@@ -128,7 +203,7 @@ const IndexPage = () => {
                                             </td>
                                         }
                                         <td className="flex flex-1 justify-end">
-                                            <button className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
+                                            <button onClick={() => void removeSymbol(symbol.symbol)} className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
                                                 Remove
                                             </button>
                                         </td> 
@@ -149,10 +224,10 @@ const IndexPage = () => {
                         <h1 className='text-lg font-bold'>Keywords</h1>
                         <GoSearch className='text-2xl ml-5'/>
                         <button className='outline outline-2 px-3 rounded-md text-lg hover:bg-white/5'>
-                            SYB
+                            BTC
                         </button>
-                        <input className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
-                        <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
+                        <input onChange={keywordUpdate} className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
+                        <button onClick={() => void addKeyword("BTC", keywordInput)} className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
                     </div>
                     <div className='flex flex-1 flex-col h-full'>
                             <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
@@ -173,7 +248,7 @@ const IndexPage = () => {
                                                     <td className="flex text-start w-24">{symbol.symbol}</td>
                                                     <td className="flex-1 text-start ">{keyword}</td>
                                                     <td className="flex justify-end">
-                                                        <button className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
+                                                        <button onClick={() => void removeKeyword(symbol.symbol, keyword)} className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
                                                             Remove
                                                         </button>
                                                     </td> 
@@ -196,8 +271,8 @@ const IndexPage = () => {
                     <div className='flex flex-row items-center gap-5'>
                         <h1 className='text-lg font-bold'>Negative Keywords</h1>
                         <GoSearch className='text-2xl ml-5'/>
-                        <input className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
-                        <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
+                        <input onChange={negativeKeywordUpdate} className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
+                        <button onClick={() => void addNegativeKeyword(negativeKeywordInput)} className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
                     </div>
                     <div className='flex flex-1 flex-col h-full'>
                             <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
@@ -212,7 +287,7 @@ const IndexPage = () => {
                                         <tr key={index} className="flex flex-row w-full text-white">
                                             <td className="flex-1 text-start">{keyword}</td>
                                             <td className="flex justify-end">
-                                                <button className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
+                                                <button onClick={() => void removeNegativeKeyword(keyword)} className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
                                                     Remove
                                                 </button>
                                             </td> 

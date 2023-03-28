@@ -21,7 +21,7 @@ ws.on('open', () => {
   notifier.notify({
     title: 'Connected',
     message: 'Successfully connected to websocket server',
-    open: `http://localhost:3000`,
+    reply : true,
   });
 });
 
