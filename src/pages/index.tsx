@@ -99,15 +99,15 @@ const IndexPage = () => {
                         <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
                     </div>
                     <div className='flex flex-1 flex-col h-full'>
-                            <tr className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
-                                <th className="flex-1 text-start">Symbol</th>
-                                <th className="flex-1 text-start">Trading Pair</th>
-                                <th className="flex-1 text-center">Status</th>
-                                <th className="flex-1 text-end"> Count: {settings?.symbols.length}</th>
-                            </tr>
+                            <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
+                                <div className="flex-1 text-start">Symbol</div>
+                                <div className="flex-1 text-start">Trading Pair</div>
+                                <div className="flex-1 text-center">Status</div>
+                                <div className="flex-1 text-end"> Count: {settings?.symbols.length}</div>
+                            </div>
                         <table className="text-left w-full h-full">
                         <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                            {settings?.symbols.map((symbol, index) => {
+                            {settings ? settings.symbols.map((symbol, index) => {
                                 return (
                                     <tr className="flex flex-row w-full" key={index}>
                                         <td className="flex-1 text-start">{symbol.symbol}</td>
@@ -134,12 +134,16 @@ const IndexPage = () => {
                                         </td> 
                                     </tr>
                                 )
-                            })
+                            }) :
+                                <tr className="flex flex-row w-full">
+                                    <td className="flex-1 text-start">Loading...</td>
+                                </tr>
                             }
                         </tbody>
                     </table>
                 </div>
                 </div>
+                
                 <div className='flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start'>
                     <div className='flex flex-row items-center gap-5'>
                         <h1 className='text-lg font-bold'>Keywords</h1>
@@ -151,15 +155,15 @@ const IndexPage = () => {
                         <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
                     </div>
                     <div className='flex flex-1 flex-col h-full'>
-                            <tr className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
-                                <th className="flex text-start w-24">Symbol</th>
-                                <th className="flex-1 text-start">Keyword</th>
-                                <th className="text-end"> Count : {keywordCount}</th>
-                            </tr>
+                            <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
+                                <div className="flex text-start w-24">Symbol</div>
+                                <div className="flex-1 text-start">Keyword</div>
+                                <div className="text-end"> Count : {keywordCount}</div>
+                            </div>
                         <table className="text-left w-full h-full">
                         <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
                             {
-                                settings?.symbols.map((symbol, s_index) => {
+                                settings ? settings.symbols.map((symbol, s_index) => {
                                     return (
                                         symbol.keywords.map((keyword, k_index) => {
                 
@@ -178,11 +182,16 @@ const IndexPage = () => {
                                         })
                                     )
                                 })
+                                :
+                                <tr className="flex flex-row w-full">
+                                    <td className="flex-1 text-start">Loading...</td>
+                                </tr>
                             }
                         </tbody>
                     </table>
                 </div>
                 </div>
+
                 <div className='flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start'>
                     <div className='flex flex-row items-center gap-5'>
                         <h1 className='text-lg font-bold'>Negative Keywords</h1>
@@ -191,14 +200,14 @@ const IndexPage = () => {
                         <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
                     </div>
                     <div className='flex flex-1 flex-col h-full'>
-                            <tr className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
-                                <th className="flex-1 text-start">Keyword</th>
-                                <th className="flex-1 text-end"> Count: {settings?.negativeKeywords.length}</th>
-                            </tr>
+                            <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
+                                <div className="flex-1 text-start">Keyword</div>
+                                <div className="flex-1 text-end"> Count: {settings?.negativeKeywords.length}</div>
+                            </div>
                         <table className="text-left w-full h-full">
                         <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
                             {
-                                settings?.negativeKeywords.map((keyword, index) => {
+                                settings ? settings.negativeKeywords.map((keyword, index) => {
                                     return (
                                         <tr key={index} className="flex flex-row w-full text-white">
                                             <td className="flex-1 text-start">{keyword}</td>
@@ -210,12 +219,15 @@ const IndexPage = () => {
                                         </tr>
                                     )
                                 })
+                                :
+                                <tr className="flex flex-row w-full">
+                                    <td className="flex-1 text-start">Loading...</td>
+                                </tr>
                             }
                         </tbody>
                     </table>
                 </div>
                 </div>
-
             </div>
         </div>
       </div>
