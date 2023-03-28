@@ -7,6 +7,10 @@ import { GoTerminal, GoSearch } from 'react-icons/go';
 
 const IndexPage = () => {
     const status  = api.settings.status.useMutation()
+    const { data: settings }  = api.settings.getSettings.useQuery();
+
+    const [keywordCount, setKeywordCount]   = useState(0);
+
 
     const [socketStatus, setSocketStatus]   = useState(true);
     const [ichibotStatus, setIchibotStatus] = useState(true);
@@ -18,12 +22,15 @@ const IndexPage = () => {
             const res = await status.mutateAsync()
             setSocketStatus(res)
         }
+        let keywords = 0;
+        settings?.symbols.forEach((symbol) => {
+            keywords += symbol.keywords.length
+        })
+        setKeywordCount(keywords)
 
         const interval = setInterval(() => {void checkStatus()}, 10000);
         return () => clearInterval(interval);
-
-
-    }, []);
+    }, [settings]);
 
   return (
     <>
@@ -32,7 +39,7 @@ const IndexPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="flex flex-col  h-screen max-h-screen min-h-screen bg-slate-900 p-5 gap-5 ">
-        <div className='flex flex-col gap-5 text-white'>
+        <div className='flex flex-1 flex-col gap-5 text-white'>
             <div className='flex flex-row gap-5'>
                 <div className='flex bg-white/5 rounded-md p-5 gap-5 items-center'>
                     { socketStatus ?
@@ -65,137 +72,148 @@ const IndexPage = () => {
                 <div className='flex flex-row text-lg gap-5'>
                     <h1 className='font-bold'>Notification Feeds</h1>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={true} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" checked={settings?.feeds.includes("BLOGS")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Blogs</p>
                     </label>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={true} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" checked={settings?.feeds.includes("TWITTER")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Twitter</p>
                     </label>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={true} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" checked={settings?.feeds.includes("TELEGRAM")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Telegram</p>
                     </label>
                     <label className='flex flex-row gap-2 items-center'>
-                        <input type="checkbox" checked={true} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
+                        <input type="checkbox" checked={settings?.feeds.includes("UNKNOWN")} className='w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded'/>
                         <p>Unknown</p>
                     </label>
                 <div/>
                 </div>
             </div>
-            <div className='flex flex-row gap-5'> 
+            <div className='flex flex-1 flex-row gap-5'> 
                 <div className='flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start'>
                     <div className='flex flex-row items-center gap-5'>
                         <h1 className='text-lg font-bold'>Symbols</h1>
                         <GoSearch className='text-2xl ml-5'/>
                         <input className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
-                        <div className='px-3'>ADD</div>
+                        <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
                     </div>
-                    <table className="w-full text-md bg-white shadow-md rounded mb-4">
-            <tbody className='overflow-auto'>
-                <tr className="border-b">
-                    <th className="text-left p-3 px-5">Name</th>
-                    <th className="text-left p-3 px-5">Email</th>
-                    <th className="text-left p-3 px-5">Role</th>
-                    <th></th>
-                </tr>
-                <tr className="border-b hover:bg-orange-100 bg-gray-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
-                <tr className="border-b hover:bg-orange-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
+                    <div className='flex flex-1 flex-col h-full'>
+                            <tr className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
+                                <th className="flex-1 text-start">Symbol</th>
+                                <th className="flex-1 text-start">Trading Pair</th>
+                                <th className="flex-1 text-center">Status</th>
+                                <th className="flex-1 text-end"> Count: {settings?.symbols.length}</th>
+                            </tr>
+                        <table className="text-left w-full h-full">
+                        <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
+                            {settings?.symbols.map((symbol, index) => {
+                                return (
+                                    <tr className="flex flex-row w-full" key={index}>
+                                        <td className="flex-1 text-start">{symbol.symbol}</td>
+                                        <td className="flex-1 text-start">{symbol.tradingPair}</td>
+                                        {
+                                            symbol.status === "AVAILABLE" ?
+                                            <td className="flex flex-1 font-bold bg-green-500 rounded-full justify-center">
+                                                Available
+                                            </td>
+                                            :
+                                            symbol.status === "UNAVAILABLE" ?
+                                            <td className="flex flex-1 font-bold bg-red-500 rounded-full justify-center">
+                                                Unavailable
+                                            </td>
+                                            :
+                                            <td className="flex flex-1 font-bold bg-white/50 rounded-full justify-center">
+                                                Unknown
+                                            </td>
+                                        }
+                                        <td className="flex flex-1 justify-end">
+                                            <button className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
+                                                Remove
+                                            </button>
+                                        </td> 
+                                    </tr>
+                                )
+                            })
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+                <div className='flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start'>
+                    <div className='flex flex-row items-center gap-5'>
+                        <h1 className='text-lg font-bold'>Keywords</h1>
+                        <GoSearch className='text-2xl ml-5'/>
+                        <button className='outline outline-2 px-3 rounded-md text-lg hover:bg-white/5'>
+                            SYB
+                        </button>
+                        <input className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
+                        <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
+                    </div>
+                    <div className='flex flex-1 flex-col h-full'>
+                            <tr className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
+                                <th className="flex text-start w-24">Symbol</th>
+                                <th className="flex-1 text-start">Keyword</th>
+                                <th className="text-end"> Count : {keywordCount}</th>
+                            </tr>
+                        <table className="text-left w-full h-full">
+                        <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
+                            {
+                                settings?.symbols.map((symbol, s_index) => {
+                                    return (
+                                        symbol.keywords.map((keyword, k_index) => {
                 
-                <tr className="border-b hover:bg-orange-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
-                <tr className="border-b hover:bg-orange-100 bg-gray-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
-                <tr className="border-b hover:bg-orange-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
-                <tr className="border-b hover:bg-orange-100 bg-gray-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
-                <tr className="border-b hover:bg-orange-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
-                <tr className="border-b hover:bg-orange-100">
-                    <td className="p-3 px-5"><input type="text" value="user.name" className="bg-transparent"/></td>
-                    <td className="p-3 px-5"><input type="text" value="user.email" className="bg-transparent"/></td>
-                    <td className="p-3 px-5">
-                        <select value="user.role" className="bg-transparent">
-                            <option value="user">user</option>
-                            <option value="admin">admin</option>
-                        </select>
-                    </td>
-                    <td className="p-3 px-5 flex justify-end"><button type="button" className="mr-3 text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Save</button><button type="button" className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline">Delete</button></td>
-                </tr>
-            </tbody>
-        </table>
+                                            return (
+                                                //Max 50000 keywords per symbol before repeating keys - will never happen
+                                                <tr key={s_index*50000+k_index} className="flex flex-row w-full text-white gap-5">
+                                                    <td className="flex text-start w-24">{symbol.symbol}</td>
+                                                    <td className="flex-1 text-start ">{keyword}</td>
+                                                    <td className="flex justify-end">
+                                                        <button className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
+                                                            Remove
+                                                        </button>
+                                                    </td> 
+                                                </tr>
+                                            )
+                                        })
+                                    )
+                                })
+                            }
+                        </tbody>
+                    </table>
                 </div>
-                <div className='flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-2 justify-start'>
-            
                 </div>
-                <div className='flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-2 justify-start'>
-            
+                <div className='flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start'>
+                    <div className='flex flex-row items-center gap-5'>
+                        <h1 className='text-lg font-bold'>Negative Keywords</h1>
+                        <GoSearch className='text-2xl ml-5'/>
+                        <input className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right" size={1}/>
+                        <button className='px-5 py-1 rounded-md bg-green-500 hover:bg-green-400'>ADD</button>
+                    </div>
+                    <div className='flex flex-1 flex-col h-full'>
+                            <tr className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
+                                <th className="flex-1 text-start">Keyword</th>
+                                <th className="flex-1 text-end"> Count: {settings?.negativeKeywords.length}</th>
+                            </tr>
+                        <table className="text-left w-full h-full">
+                        <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
+                            {
+                                settings?.negativeKeywords.map((keyword, index) => {
+                                    return (
+                                        <tr key={index} className="flex flex-row w-full text-white">
+                                            <td className="flex-1 text-start">{keyword}</td>
+                                            <td className="flex justify-end">
+                                                <button className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5">
+                                                    Remove
+                                                </button>
+                                            </td> 
+                                        </tr>
+                                    )
+                                })
+                            }
+                        </tbody>
+                    </table>
+                </div>
                 </div>
 
             </div>
