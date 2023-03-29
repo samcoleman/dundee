@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
+import { LocalStorage } from 'node-localstorage';
 
 export type feeds = 'BLOGS' | 'TWITTER' | 'TELEGRAM' | 'UNKNOWN';
 
@@ -18,30 +19,20 @@ export type settings = {
   negativeKeywords: string[];
 };
 
-const data: settings = {
-  feeds: ['BLOGS', 'TWITTER', 'TELEGRAM'],
-  symbols: [
-    {
-      symbol: 'BTCUSDT',
-      status: 'TRADING',
-      keywords: ['BTC', 'BITCOIN'],
-    },
-    {
-      symbol: 'ETHUSDT',
-      status: 'DOWN',
-      keywords: ['ETH', 'ETHERIUM'],
-    },
-    {
-      symbol: 'XRPUSDT',
-      status: 'UNKNOWN',
-      keywords: ['XRP', 'RIPPLE'],
-    },
-  ],
-  negativeKeywords: ['SCAM', 'FAKE', 'PUMP', 'DUMP'],
-};
+const localstorage = new LocalStorage('./settings')
+
+let data : settings = {
+  feeds: [],
+  symbols: [],
+  negativeKeywords: []
+}
+
+//localstorage.setItem('settings', JSON.stringify(data))
+data = JSON.parse(localstorage.getItem('settings'))
 
 export const settingsManager = createTRPCRouter({
   getSettings: publicProcedure.query(() => {
+    localstorage.setItem('settings', JSON.stringify(data))
     return data;
   }),
   updateSymbols: publicProcedure

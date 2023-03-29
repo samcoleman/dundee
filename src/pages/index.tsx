@@ -13,6 +13,8 @@ const IndexPage = () => {
   const { data: settings, refetch: settingsRefetch } =
     api.settings.getSettings.useQuery();
 
+  const [toggles, setToggles] = useState<feeds[]>([]);
+
   const [keywordCount, setKeywordCount] = useState(0);
   const [selectedSymbol, setSelectedSymbol] = useState(NO_SYMBOL);
 
@@ -31,9 +33,9 @@ const IndexPage = () => {
     setKeywordInput(e.target.value);
   };
 
-  const [keywordSymbolInput, setkeywordSymbol] = useState('');
+  const [keywordSymbolInput, setkeywordSymbolInput] = useState('');
   const keywordSymbolUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setkeywordSymbol(e.target.value);
+    setkeywordSymbolInput(e.target.value);
   };
 
   const [negativeKeywordInput, setNegativeKeywordInput] = useState('');
@@ -122,7 +124,6 @@ const IndexPage = () => {
         setBinanceStatus(false);
       }
     };
-
     void checkSymbolStatus();
     const interval = setInterval(() => {
       void checkStatus();
@@ -132,8 +133,10 @@ const IndexPage = () => {
 
   // create a timer for ever 10 seconds in useEffect
   useEffect(() => {
+    setToggles(settings?.feeds || []);
+
     let keywords = 0;
-    settings?.symbols.forEach((symbol) => {
+    settings?.symbols?.forEach((symbol) => {
       keywords += symbol.keywords.length;
     });
     setKeywordCount(keywords);
@@ -181,8 +184,8 @@ const IndexPage = () => {
               <label className="flex flex-row gap-2 items-center">
                 <input
                   type="checkbox"
-                  onClick={() => void toggleFeed('BLOGS')}
-                  checked={settings?.feeds.includes('BLOGS')}
+                  onChange={() => void toggleFeed('BLOGS')}
+                  checked={toggles.includes('BLOGS')}
                   className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded"
                 />
                 <p>Blogs</p>
@@ -190,8 +193,9 @@ const IndexPage = () => {
               <label className="flex flex-row gap-2 items-center">
                 <input
                   type="checkbox"
-                  onClick={() => void toggleFeed('TWITTER')}
-                  checked={settings?.feeds.includes('TWITTER')}
+                  id="twitter"
+                  onChange={() => void toggleFeed('TWITTER')}
+                  checked={toggles.includes('TWITTER')}
                   className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded"
                 />
                 <p>Twitter</p>
@@ -199,8 +203,8 @@ const IndexPage = () => {
               <label className="flex flex-row gap-2 items-center">
                 <input
                   type="checkbox"
-                  onClick={() => void toggleFeed('TELEGRAM')}
-                  checked={settings?.feeds.includes('TELEGRAM')}
+                  onChange={() => void toggleFeed('TELEGRAM')}
+                  checked={toggles.includes('TELEGRAM')}
                   className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded"
                 />
                 <p>Telegram</p>
@@ -208,8 +212,8 @@ const IndexPage = () => {
               <label className="flex flex-row gap-2 items-center">
                 <input
                   type="checkbox"
-                  onClick={() => void toggleFeed('UNKNOWN')}
-                  checked={settings?.feeds.includes('UNKNOWN')}
+                  onChange={() => void toggleFeed('UNKNOWN')}
+                  checked={toggles.includes('UNKNOWN')}
                   className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded"
                 />
                 <p>Unknown</p>
@@ -222,17 +226,22 @@ const IndexPage = () => {
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl" />
                 <input
+                  value={symbolInput}
                   onChange={symbolUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       void addSymbol(symbolInput);
+                      setSymbolInput('');
                     }
                   }}
                   className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
                   size={1}
                 />
                 <button
-                  onClick={() => void addSymbol(symbolInput)}
+                  onClick={() => {
+                    void addSymbol(symbolInput);
+                    setSymbolInput('');
+                  }}
                   className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
                 >
                   ADD
@@ -250,12 +259,12 @@ const IndexPage = () => {
                   </button>
                   <div className="flex-1 text-end">
                     {' '}
-                    Count: {settings?.symbols.length}
+                    Count: {settings?.symbols?.length}
                   </div>
                 </div>
                 <table className="text-left w-full h-full">
                   <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                    {settings ? (
+                    {settings?.symbols ? (
                       settings.symbols
                         .filter((symbol) => {
                           return symbol.symbol.includes(
@@ -307,16 +316,22 @@ const IndexPage = () => {
             <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl " />
-                <div  onMouseEnter={() => setKeywordSymbolPopup(true)} onMouseLeave={() => setKeywordSymbolPopup(false)}>
+                <div
+                  onMouseEnter={() => setKeywordSymbolPopup(true)}
+                  onMouseLeave={() => {
+                    setKeywordSymbolPopup(false);
+                    setkeywordSymbolInput('');
+                  }}
+                >
                   <button className="outline outline-2 px-3 rounded-md text-lg hover:bg-white/5">
                     {selectedSymbol}
                   </button>
-                  {
-                    keywordSymbolPopup ?
+                  {keywordSymbolPopup ? (
                     <div className="absolute h-56 w-72 bg-[#1A2335] outline outline-2 p-3 rounded-md flex flex-col gap-4">
                       <div className="flex flex-row items-center gap-3">
                         <GoSearch className="text-2xl" />
                         <input
+                          value={keywordSymbolInput}
                           onChange={keywordSymbolUpdate}
                           className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
                           size={1}
@@ -324,7 +339,7 @@ const IndexPage = () => {
                       </div>
                       <div className="h-0.5 bg-white rounded-full" />
                       <div className="flex flex-row flex-wrap h-full overflow-auto justify-start items-start gap-2 bg-grey-light w-full">
-                        {settings ? (
+                        {settings?.symbols ? (
                           settings.symbols
                             .filter((symbol) => {
                               return symbol.symbol.includes(
@@ -357,23 +372,25 @@ const IndexPage = () => {
                         )}
                       </div>
                     </div>
-                    :
-                    null
-                  }
+                  ) : null}
                 </div>
-
                 <input
+                  value={keywordInput}
                   onChange={keywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       void addKeyword(selectedSymbol, keywordInput);
+                      setKeywordInput('');
                     }
                   }}
                   className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
                   size={1}
                 />
                 <button
-                  onClick={() => void addKeyword(selectedSymbol, keywordInput)}
+                  onClick={() => {
+                    void addKeyword(selectedSymbol, keywordInput);
+                    setKeywordInput('');
+                  }}
                   className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
                 >
                   ADD
@@ -387,38 +404,51 @@ const IndexPage = () => {
                 </div>
                 <table className="text-left w-full h-full">
                   <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                    {settings ? (
-                      settings.symbols.filter(((symbol) => {
-                        if (selectedSymbol === NO_SYMBOL) {return true;}
-                        return symbol.symbol.includes(selectedSymbol);
-                      })).map((symbol, s_index) => {
-                        return symbol.keywords.filter((keyword) => {
-                          return keyword.includes(keywordInput.toUpperCase());
-                        }).map((keyword, k_index) => {
-                          return (
-                            //Max 50000 keywords per symbol before repeating keys - will never happen
-                            <tr
-                              key={s_index * 50000 + k_index}
-                              className="flex flex-row w-full text-white gap-5"
-                            >
-                              <td className="flex text-start w-24">
-                                {symbol.symbol}
-                              </td>
-                              <td className="flex-1 text-start ">{keyword}</td>
-                              <td className="flex justify-end">
-                                <button
-                                  onClick={() =>
-                                    void removeKeyword(symbol.symbol, keyword)
-                                  }
-                                  className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
+                    {settings?.symbols ? (
+                      settings.symbols
+                        .filter((symbol) => {
+                          if (selectedSymbol === NO_SYMBOL) {
+                            return true;
+                          }
+                          return symbol.symbol.includes(selectedSymbol);
+                        })
+                        .map((symbol, s_index) => {
+                          return symbol.keywords
+                            .filter((keyword) => {
+                              return keyword.includes(
+                                keywordInput.toUpperCase(),
+                              );
+                            })
+                            .map((keyword, k_index) => {
+                              return (
+                                //Max 50000 keywords per symbol before repeating keys - will never happen
+                                <tr
+                                  key={s_index * 50000 + k_index}
+                                  className="flex flex-row w-full text-white gap-5"
                                 >
-                                  Remove
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        });
-                      })
+                                  <td className="flex text-start w-24">
+                                    {symbol.symbol}
+                                  </td>
+                                  <td className="flex-1 text-start ">
+                                    {keyword}
+                                  </td>
+                                  <td className="flex justify-end">
+                                    <button
+                                      onClick={() =>
+                                        void removeKeyword(
+                                          symbol.symbol,
+                                          keyword,
+                                        )
+                                      }
+                                      className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
+                                    >
+                                      Remove
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            });
+                        })
                     ) : (
                       <tr className="flex flex-row w-full">
                         <td className="flex-1 text-start">Loading...</td>
@@ -433,12 +463,22 @@ const IndexPage = () => {
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl " />
                 <input
+                  value={negativeKeywordInput}
                   onChange={negativeKeywordUpdate}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      void addNegativeKeyword(negativeKeywordInput);
+                      setNegativeKeywordInput('');
+                    }
+                  }}
                   className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right"
                   size={1}
                 />
                 <button
-                  onClick={() => void addNegativeKeyword(negativeKeywordInput)}
+                  onClick={() => {
+                    void addNegativeKeyword(negativeKeywordInput);
+                    setNegativeKeywordInput('');
+                  }}
                   className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
                 >
                   ADD
@@ -449,12 +489,12 @@ const IndexPage = () => {
                   <div className="flex-1 text-start">Negative Keyword</div>
                   <div className="flex-1 text-end">
                     {' '}
-                    Count: {settings?.negativeKeywords.length}
+                    Count: {settings?.negativeKeywords?.length}
                   </div>
                 </div>
                 <table className="text-left w-full h-full">
                   <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                    {settings ? (
+                    {settings?.negativeKeywords ? (
                       settings.negativeKeywords
                         .filter((negativeKeyword) => {
                           return negativeKeyword.includes(
