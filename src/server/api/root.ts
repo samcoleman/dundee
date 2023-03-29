@@ -1,5 +1,9 @@
 import { createTRPCRouter, publicProcedure } from "./trpc";
+
+import { binance } from "./routers/binance";
+import { notification } from "./routers/notificaton";
 import { settingsManager } from "./routers/settings";
+import { server } from "./routers/server";
 /**
  * This is the primary router for your server.
  *
@@ -7,7 +11,10 @@ import { settingsManager } from "./routers/settings";
  */
 export const appRouter = createTRPCRouter({
   health: publicProcedure.query(() => 'yay!'),
-  settings: settingsManager
+  settings: settingsManager,
+  binance: binance,
+  server: server,
+  //notifications: notification,
 });
 
 // export type definition of API

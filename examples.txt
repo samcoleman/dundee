@@ -21,3 +21,76 @@ TELEGRAM
   time: 1679950937515,
   _id: '1679950937515FFhbattClrFClyh'
 }
+
+{
+  title: "CryptoCapo's TA (t.me/CryptoCapoTG)",
+  body: 'SOL\n\nBack to $3\n\nhttps://www.tradingview.com/x/XWK9i21j/',
+  icon: 'https://cdn4.telegram-cdn.org/file/gqNyLBQNJt86d_WvUTdBelHw0dv2ywxRt7zuyvdxOmjer3hBZQp9pp4Cabe3qCLHKh0InclsnEcI_LuILJXF_WZYC57R_mP76R1NfsrBeI6WNjm7G1wpeOPT01I0iCob_MuF1-7s1mIof8nD13lPZzSvCo1CvwrSyW-2raOoFZ0ibZoczq1gS-aZKvT7LE7YDHp5e0rQnW9YgZ4h7cCvHFnY-akYkaDD660d58fDIkbVaHSxpceVyJXG7VuYUfZRmFytJLy1520xmlcJRBib-6mT65wIMIo-3sLSZzh-D80HEAASP1iuhEzl8ydoLqbTIqbe6k4qWf9_X2adaWsO1w.jpg',
+  image: 'https://cdn4.telegram-cdn.org/file/ZEP3L-NE6ny2VZbDMedX0uSfBTFFNWgDhIrf-BrkqBZkspTMGIV_FDhN24kr_eFkMSVqYV2Ijx7u-dbDdF7pwOvcFuVXF6wieaXTHa4YwfpUWxiyijpueL0iiVWAXEVLRn0PkhUu6JyIceG4djBeWhINcErBPnjzRSuh47_iydCB7K_BPmLIjBj9h0Bqd9gQ7oG9WBJlvRMc5KrrX2JN7PvfDUc095GaxhM9GYUIpALdDLRMvwZRA1ysVH6PrEIO-80uWLrgXVXmWmIVREA2SA3xSSORSLOjgXs3y94ROJLYdSiheIeSrVl90w6o6yMZmPsiIgArMaDVvsTMQM0ALw.jpg',
+  requireInteraction: true,
+  type: 'telegram',
+  link: 'https://t.me/CryptoCapoTG/65',
+  telegramId: 'CryptoCapoTG',
+  actions: [
+    {
+      action: 'BINFUT_SOLUSDT',
+      title: 'SOLUSDT PERP',
+      icon: 'https://news.treeofalpha.com/static/images/binance_icon.png'
+    },
+    {
+      action: 'BIN_SOL_USDT',
+      title: 'SOL/USDT',
+      icon: 'https://news.treeofalpha.com/static/images/binance_icon.png'
+    },
+    {
+      action: 'BIN_SOL_BTC',
+      title: 'SOL/BTC',
+      icon: 'https://news.treeofalpha.com/static/images/binance_icon.png'
+    },
+    {
+      action: 'BIN_SOL_BUSD',
+      title: 'SOL/BUSD',
+      icon: 'https://news.treeofalpha.com/static/images/binance_icon.png'
+    },
+    {
+      action: 'BIN_SOL_BNB',
+      title: 'SOL/BNB',
+      icon: 'https://news.treeofalpha.com/static/images/binance_icon.png'
+    },
+    {
+      action: 'BIN_SOL_ETH',
+      title: 'SOL/ETH',
+      icon: 'https://news.treeofalpha.com/static/images/binance_icon.png'
+    },
+    {
+      action: 'BYBIT_SOLUSDT',
+      title: 'SOLUSDT PERP',
+      icon: 'https://news.treeofalpha.com/static/images/bybit.png'
+    }
+  ],
+  time: 1680032154054,
+  _id: '1680032154054St3'
+}
+
+ALERT
+{
+  title: 'Push from 0xxbt.',
+  body: 'no',
+  icon: 'https://cdn.discordapp.com/avatars/551052601815203852/3dfb3c104c13f9ad94a657db50dc0644.png',
+  requireInteraction: true,
+  type: 'alert',
+  link: 'discord://https://discord.com/channels/723484028191113246/911669425390882887/1090728786410082394',
+  time: 1680120407832,
+  _id: '1680120407832n'
+}
+
+{
+  title: 'Push from Huma Capital.',
+  body: 'Daily pray for Madward <:madpray:872378667567833108>',
+  icon: 'https://cdn.discordapp.com/avatars/1022782791739523102/df92d648db3da2de6ab86313d32378e3.png',
+  requireInteraction: true,
+  type: 'alert',
+  link: 'discord://https://discord.com/channels/723484028191113246/911669425390882887/1090734897989161010',
+  time: 1680121865061,
+  _id: '1680121865061DpfMm'
+}
