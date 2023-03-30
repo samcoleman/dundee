@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
-import { USDMClient } from 'binance';
+import { USDMClient, MainClient } from 'binance';
 import { statusObj } from './settings';
 
-const client = new USDMClient({
+const client = new MainClient({
   api_secret: process.env.BINANCE_SECRET,
   api_key: process.env.BINANCE_KEY,
-  beautifyResponses: true,
+  baseUrl: "https://testnet.binance.vision"
 });
 
 export const binance = createTRPCRouter({
@@ -42,7 +42,6 @@ export const binance = createTRPCRouter({
       });
       return input;
     }),
-
   order: publicProcedure
     .input(
       z.object({
@@ -54,12 +53,17 @@ export const binance = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       // To open a short position - if you don't have a position yet, and your account is set to one-way mode, just place a sell order to open a short position
-      const res = await client.submitNewOrder({
-        symbol: 'BTCUSDT',
-        side: input.side,
-        type: 'MARKET',
-        quantity: 0.001,
-      });
+      try {
+        const res = await client.submitNewOrder({
+          symbol: input.symbol,
+          side: input.side,
+          type: "MARKET",
+          quantity: input.quantity,
+        });
+        return res;
+      }catch(e){
+        console.log(e)
+      }
     }),
   orderStatus: publicProcedure.mutation(() => {
     return;

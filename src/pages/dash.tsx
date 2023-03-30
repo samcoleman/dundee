@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { AdvancedRealTimeChart } from 'react-ts-tradingview-widgets';
 import { IoIosArrowBack } from 'react-icons/io';
+import { api } from 'utils/api';
 
 type source = {
   link: string;
@@ -27,6 +28,17 @@ type pageData = {
 };
 
 const DashPage = () => {
+  const order = api.binance.order.useMutation()
+  const makeOrder = async () => {
+    const res = await order.mutateAsync({
+      symbol: 'BTCUSDT',
+      side: 'BUY',
+      type: 'MARKET',
+      quantity: 0.001,
+    })
+    console.log(res)
+  }
+
   const [pageData, setPageData] = useState<pageData>({
     symbol: 'XXXX',
     source: 'UNKNOWN',
@@ -136,7 +148,7 @@ const DashPage = () => {
           </div>
           <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5">
             <div className="flex flex-row text-4xl font-bold gap-5">
-              <button className="bg-green-500 hover:bg-green-400 rounded-md w-28 aspect-square">
+              <button onClick={() => void makeOrder()} className="bg-green-500 hover:bg-green-400 rounded-md w-28 aspect-square">
                 5k
               </button>
               <button className="bg-green-500 hover:bg-green-400 rounded-md w-28 aspect-square">

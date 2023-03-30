@@ -27,8 +27,7 @@ let data : settings = {
   negativeKeywords: []
 }
 
-//localstorage.setItem('settings', JSON.stringify(data))
-data = JSON.parse(localstorage.getItem('settings'))
+data = JSON.parse(localstorage.getItem('settings') || JSON.stringify(data)) as settings
 
 export const settingsManager = createTRPCRouter({
   getSettings: publicProcedure.query(() => {
