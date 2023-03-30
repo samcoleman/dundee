@@ -34,7 +34,7 @@ const DashPage = () => {
       symbol: 'BTCUSDT',
       side: 'BUY',
       type: 'MARKET',
-      quantity: 0.001,
+      quoteOrderQty: 10,
     })
     console.log(res)
   }

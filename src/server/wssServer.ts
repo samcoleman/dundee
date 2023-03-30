@@ -7,6 +7,11 @@ import express from 'express';
 const caller = appRouter.createCaller({session: null});
 const url = 'wss://news.treeofalpha.com/ws';
 
+let settings;
+const getSettings = async () => {
+  settings = await caller.settings.getSettings();
+};
+
 const ws = new WebSocket(url, {
   headers: {
     Cookie:
@@ -15,6 +20,7 @@ const ws = new WebSocket(url, {
 });
 
 ws.on('open', () => {
+  void getSettings();
   console.log('connected');
 
   // Object
@@ -116,7 +122,7 @@ ws.on('error', (err) => {
 const app = express();
 
 app.get('/reload', (req, res) => {
-  console.log('Express + TypeScript Server');
+  void getSettings();
 });
 
 app.get('/restart', (req, res) => {

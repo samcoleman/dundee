@@ -48,7 +48,7 @@ export const binance = createTRPCRouter({
         symbol: z.string(),
         side: z.string().and(z.enum(['BUY', 'SELL'])),
         type: z.string(),
-        quantity: z.number(),
+        quoteOrderQty: z.number(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -58,7 +58,7 @@ export const binance = createTRPCRouter({
           symbol: input.symbol,
           side: input.side,
           type: "MARKET",
-          quantity: input.quantity,
+          quoteOrderQty: input.quoteOrderQty,
         });
         return res;
       }catch(e){
