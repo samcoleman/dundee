@@ -1,11 +1,12 @@
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
-import { IoIosArrowBack } from 'react-icons/io';
+import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { api } from 'utils/api';
 import { type pageData } from 'server/wssServer';
 import { Update } from 'server/api/routers/treeofalpha';
 
 import dynamic from 'next/dynamic';
+import SymbolPicker from 'components/symbolPicker';
 const AdvancedRealTimeChart = dynamic(
   () =>
     import('react-ts-tradingview-widgets').then((w) => w.AdvancedRealTimeChart),
@@ -18,25 +19,30 @@ type parsedUpdates = {
   update: Update;
   symbol: string;
   filtered: boolean;
-  checked:  boolean;
-}
+  checked: boolean;
+};
 
 const DashPage = () => {
   //trpc query for treeofaplha
   const { data: treeOfAlphaData } = api.tree.getUpdates.useQuery();
 
+  const { data: settings, refetch: settingsRefetch } =
+    api.settings.getSettings.useQuery();
+
   const [parsedUpdates, setParsedUpdates] = useState<parsedUpdates[]>([]);
 
-  useEffect (() => {
-    setParsedUpdates(treeOfAlphaData?.map((update) => {
-      return {
-        update:   update,
-        symbol:   '',
-        filtered: false,
-        checked:  false,
-      }
-    }) || []);
- },[treeOfAlphaData]);
+  useEffect(() => {
+    setParsedUpdates(
+      treeOfAlphaData?.map((update) => {
+        return {
+          update: update,
+          symbol: '',
+          filtered: false,
+          checked: false,
+        };
+      }) || [],
+    );
+  }, [treeOfAlphaData]);
 
   const order = api.binance.order.useMutation();
   const makeOrder = async () => {
@@ -49,13 +55,9 @@ const DashPage = () => {
     console.log(res);
   };
 
-  const [pageData, setPageData] = useState<pageData>({
-    symbol: 'XXXX',
-    source: 'UNKNOWN',
-    title: '',
-    link: '',
-    time: 0,
-  });
+  const [selectedSymbol, setSelectedSymbol] = useState('');
+
+  const [pageData, setPageData] = useState<pageData | undefined>(undefined);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -73,19 +75,19 @@ const DashPage = () => {
       time: time ? parseInt(decodeURIComponent(time)) : 0,
     };
 
-    if (pageData.source === 'BLOG') {
+    if (data.source === 'BLOG') {
       data['payload_blog'] = JSON.parse(
         decodeURIComponent(urlParams.get('payload_blog') || ''),
       ) as pageData['payload_blog'];
-    } else if (pageData.source === 'TWITTER') {
+    } else if (data.source === 'TWITTER') {
       data['payload_twitter'] = JSON.parse(
         decodeURIComponent(urlParams.get('payload_twitter') || ''),
       ) as pageData['payload_twitter'];
-    } else if (pageData.source === 'TELEGRAM') {
+    } else if (data.source === 'TELEGRAM') {
       data['payload_telegram'] = JSON.parse(
         decodeURIComponent(urlParams.get('payload_telegram') || ''),
       ) as pageData['payload_telegram'];
-    } else if (pageData.source === 'UNKNOWN') {
+    } else if (data.source === 'UNKNOWN') {
     }
 
     setPageData(data);
@@ -100,37 +102,43 @@ const DashPage = () => {
   return (
     <>
       <Head>
-        <title>{pageData.symbol.toUpperCase()}</title>
+        <title>{selectedSymbol.toUpperCase()}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="flex flex-col h-screen bg-slate-900 p-5 gap-5 text-white">
+      <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white">
         <div className="flex flex-row gap-5">
-          <div className="w-3/5 flex-col bg-white/5 rounded-md p-5">
-            <div className="flex flex-row gap-5"></div>
+          <div className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
-              <p className="w-1/12 min-w-max">Type</p>
-              <p className="w-3/4">Title</p>
-              <p className="w-1/12">Filter</p>
+              <p className="w-1/12 pl-2">Type</p>
+              <p className="w-1/12">Symbol</p>
+              <p className="w-2/3">Title</p>
+              <p className="w-1/12">Filters</p>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
-            <div className="flex flex-col overflow-y-auto h-64">
+            <div className="flex flex-col overflow-y-auto h-64 clip">
               {treeOfAlphaData?.map((item, index) => {
                 return (
                   <button
                     key={index}
                     onClick={() => {
-                      setPageData({...item, symbol: "BTC", source: item.source});
+                      setPageData({
+                        ...item,
+                        symbol: 'BTC',
+                        source: item.source,
+                        link: item.url,
+                      });
                     }}
-                    className={`flex w-full text-start flex-row gap-5 my-1 rounded-md ${
-                      index % 2 === 0
-                        ? 'bg-white/5 hover:bg-white/10'
-                        : 'hover:bg-white/5'
+                    className={`flex text-start flex-row gap-5 py-0.5 my-0.5 rounded-md hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white ${
+                      index % 2 === 0 ? 'bg-white/5' : ''
                     }`}
                   >
-                    <p className="w-1/12 min-w-max pl-2 overflow-clip">
-                      {item.source}
+                    <p className="w-1/12 min-w-max pl-2 overflow-hidden">
+                      {item.source?.toUpperCase()}
                     </p>
-                    <p className="w-full overflow-clip">{item.title}</p>
+                    <p className="w-1/12 overflow-clip">BTCUSDT</p>
+                    <p className="flex-1 overflow-hidden break-all">
+                      {item.title}
+                    </p>
                   </button>
                 );
               })}
@@ -161,12 +169,10 @@ const DashPage = () => {
               </button>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
-            <div className="flex flex-row text-2xl font-bold gap-5 ">
-              <button className="flex items-center px-5 hover:bg-white/5 rounded-md">
-                {quoteSymbol}
-              </button>
+            <div className="flex flex-row text-2xl font-bold gap-5 items-center">
+              <SymbolPicker className='text-2xl' symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol}/>
               <input
-                className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right"
+                className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 py-2 text-right"
                 size={1}
               />
               <button className="flex bg-green-500 hover:bg-green-400 rounded-md py-2 px-10">
@@ -183,57 +189,46 @@ const DashPage = () => {
         </div>
         <div className="flex flex-1 flex-row gap-5">
           <div className="w-3/5">
-            <AdvancedRealTimeChart
-              symbol="BTCUSDT"
-              theme="dark"
-              autosize={true}
-            />
-          </div>
-          <div className="w-2/5 flex-col flex-auto bg-white/5 rounded-md p-5 gap-2">
-            <div className="flex flex-row gap-10">
-              <div className="flex-1" />
-              <h1 className="flex text-lg">
-                {pageData.time === 0
-                  ? null
-                  : new Date(pageData.time).toLocaleTimeString()}
-              </h1>
-              <a
-                href={pageData.link}
-                rel="noopener noreferrer"
-                target="_blank"
-                className="flex text-2xl hover:bg-white/5 rouinded-md px-2"
-              >
-                {pageData.source}
-              </a>
-              <h1 className="flex text-2xl font-bold">
-                {pageData.symbol.toUpperCase()}
-              </h1>
-            </div>
-            <div className="h-0.5 bg-white rounded-full" />
-            <h1 className="flex text-2xl">{pageData.title}</h1>
-            {pageData.payload_blog ? (
-              <div className="flex flex-col gap-2">
-                {pageData.payload_blog.symbols ? (
-                  <div className="flex flex-row gap-5">
-                    {pageData.payload_blog.symbols.map((symbol, index) => {
-                      return (
-                        <h1 key={index} className="flex text-2xl font-bold">
-                          {symbol}USDT : {pageData.payload_blog?.prices[index]}{' '}
-                        </h1>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
-            ) : pageData.payload_twitter ? (
-              <div className="flex flex-col gap-2">
-                <p className="flex text-lg">{pageData.payload_twitter.body}</p>
-              </div>
+            {selectedSymbol !== '' ? (
+              <AdvancedRealTimeChart
+                symbol={selectedSymbol}
+                theme="dark"
+                autosize={true}
+              />
             ) : (
-              <p className="flex text-2xl font-bold">
-                {pageData.payload_unknown ? pageData.payload_unknown : null}
-              </p>
+              <div className="flex flex-col h-full justify-center items-center bg-white/5 rounded-md">
+                <h1 className="text-2xl">Symbol Not Selected</h1>
+              </div>
             )}
+          </div>
+          <div className="w-2/5 flex flex-col flex-auto bg-white/5 rounded-md p-5 gap-2 min-h-0">
+            {pageData ? (
+              <>
+                <div className="flex flex-row gap-10 py-2 items-center">
+                  <div className="flex-1" />
+                  <h1 className="flex text-lg">
+                    {pageData.time !== 0
+                      ? new Date(pageData.time).toISOString()
+                      : null}
+                  </h1>
+
+                  {pageData.source?.toUpperCase()}
+                </div>
+                <div className="h-0.5 bg-white rounded-full" />
+                <h1 className="flex flex-1 text-xl break-all overflow-y-auto min-h-0 ">
+                  {pageData.title}
+                </h1>
+                <div className="h-0.5 bg-white rounded-full" />
+                <a
+                  href={pageData.link}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="flex flex-row justify-end items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md"
+                >
+                  Link <IoIosArrowForward />
+                </a>
+              </>
+            ) : null}
           </div>
         </div>
       </div>
