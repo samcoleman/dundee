@@ -8,7 +8,6 @@ import { FiRefreshCcw } from 'react-icons/fi';
 import { type feeds } from 'server/api/routers/settings';
 import SymbolPicker from 'components/symbolPicker';
 
-const NO_SYMBOL = 'XXXXX';
 
 const IndexPage = () => {
   const { data: settings, refetch: settingsRefetch } =
@@ -17,7 +16,7 @@ const IndexPage = () => {
   const [toggles, setToggles] = useState<feeds[]>([]);
 
   const [keywordCount, setKeywordCount] = useState(0);
-  const [selectedSymbol, setSelectedSymbol] = useState(NO_SYMBOL);
+  const [selectedSymbol, setSelectedSymbol] = useState('');
 
   const [keywordSymbolPopup, setKeywordSymbolPopup] = useState(false);
 
@@ -116,7 +115,7 @@ const IndexPage = () => {
   useEffect(() => {
     const checkStatus = async () => {
       const res = await tStatus.mutateAsync();
-      setSocketStatus(res);
+      //ßsetSocketStatus(res);
 
       try {
         const res2 = await bStatus.mutateAsync();
@@ -316,10 +315,9 @@ const IndexPage = () => {
             </div>
 
             <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
-              <div className="flex flex-row items-center gap-3">
+              <div className="flex flex-row  gap-3">
                 <GoSearch className="text-2xl " />
-                <SymbolPicker className="text-xl" symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
-              
+                <SymbolPicker symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
                 <input
                   value={keywordInput}
                   onChange={keywordUpdate}
@@ -353,7 +351,7 @@ const IndexPage = () => {
                     {settings?.symbols ? (
                       settings.symbols
                         .filter((symbol) => {
-                          if (selectedSymbol === NO_SYMBOL) {
+                          if (selectedSymbol === '') {
                             return true;
                           }
                           return symbol.symbol.includes(selectedSymbol);
@@ -480,8 +478,7 @@ const IndexPage = () => {
             <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start h-96">
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl " />
-                <SymbolPicker className='text-xl' symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
-                <SymbolPicker className='text-xl' symbols={settings?.symbols} selectedSymbol="TWITTER" setSymbol={setSelectedSymbol} />
+                <SymbolPicker symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
                 <input
                   value={negativeKeywordInput}
                   onChange={negativeKeywordUpdate}

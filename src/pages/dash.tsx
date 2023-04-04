@@ -7,6 +7,7 @@ import { Update } from 'server/api/routers/treeofalpha';
 
 import dynamic from 'next/dynamic';
 import SymbolPicker from 'components/symbolPicker';
+import { GoSearch } from 'react-icons/go';
 const AdvancedRealTimeChart = dynamic(
   () =>
     import('react-ts-tradingview-widgets').then((w) => w.AdvancedRealTimeChart),
@@ -30,6 +31,13 @@ const DashPage = () => {
     api.settings.getSettings.useQuery();
 
   const [parsedUpdates, setParsedUpdates] = useState<parsedUpdates[]>([]);
+
+  const [keywordSymbolPopup, setKeywordSymbolPopup] = useState(false);
+
+  const [keywordSymbolInput, setKeywordSymbolInput] = useState('');
+  const keywordSymbolUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKeywordSymbolInput(e.target.value);
+  };
 
   useEffect(() => {
     setParsedUpdates(
@@ -170,15 +178,15 @@ const DashPage = () => {
             </div>
             <div className="h-0.5 bg-white rounded-full" />
             <div className="flex flex-row text-2xl font-bold gap-5 items-center">
-              <SymbolPicker className='text-2xl' symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol}/>
+              <SymbolPicker symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
               <input
                 className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 py-2 text-right"
                 size={1}
               />
-              <button className="flex bg-green-500 hover:bg-green-400 rounded-md py-2 px-10">
+              <button className="flex bg-green-500 hover:bg-green-400 rounded-md px-10">
                 Buy
               </button>
-              <button className="flex bg-red-500   hover:bg-red-400   rounded-md py-2 px-10">
+              <button className="flex bg-red-500   hover:bg-red-400   rounded-md px-10">
                 Sell
               </button>
             </div>

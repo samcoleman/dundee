@@ -1,17 +1,17 @@
-import React, { type SetStateAction, useState, HTMLAttributes } from "react";
-import { GoSearch } from "react-icons/go";
-import { type sym } from "server/api/routers/settings";
-
+import React, { type SetStateAction, useState } from 'react';
+import { GoSearch } from 'react-icons/go';
+import { type sym } from 'server/api/routers/settings';
 
 type SymbolPickerProps = {
   symbols?: sym[];
   selectedSymbol: string;
-  setSymbol: (value: SetStateAction<string>) => void
-  className?: string
+  setSymbol: (value: SetStateAction<string>) => void;
+  className?: string;
 };
 
-const SymbolPicker : React.FC<SymbolPickerProps> = (props: SymbolPickerProps) => {
-
+const SymbolPicker: React.FC<SymbolPickerProps> = (
+  props: SymbolPickerProps,
+) => {
   const [keywordSymbolPopup, setKeywordSymbolPopup] = useState(false);
 
   const [keywordSymbolInput, setKeywordSymbolInput] = useState('');
@@ -21,7 +21,6 @@ const SymbolPicker : React.FC<SymbolPickerProps> = (props: SymbolPickerProps) =>
 
   return (
     <div
-      className={props.className}
       onMouseEnter={() => setKeywordSymbolPopup(true)}
       onMouseLeave={() => {
         setKeywordSymbolPopup(false);
@@ -38,12 +37,12 @@ const SymbolPicker : React.FC<SymbolPickerProps> = (props: SymbolPickerProps) =>
             <input
               value={keywordSymbolInput}
               onChange={keywordSymbolUpdate}
-              className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
+              className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
               size={1}
             />
           </div>
           <div className="h-0.5 bg-white rounded-full" />
-          <div className="flex flex-row text-lg flex-wrap h-full overflow-auto justify-start items-start gap-2 bg-grey-light w-full">
+          <div className="flex flex-row flex-wrap h-full overflow-auto justify-start items-start gap-2 bg-grey-light w-full">
             {props.symbols ? (
               props.symbols
                 .filter((symbol) => {
@@ -79,7 +78,7 @@ const SymbolPicker : React.FC<SymbolPickerProps> = (props: SymbolPickerProps) =>
         </div>
       ) : null}
     </div>
-  )
-}
+  );
+};
 
 export default SymbolPicker;
