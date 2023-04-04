@@ -3,7 +3,6 @@ import { createTRPCRouter, publicProcedure } from "./trpc";
 import { binance } from "./routers/binance";
 import { notification } from "./routers/notificaton";
 import { settingsManager } from "./routers/settings";
-import { server } from "./routers/server";
 import { treeofalpha } from "./routers/treeofalpha";
 /**
  * This is the primary router for your server.
@@ -14,8 +13,8 @@ export const appRouter = createTRPCRouter({
   health: publicProcedure.query(() => 'yay!'),
   settings: settingsManager,
   binance: binance,
-  server: server,
-  tree: treeofalpha
+
+  tree: treeofalpha,
   //notifications: notification,
 });
 

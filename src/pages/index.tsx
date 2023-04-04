@@ -110,13 +110,10 @@ const IndexPage = () => {
     void settingsRefetch();
   };
 
-  const tStatus = api.server.status.useMutation();
+  
   const bStatus = api.binance.status.useMutation();
   useEffect(() => {
     const checkStatus = async () => {
-      const res = await tStatus.mutateAsync();
-      //ßsetSocketStatus(res);
-
       try {
         const res2 = await bStatus.mutateAsync();
         setBinanceStatus(true);

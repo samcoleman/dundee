@@ -5,7 +5,9 @@
  *
  * We also create a few inference helpers for input and output types
  */
-import { httpBatchLink, loggerLink } from "@trpc/client";
+
+
+import { createWSClient, httpBatchLink, loggerLink, wsLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
@@ -21,6 +23,39 @@ const getBaseUrl = () => {
 /**
  * A set of typesafe react-query hooks for your tRPC API
  */
+
+function getLinks() {
+  if (typeof window === 'undefined') {
+    return [
+      loggerLink({
+        enabled: (opts) =>
+          process.env.NODE_ENV === "development" ||
+          (opts.direction === "down" && opts.result instanceof Error),
+      }),
+      httpBatchLink({
+        url: `${getBaseUrl()}/api/trpc`,
+      })
+    ]
+  }else{
+    const client = createWSClient({
+      url: 'ws://localhost:3005',
+    }); 
+    
+    return [
+      loggerLink({
+        enabled: (opts) =>
+          process.env.NODE_ENV === "development" ||
+          (opts.direction === "down" && opts.result instanceof Error),
+      }),
+      httpBatchLink({
+        url: `${getBaseUrl()}/api/trpc`,
+      }),
+      wsLink<AppRouter>({client})
+    ]
+  }
+}
+
+
 export const api = createTRPCNext<AppRouter>({
   config() {
     return {
@@ -34,16 +69,7 @@ export const api = createTRPCNext<AppRouter>({
        * Links used to determine request flow from client to server
        * @see https://trpc.io/docs/links
        * */
-      links: [
-        loggerLink({
-          enabled: (opts) =>
-            process.env.NODE_ENV === "development" ||
-            (opts.direction === "down" && opts.result instanceof Error),
-        }),
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
-        }),
-      ],
+      links: getLinks()
     };
   },
   /**

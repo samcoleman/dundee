@@ -12,8 +12,4 @@ const MyApp: AppType = ({
   );
 };
 
-MyApp.getInitialProps = ({ ctx }) => {
-  return {};
-};
-
 export default api.withTRPC(MyApp);

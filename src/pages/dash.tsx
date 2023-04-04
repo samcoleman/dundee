@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { api } from 'utils/api';
-import { type pageData } from 'server/wssServer';
+import { type pageData } from 'server/wssDev2';
 import { Update } from 'server/api/routers/treeofalpha';
 
 import dynamic from 'next/dynamic';
