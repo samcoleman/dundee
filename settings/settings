@@ -1,1 +1,1 @@
-{"feeds":["TWITTER","BLOGS","TELEGRAM","UNKNOWN"],"symbols":[{"symbol":"BTCUSDT","status":"TRADING","keywords":["BITCOIN","TEST"]},{"symbol":"XRPUSDT","status":"TRADING","keywords":["RIPPLE"]},{"symbol":"ETHUSDT","status":"TRADING","keywords":["ETHERIUM"]}],"negativeKeywords":["SPAM"]}
+{"feeds":[],"symbols":[{"symbol":"BTCUSDT","status":"TRADING","keywords":["BITCOIN","TEST"]},{"symbol":"XRPUSDT","status":"TRADING","keywords":["RIPPLE"]},{"symbol":"ETHUSDT","status":"TRADING","keywords":["ETHERIUM"]}],"negativeKeywords":["SPAM"]}

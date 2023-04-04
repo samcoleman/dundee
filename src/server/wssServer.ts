@@ -2,15 +2,10 @@ import WebSocket from 'ws';
 import notifier from 'node-notifier';
 import { appRouter } from './api/root';
 import express from 'express';
-import { settings } from './api/routers/settings';
 
 const caller = appRouter.createCaller({ session: null });
 const url = 'wss://news.treeofalpha.com/ws';
 
-let settings: settings;
-const getSettings = async () => {
-  settings = await caller.settings.getSettings();
-};
 
 const ws = new WebSocket(url, {
   headers: {
@@ -19,15 +14,26 @@ const ws = new WebSocket(url, {
 });
 
 ws.on('open', () => {
-  void getSettings();
   console.log('connected');
 
-  // Object
-  notifier.notify({
-    title: 'Connected',
-    message: 'Successfully connected to websocket server',
-    reply: true,
-  });
+  //WAIT ONE SECOND TO GET SETTINGS
+  setTimeout(() => {
+    caller.settings.getSettings().then((settings: settings) => {
+      console.log(settings);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+
+    // Object
+    notifier.notify({
+      title: 'Connected',
+      message: 'Successfully connected to websocket server',
+      reply: true,
+    });
+  }, 2000);
+
+
 });
 
 export type blog_payload = {
@@ -209,11 +215,13 @@ ws.on('error', (err) => {
 const app = express();
 
 app.get('/reload', (req, res) => {
-  void getSettings();
+  console.log('API CALLED')
+  return res.send('API CALLED');
 });
 
 app.get('/restart', (req, res) => {
   console.log('Express + TypeScript Server');
+  return res.send('API CALLED');
 });
 
 app.get('/status', (req, res) => {
@@ -224,6 +232,6 @@ app.get('/status', (req, res) => {
   }
 });
 
-app.listen(6000, () => {
-  console.log(`[node]: Server is running at http://localhost:6000`);
+app.listen(3005, () => {
+  console.log(`[node]: Server is running at http://localhost:3005`);
 });
