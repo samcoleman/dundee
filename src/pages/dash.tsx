@@ -32,12 +32,6 @@ const DashPage = () => {
 
   const [parsedUpdates, setParsedUpdates] = useState<parsedUpdates[]>([]);
 
-  const [keywordSymbolPopup, setKeywordSymbolPopup] = useState(false);
-
-  const [keywordSymbolInput, setKeywordSymbolInput] = useState('');
-  const keywordSymbolUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeywordSymbolInput(e.target.value);
-  };
 
   useEffect(() => {
     setParsedUpdates(
@@ -113,7 +107,7 @@ const DashPage = () => {
         <title>{selectedSymbol.toUpperCase()}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white">
+      <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white overflow-clip">
         <div className="flex flex-row gap-5">
           <div className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
@@ -152,7 +146,7 @@ const DashPage = () => {
               })}
             </div>
           </div>
-          <div className="w-2/5 flex flex-col bg-white/5 rounded-md p-5 gap-5">
+          <div className="w-2/5 flex flex-col justify-between bg-white/5 rounded-md p-5 gap-5">
             <div className="flex flex-row text-2xl font-bold gap-5">
               <button
                 onClick={() => void makeOrder()}
@@ -177,22 +171,32 @@ const DashPage = () => {
               </button>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
-            <div className="flex flex-row text-2xl font-bold gap-5 items-center">
+            <div className="flex flex-row text-xl font-bold gap-5 items-center">
               <SymbolPicker symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
               <input
-                className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 py-2 text-right"
+                className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 p-2 text-right"
                 size={1}
               />
-              <button className="flex bg-green-500 hover:bg-green-400 rounded-md px-10">
+              <button className="flex bg-green-500 hover:bg-green-400 rounded-md text-2xl px-4 p-2">
                 Buy
               </button>
-              <button className="flex bg-red-500   hover:bg-red-400   rounded-md px-10">
+              <button className="flex bg-red-500   hover:bg-red-400   rounded-md text-2xl px-4 p-2">
                 Sell
               </button>
             </div>
-            <button className="flex bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
-              Sell All
+            <div className="h-0.5 bg-white rounded-full" />
+            <div className='flex flex-row gap-5'>
+            <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
+              Close 33%
             </button>
+            <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
+              Close 50%
+            </button>
+            <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
+              Close 100%
+            </button>
+            </div>
+        
           </div>
         </div>
         <div className="flex flex-1 flex-row gap-5">

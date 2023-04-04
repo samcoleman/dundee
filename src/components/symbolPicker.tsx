@@ -6,7 +6,6 @@ type SymbolPickerProps = {
   symbols?: sym[];
   selectedSymbol: string;
   setSymbol: (value: SetStateAction<string>) => void;
-  className?: string;
 };
 
 const SymbolPicker: React.FC<SymbolPickerProps> = (
@@ -24,10 +23,10 @@ const SymbolPicker: React.FC<SymbolPickerProps> = (
       onMouseEnter={() => setKeywordSymbolPopup(true)}
       onMouseLeave={() => {
         setKeywordSymbolPopup(false);
-        setKeywordSymbolInput('');
+        setKeywordSymbolInput('')
       }}
     >
-      <button className="outline outline-2 px-3 rounded-md hover:bg-white/5">
+      <button className="px-3 hover:bg-white/5 rounded-md">
         {props.selectedSymbol === '' ? 'XXXXXX' : props.selectedSymbol}
       </button>
       {keywordSymbolPopup ? (
