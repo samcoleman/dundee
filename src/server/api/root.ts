@@ -13,7 +13,6 @@ export const appRouter = createTRPCRouter({
   health: publicProcedure.query(() => 'yay!'),
   settings: settingsManager,
   binance: binance,
-
   tree: treeofalpha,
   //notifications: notification,
 });
