@@ -149,7 +149,7 @@ const IndexPage = () => {
         <title>Dundee</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="flex flex-col  h-screen max-h-screen min-h-screen bg-slate-900 p-5 gap-5 ">
+      <div className="flex flex-col  bg-slate-900 p-5 gap-5 ">
         <div className="flex flex-1 flex-col gap-5 text-white">
           <div className="flex flex-row gap-5">
             <div className="flex bg-white/5 rounded-md p-5 gap-5 items-center">
@@ -222,8 +222,9 @@ const IndexPage = () => {
               <div />
             </div>
           </div>
-          <div className="flex flex-1 flex-row gap-5">
-            <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
+          
+          <div className="grid-cols-2 grid gap-5">
+            <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start h-96">
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl" />
                 <input
@@ -314,7 +315,7 @@ const IndexPage = () => {
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
+            <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl " />
                 <SymbolPicker className="text-xl" symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
@@ -404,7 +405,7 @@ const IndexPage = () => {
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
+            <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start h-96">
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl " />
                 <input
@@ -416,7 +417,7 @@ const IndexPage = () => {
                       setNegativeKeywordInput('');
                     }
                   }}
-                  className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 text-right"
+                  className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
                   size={1}
                 />
                 <button
@@ -475,6 +476,86 @@ const IndexPage = () => {
                 </table>
               </div>
             </div>
+
+            <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start h-96">
+              <div className="flex flex-row items-center gap-3">
+                <GoSearch className="text-2xl " />
+                <SymbolPicker className='text-xl' symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
+                <SymbolPicker className='text-xl' symbols={settings?.symbols} selectedSymbol="TWITTER" setSymbol={setSelectedSymbol} />
+                <input
+                  value={negativeKeywordInput}
+                  onChange={negativeKeywordUpdate}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      void addNegativeKeyword(negativeKeywordInput);
+                      setNegativeKeywordInput('');
+                    }
+                  }}
+                  className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
+                  size={1}
+                />
+                <button
+                  onClick={() => {
+                    void addNegativeKeyword(negativeKeywordInput);
+                    setNegativeKeywordInput('');
+                  }}
+                  className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
+                >
+                  ADD
+                </button>
+              </div>
+              <div className="flex flex-1 flex-col h-full">
+                <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
+                  <div className="flex-1 text-start">Symbol</div>
+                  <div className="flex-1 text-start">Keyword</div>
+                  <div className="flex-1 text-start">Sources</div>
+                  <div className="flex-1 text-end">
+                    {' '}
+                    Count: {settings?.negativeKeywords?.length}
+                  </div>
+                </div>
+                <table className="text-left w-full h-full">
+                  <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
+                    {settings?.negativeKeywords ? (
+                      settings.negativeKeywords
+                        .filter((negativeKeyword) => {
+                          return negativeKeyword.includes(
+                            negativeKeywordInput.toUpperCase(),
+                          );
+                        })
+                        .map((keyword, index) => {
+                          return (
+                            <tr
+                              key={index}
+                              className="flex flex-row w-full text-white"
+                            >
+                              <td className="flex-1 text-start">BNBUSDT</td>
+                              <td className="flex-1 text-start">CZ_BINANCE</td>
+                              <td className="flex-1 text-start">TWITTER</td>
+                              <td className="flex-1 flex justify-end">
+                                <button
+                                  onClick={() =>
+                                    void removeNegativeKeyword(keyword)
+                                  }
+                                  className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
+                                >
+                                  Remove
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    ) : (
+                      <tr className="flex flex-row w-full">
+                        <td className="flex-1 text-start">Loading...</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+
           </div>
         </div>
       </div>
