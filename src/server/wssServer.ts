@@ -3,6 +3,8 @@ import { appRouter } from './api/root';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import ws, { WebSocket } from 'ws';
 import { LocalStorage } from "node-localstorage";
+import { z } from 'zod';
+import { Message } from 'utils/const';
 
 const caller = appRouter.createCaller({}); 
 const wss = new ws.Server({
@@ -70,15 +72,34 @@ export type pageData = {
   payload_unknown?: string;
 };
 
-type blog = {
-  title: string;
-  time: number;
-  link: string;
-  symbols?: string[];
-  prices?: number[];
+const suggestions = z.array(z.object({
+  found: z.array(z.string()),
+  coin: z.string(),
+  symbols: z.array(z.object({
+    symbol: z.string(),
+    exchange: z.string()
+  }))}))
 
-}
-const handleBlog = (obj: blog) => {
+const handleBlog = (obj: any) => {
+  const blogMessage = z.object({
+    title: z.string(),
+    source: z.string(),
+    url: z.string(),
+    time: z.number(),
+    symbols: z.array(z.string()),
+    en: z.string(),
+    _id: z.string(),
+    suggestions: suggestions})
+  .parse(obj)
+
+  const message : Message = {
+    ...blogMessage,
+    source: 'BLOG',
+    body: ''
+  }
+
+  return message
+  /*
   const pageData: pageData = {
     symbol: 'BTCUSDT',
     source: 'BLOG',
@@ -96,17 +117,14 @@ const handleBlog = (obj: blog) => {
   }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
     pageData.link
   }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
+
+  */
+
+
 };
 
-type twitter = {
-  title: string;
-  time: number;
-  link: string;
-  body: string;
-  icon: string;
-  image?: string;
-};
-const handleTwitter = (obj: twitter) => {
+const handleTwitter = (obj: any) => {
+  /*
   const pageData: pageData = {
     symbol: 'BTCUSDT',
     source: 'TWITTER',
@@ -125,40 +143,31 @@ const handleTwitter = (obj: twitter) => {
   }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
     pageData.link
   }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
+  */
+
+  const twitterMessage = z.object({
+    title: z.string(),
+    body: z.string(),
+    icon: z.string(),
+    image: z.string(),
+    link: z.string(),
+    time: z.number(),
+    _id: z.string(),
+    suggestions: suggestions})
+  .parse(obj)
+
+  const message : Message = {
+    ...twitterMessage,
+    source: 'TWITTER',
+    url: twitterMessage.link
+  }
+
+  return message
 };
 
-type telegram = {
-  title: string;
-  time: number;
-  link: string;
-  body: string;
-  icon: string;
-  image?: string;
-};
-const handleTelegram = (obj: telegram) => {
-  const pageData: pageData = {
-    symbol: 'BTCUSDT',
-    source: 'TELEGRAM',
-    title: obj['title'],
-    time: obj['time'],
-    link: obj['link'],
-    payload_twitter: {
-      body: obj['body'],
-      icon: obj['icon'],
-      image: obj['image'] as string,
-    },
-  };
-
-  const url = `http://localhost:3000/dash\?symbol=${pageData.symbol}\&source=${
-    pageData.source
-  }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
-    pageData.link
-  }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
-};
-
-const handleUnknown = (obj) => {
+const handleUnknown = (obj: any) => {
   console.log('Unknown message');
-  console.log(obj);
+  return obj as Message
 };
 
 tws.on('open', () => {
@@ -174,14 +183,19 @@ tws.on('message', (data) => {
     console.log(obj);
     localstorage.setItem(new Date().getTime().toString()+'.json', JSON.stringify(obj))
 
-    if ('source' in obj) {
-      handleBlog(obj as blog);
+    let message : Message
+    if ('source' in obj && obj['source'] === 'Blogs') {
+      message = handleBlog(obj);
     } else if ('type' in obj && obj['type'] === 'direct'){
-      handleTwitter(obj as twitter);
-    } else if ('type' in obj && obj['type'] === 'telegram'){
-      handleTelegram(obj as telegram);
+      message = handleTwitter(obj);
+    //} else if ('type' in obj && obj['type'] === 'telegram'){
+    //  handleTelegram(obj as telegram);
     } else {
-      handleUnknown(obj);
+      message = handleUnknown(obj);
+    }
+
+    if (message) {
+      void caller.tree.message(message);
     }
 
   } catch (err) {
