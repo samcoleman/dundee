@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
 import { USDMClient, MainClient } from 'binance';
-import { statusObj } from './settings';
+import { statusObj } from 'utils/const';
 
 const client = new MainClient({
   api_secret: process.env.BINANCE_SECRET,
@@ -16,19 +16,20 @@ export const binance = createTRPCRouter({
   }),
   checkSymbols: publicProcedure
     .input(
-      z.array(
+      z.map(
+        z.string(),
         z.object({
-          symbol: z.string(),
+          future_id: z.string(),
           status: z.string().and(z.enum(statusObj)),
-          keywords: z.array(z.string()),
+          active: z.boolean(),
         }),
       ),
     )
     .mutation(async ({ input }) => {
       const symbolStatus = await client.getExchangeInfo();
-      input.forEach((symbol) => {
+      input.forEach((symbol, key) => {
         const symExchange = symbolStatus.symbols.find(
-          (sym) => sym.symbol === symbol.symbol,
+          (sym) => sym.symbol === key,
         );
         if (!symExchange) {
           symbol.status = 'NOT_FOUND';

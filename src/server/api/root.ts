@@ -1,7 +1,6 @@
 import { createTRPCRouter, publicProcedure } from "./trpc";
 
 import { binance } from "./routers/binance";
-import { notification } from "./routers/notificaton";
 import { settingsManager } from "./routers/settings";
 import { treeofalpha } from "./routers/treeofalpha";
 /**

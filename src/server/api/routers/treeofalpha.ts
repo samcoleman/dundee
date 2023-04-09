@@ -5,6 +5,7 @@ import EventEmitter from "events";
 
 export type Message = {
   title: string
+  body: string
   source: string
   url: string
   time: number
@@ -20,15 +21,15 @@ const ee = new EventEmitter();
 
 export const treeofalpha = createTRPCRouter({
   getUpdates: publicProcedure
-  .query(async () => {
+  .query(async () : Promise<Message[]> => {
 
       const res = await fetch('https://news.treeofalpha.com/api/news?limit=500', {
         headers: {
           Cookie: "tree_login_cookie=s%3AkT_W-vPFN1oEgl2LER1tOIICWOxw3Ral.gL6yrs9481uvZA33BP%2FlMheSbgZIX97SialIk%2FhWYMU"
         }
       })
-      // Typecheck all elements of the array are of type Update
-      const updates = z.array(z.object({
+      // Typecheck that the API returns a response we expect
+      const updatesAPI = z.array(z.object({
         title: z.string(),
         source: z.string(),
         url: z.string(),
@@ -39,7 +40,39 @@ export const treeofalpha = createTRPCRouter({
         image: z.string().optional(),
       })).parse(await res.json())
 
-      return updates as Message[] 
+      // Cast to unified type
+      const updates : Message[] = updatesAPI.map(update => {
+
+        const titleIndex = update.title.indexOf(':')
+        let title = update.title
+        let body  = ''
+
+        if (titleIndex > 0) {
+          title = update.title.slice(0, titleIndex)
+          body  = update.title.slice(titleIndex + 1, update.title.length + 1)
+        }
+
+        if (update.symbols) {
+          // Remove all symbols not containing USDT
+          update.symbols = update.symbols.filter(symbol => {return symbol.indexOf('USDT') > 0})
+          // Remove _ from symbol
+          update.symbols = update.symbols.map(symbol => symbol.replace('_', ''))
+        }
+
+        return {
+          title: title,
+          body:  body,
+          source: update.source,
+          url: update.url,
+          time: update.time,
+          _id: update._id,
+          symbols: update.symbols || [],
+          icon: update.icon,
+          image: update.image,
+        }
+      })
+
+      return updates
   }),
   onMessage: publicProcedure
   .subscription(() => {
@@ -61,7 +94,7 @@ export const treeofalpha = createTRPCRouter({
   .input(
     z.object({
       title: z.string(),
-      source: z.string(),
+      source: z.string().optional(),
       url: z.string(),
       time: z.number(),
       _id: z.string(),
@@ -72,7 +105,7 @@ export const treeofalpha = createTRPCRouter({
   )
   .mutation(({ input }) => {
     const message = { ...input }; /* [..] add to db */
-    ee.emit('add', message);
+    ee.emit('message', message);
     return message;
   }),
 });

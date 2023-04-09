@@ -165,7 +165,6 @@ tws.on('open', () => {
   console.log('[TreeOfAlpha] connected');
 });
 
-
 tws.on('message', (data) => {
   try {
     const obj = JSON.parse(data.toString());

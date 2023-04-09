@@ -92,5 +92,10 @@
   },
   "publishConfig": {
     "access": "restricted"
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
   }
 }

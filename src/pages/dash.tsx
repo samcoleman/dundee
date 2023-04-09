@@ -1,23 +1,21 @@
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
-import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import { IoIosArrowForward } from 'react-icons/io';
 import { api } from 'utils/api';
-import { type pageData } from 'server/wssDev2';
-import { Update } from 'server/api/routers/treeofalpha';
+import { type Message } from 'server/api/routers/treeofalpha';
 
 import dynamic from 'next/dynamic';
-import SymbolPicker from 'components/symbolPicker';
-import { GoSearch } from 'react-icons/go';
+import OptionPicker from 'components/optionPicker';
+
+
 const AdvancedRealTimeChart = dynamic(
   () =>
     import('react-ts-tradingview-widgets').then((w) => w.AdvancedRealTimeChart),
   { ssr: false },
 );
 
-const quoteSymbol = 'USDT';
-
 type parsedUpdates = {
-  update: Update;
+  update: Message;
   symbol: string;
   filtered: boolean;
   checked: boolean;
@@ -59,7 +57,7 @@ const DashPage = () => {
 
   const [selectedSymbol, setSelectedSymbol] = useState('');
 
-  const [pageData, setPageData] = useState<pageData | undefined>(undefined);
+  const [pageData, setPageData] = useState<Message | undefined>(undefined);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -68,31 +66,6 @@ const DashPage = () => {
     const title = urlParams.get('title');
     const time = urlParams.get('time');
     const link = urlParams.get('link');
-
-    const data: pageData = {
-      symbol: symbol ? decodeURIComponent(symbol) : 'XXXX',
-      source: source as pageData['source'],
-      title: title ? decodeURIComponent(title) : '',
-      link: link ? decodeURIComponent(link) : '',
-      time: time ? parseInt(decodeURIComponent(time)) : 0,
-    };
-
-    if (data.source === 'BLOG') {
-      data['payload_blog'] = JSON.parse(
-        decodeURIComponent(urlParams.get('payload_blog') || ''),
-      ) as pageData['payload_blog'];
-    } else if (data.source === 'TWITTER') {
-      data['payload_twitter'] = JSON.parse(
-        decodeURIComponent(urlParams.get('payload_twitter') || ''),
-      ) as pageData['payload_twitter'];
-    } else if (data.source === 'TELEGRAM') {
-      data['payload_telegram'] = JSON.parse(
-        decodeURIComponent(urlParams.get('payload_telegram') || ''),
-      ) as pageData['payload_telegram'];
-    } else if (data.source === 'UNKNOWN') {
-    }
-
-    setPageData(data);
   }, []);
 
   /*
@@ -111,7 +84,7 @@ const DashPage = () => {
         <div className="flex flex-row gap-5">
           <div className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
-              <p className="w-1/12 pl-2">Type</p>
+              <p className="w-1/12 pl-2">Source</p>
               <p className="w-1/12">Symbol</p>
               <p className="w-2/3">Title</p>
               <p className="w-1/12">Filters</p>
@@ -123,12 +96,7 @@ const DashPage = () => {
                   <button
                     key={index}
                     onClick={() => {
-                      setPageData({
-                        ...item,
-                        symbol: 'BTC',
-                        source: item.source,
-                        link: item.url,
-                      });
+                      setPageData(item);
                     }}
                     className={`flex text-start flex-row gap-5 py-0.5 my-0.5 rounded-md hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white ${
                       index % 2 === 0 ? 'bg-white/5' : ''
@@ -138,9 +106,14 @@ const DashPage = () => {
                       {item.source?.toUpperCase()}
                     </p>
                     <p className="w-1/12 overflow-clip">BTCUSDT</p>
-                    <p className="flex-1 overflow-hidden break-all">
-                      {item.title}
-                    </p>
+                    <div className="flex-1 overflow-hidden break-all">
+                      <p>
+                        {item.title}
+                      </p>
+                      <p>
+                        {item.body}
+                      </p>
+                    </div>
                   </button>
                 );
               })}
@@ -172,7 +145,7 @@ const DashPage = () => {
             </div>
             <div className="h-0.5 bg-white rounded-full" />
             <div className="flex flex-row text-xl font-bold gap-5 items-center">
-              <SymbolPicker symbols={settings?.symbols} selectedSymbol={selectedSymbol} setSymbol={setSelectedSymbol} />
+              <OptionPicker options={settings ? Array.from(settings.symbols.keys()) : []} selectedOption={selectedSymbol} setOption={setSelectedSymbol} />
               <input
                 className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 p-2 text-right"
                 size={1}
@@ -227,12 +200,15 @@ const DashPage = () => {
                   {pageData.source?.toUpperCase()}
                 </div>
                 <div className="h-0.5 bg-white rounded-full" />
-                <h1 className="flex flex-1 text-xl break-all overflow-y-auto min-h-0 ">
+                <h1 className="flex flex-1 text-xl break-all">
                   {pageData.title}
                 </h1>
+                <p className="flex flex-1 text-xl break-all overflow-y-auto min-h-0 ">
+                  {pageData.body}
+                </p>
                 <div className="h-0.5 bg-white rounded-full" />
                 <a
-                  href={pageData.link}
+                  href={pageData.url}
                   rel="noopener noreferrer"
                   target="_blank"
                   className="flex flex-row justify-end items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md"

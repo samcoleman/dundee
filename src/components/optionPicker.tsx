@@ -1,72 +1,72 @@
 import React, { type SetStateAction, useState } from 'react';
 import { GoSearch } from 'react-icons/go';
-import { type sym } from 'server/api/routers/settings';
 
-type SymbolPickerProps = {
-  symbols?: sym[];
-  selectedSymbol: string;
-  setSymbol: (value: SetStateAction<string>) => void;
+// Would be nice with templates
+type OptionPickerProps = {
+  options?: string[];
+  selectedOption: any;
+  setOption: (value: SetStateAction<any>) => void;
 };
 
-const SymbolPicker: React.FC<SymbolPickerProps> = (
-  props: SymbolPickerProps,
+const OptionPicker: React.FC<OptionPickerProps> = (
+  props: OptionPickerProps,
 ) => {
-  const [keywordSymbolPopup, setKeywordSymbolPopup] = useState(false);
+  const [keywordOptionPopup, setKeywordOptionPopup] = useState(false);
 
-  const [keywordSymbolInput, setKeywordSymbolInput] = useState('');
-  const keywordSymbolUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeywordSymbolInput(e.target.value);
+  const [keywordOptionInput, setKeywordOptionInput] = useState('');
+  const keywordOptionUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKeywordOptionInput(e.target.value);
   };
 
   return (
     <div
-      onMouseEnter={() => setKeywordSymbolPopup(true)}
+      onMouseEnter={() => setKeywordOptionPopup(true)}
       onMouseLeave={() => {
-        setKeywordSymbolPopup(false);
-        setKeywordSymbolInput('')
+        setKeywordOptionPopup(false);
+        setKeywordOptionInput('')
       }}
     >
       <button className="px-3 hover:bg-white/5 rounded-md">
-        {props.selectedSymbol === '' ? 'XXXXXX' : props.selectedSymbol}
+        {props.selectedOption ? props.selectedOption : 'XXXXXX' }
       </button>
-      {keywordSymbolPopup ? (
+      {keywordOptionPopup ? (
         <div className="absolute h-56 w-72 bg-[#1A2335] outline outline-2 p-3 rounded-md flex flex-col gap-4">
           <div className="flex flex-row items-center gap-3">
             <GoSearch className="text-2xl" />
             <input
-              value={keywordSymbolInput}
-              onChange={keywordSymbolUpdate}
+              value={keywordOptionInput}
+              onChange={keywordOptionUpdate}
               className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
               size={1}
             />
           </div>
           <div className="h-0.5 bg-white rounded-full" />
           <div className="flex flex-row flex-wrap h-full overflow-auto justify-start items-start gap-2 bg-grey-light w-full">
-            {props.symbols ? (
-              props.symbols
-                .filter((symbol) => {
-                  return symbol.symbol.includes(
-                    keywordSymbolInput.toUpperCase(),
+            {props.options ? (
+              props.options
+                .filter((Option) => {
+                  return Option.includes(
+                    keywordOptionInput.toUpperCase(),
                   );
                 })
-                .map((symbol, index) => {
+                .map((Option, index) => {
                   return (
                     <button
                       className={`hover:bg-white/5 rounded-md px-1 ${
-                        props.selectedSymbol === symbol.symbol
+                        props.selectedOption === Option
                           ? 'outline outline-2 outline-offset-[-2px]'
                           : ''
                       }`}
                       key={index}
                       onClick={() => {
-                        if (props.selectedSymbol === symbol.symbol) {
-                          props.setSymbol('');
+                        if (props.selectedOption === Option) {
+                          props.setOption(undefined);
                           return;
                         }
-                        props.setSymbol(symbol.symbol);
+                        props.setOption(Option);
                       }}
                     >
-                      {symbol.symbol}
+                      {Option}
                     </button>
                   );
                 })
@@ -80,4 +80,4 @@ const SymbolPicker: React.FC<SymbolPickerProps> = (
   );
 };
 
-export default SymbolPicker;
+export default OptionPicker;
