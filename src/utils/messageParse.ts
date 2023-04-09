@@ -1,42 +1,38 @@
-import { type settings, type sym } from "server/api/routers/settings";
+import { type settings } from "server/api/routers/settings";
 import { type Message as Message } from "server/api/routers/treeofalpha";
+import { type source } from "./const";
 
-const parseSymbolKeywords = (text: string) => {
+const parseSymbolKeywords = (text: string, settings: settings) => {
   const symbols : string[] = [];
+  settings.symbol_keys.forEach((keywords, symbol) => {
+    if (keywords.some(key => text.toUpperCase().includes(key))) {
+      symbols.push(symbol)
+    }})
   return symbols
 }
 
-const filterSymbols = (symbolText: string[], symbols: sym[]) => {
-  return symbols.filter(symbol => {
-    return symbolText.includes(symbol.symbol)
-  })
+const filterSymbols = (symbolText: string[], settings: settings) => {
+  return symbolText.filter(sym => settings.symbols.has(sym))
 }
 
-const containsNegKeyword = (text: string, neg_keywords: string[]) => {
-  return neg_keywords.some(neg_key => text.includes(neg_key))
-}
-
-const filterMessage = (text: string, settings: settings) => {
-  const correctSource = settings.feeds.includes(message.source);
-
-  if (!correctSource) {
+const filter = (text: string, source: source, filter: Map<source, string[]>) => {
+  const keywords = filter.get(source);
+  if (!keywords) {
     return false
   }
-
-  
-  const neg_keyword = containsNegKeyword(text, settings.negativeKeywords)
-  return false
+  return keywords.some(key => text.toUpperCase().includes(key))
 }
 
 
 export const parseMessage = (message: Message, settings: settings) => {
-  let symbolText = message.symbols
-  if (!symbolText) {
-    symbolText = parseSymbolKeywords(message.body)
+  let symbols = message.symbols
+  if (!symbols || symbols.length === 0) {
+    symbols = parseSymbolKeywords(message.title+message.body, settings)
   }
   
   return {
-    symbols: filterSymbols(symbolText, settings.symbols),
-    filter:  filterMessage(message.body, settings),
+    symbols: filterSymbols(symbols, settings),
+    pos_filter:  filter(message.title+message.body, message.source, settings.pos_filter),
+    neg_filter:  filter(message.title+message.body, message.source, settings.neg_filter),
   }
 }

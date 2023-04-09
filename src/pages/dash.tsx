@@ -6,6 +6,7 @@ import { type Message } from 'server/api/routers/treeofalpha';
 
 import dynamic from 'next/dynamic';
 import OptionPicker from 'components/optionPicker';
+import { parseMessage } from 'utils/messageParse';
 
 
 const AdvancedRealTimeChart = dynamic(
@@ -97,6 +98,9 @@ const DashPage = () => {
                     key={index}
                     onClick={() => {
                       setPageData(item);
+                      if (!settings) return;
+                      const res = parseMessage(item, settings)
+                      console.log(res)
                     }}
                     className={`flex text-start flex-row gap-5 py-0.5 my-0.5 rounded-md hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white ${
                       index % 2 === 0 ? 'bg-white/5' : ''
@@ -200,7 +204,7 @@ const DashPage = () => {
                   {pageData.source?.toUpperCase()}
                 </div>
                 <div className="h-0.5 bg-white rounded-full" />
-                <h1 className="flex flex-1 text-xl break-all">
+                <h1 className="flex text-xl break-all">
                   {pageData.title}
                 </h1>
                 <p className="flex flex-1 text-xl break-all overflow-y-auto min-h-0 ">
