@@ -50,32 +50,31 @@ const DashPage = () => {
 
   useEffect(() => {
     if (!settings) return;
-
-    // Slow recheck everything every update
-    const newParsedMessages = treeOfAlphaData?.map((item) => {
-      return {
-        message: item,
-        parser: checkMessage(item, settings),
-        checked: true,
-      };
-    });
-
-    if (!newParsedMessages) return;
+    if (!treeOfAlphaData) return;
 
     // This has to be done in reverse to ensure the most recent messages are at the top
-    for (let index = newParsedMessages.length - 1; index >= 0; index--) {
-      const parsedMessage = newParsedMessages[index];
-      if (!messageMap.current.has(parsedMessage.message._id)) {
-        messageMap.current.set(parsedMessage.message._id, parsedMessage)
+    // Using map entry order to sort -> not great
+    for (let index = treeOfAlphaData.length - 1; index >= 0; index--) {
+      const message = treeOfAlphaData[index];
+      if (!messageMap.current.has(message._id)) {
+        messageMap.current.set(message._id, {
+          message: message,
+          parser: checkMessage(message, settings),
+          checked: true,
+        })
       }
     }
 
     updateParsedArray()
-    setPageMessage(newParsedMessages?.[0])
+    setMessageAndSymbol({
+      message: treeOfAlphaData[0],
+      parser: checkMessage(treeOfAlphaData[0], settings),
+      checked: true,
+    })
 
   }, [treeOfAlphaData]);
 
-  //If either the map or the parsed messages change, update the parsed messages
+  // Regenerate the array if the map - very inefficient TODO: SLOW
   const updateParsedArray = () => {
     if (messageMap.current.size !== parsedMessages.length) {
       // Due to col-row-reverse auto-scrolling to bottom??? why
@@ -83,6 +82,21 @@ const DashPage = () => {
     }
   }
 
+  // Updates the page to the new message
+  const setMessageAndSymbol = (parsedMessage: parsedMessage) => {
+    if (!settings) return;
+
+    if (parsedMessage.parser.symbols.length > 0) {
+      setSelectedSymbol(parsedMessage.parser.symbols[0]);
+    } else if (parsedMessage.message.symbols.length > 0) {
+      setSelectedSymbol(parsedMessage.message.symbols[0]);
+    } else {
+      setSelectedSymbol(undefined);
+    }
+    setPageMessage(parsedMessage);
+  }
+
+  // Called when a new message is received
   const addMessage = (message: Message) => {
     if (!settings) return;
 
@@ -96,7 +110,8 @@ const DashPage = () => {
     updateParsedArray()
 
     if (!focus) {
-      setPageMessage(parsedMessage)
+      console.log('Not focused')
+      setMessageAndSymbol(parsedMessage)
     }
   };
 
@@ -142,7 +157,7 @@ const DashPage = () => {
         <div className="flex flex-row gap-5">
           <div 
           onMouseEnter={() => setFocus(false)}
-          onMouseLeave={() => setFocus(true)}
+          //onMouseLeave={() => setFocus(true)}
           className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
@@ -155,18 +170,7 @@ const DashPage = () => {
                 return (
                   <button
                     key={index}
-                    onClick={() => {
-                      if (!settings) return;
-
-                      if (item.parser.symbols.length > 0) {
-                        setSelectedSymbol(item.parser.symbols[0]);
-                      } else if (item.message.symbols.length > 0) {
-                        setSelectedSymbol(item.message.symbols[0]);
-                      } else {
-                        setSelectedSymbol(undefined);
-                      }
-                      setPageMessage(item);
-                    }}
+                    onClick={() => setMessageAndSymbol(item)}
                     className={`flex text-start flex-row gap-5 py-0.5 my-0.5 rounded-md ${
                       index % 2 === 0 ? 'bg-white/5' : ''
                     } ${

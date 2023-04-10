@@ -94,8 +94,7 @@ export const treeofalpha = createTRPCRouter({
       }),
     )
     .mutation(({ input }) => {
-      const message = { ...input };
-      ee.emit('message', message);
-      return message;
+      ee.emit('message', input);
+      return input;
     }),
 });
