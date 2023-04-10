@@ -2,15 +2,17 @@
 import { appRouter } from './api/root';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import ws, { WebSocket } from 'ws';
-import { LocalStorage, JSONStorage } from "node-localstorage";
+import { LocalStorage } from "node-localstorage";
 import { z } from 'zod';
-import { source, type Message } from 'utils/const';
-import { parseSource, parseSymbols, parseTitle } from 'utils/messageParse';
+import { type Message } from 'utils/const';
+import { parseSource, parseSymbols } from 'utils/messageParse';
 
 const caller = appRouter.createCaller({}); 
+
 const wss = new ws.Server({
   port: 3005,
 });
+
 const handler = applyWSSHandler({ wss, router: appRouter });
 
 wss.on('connection', (ws) => {
@@ -38,19 +40,19 @@ const tws = new WebSocket(url, {
 });
 
 type log = {
-  [key: string]: any
+  [key: string]: {'incoming': any, 'parsed': Message} 
 }
 
-const logMessage = (location: string, message: any) => {
+const logMessage = (location: string, obj: any, message: Message ) => {
   const logString  = localstorage.getItem(location)
   const logHistory = logString ? JSON.parse(logString) as log : undefined
 
   if (logHistory) {
-    logHistory[new Date().getTime().toString()] = message
+    logHistory[new Date().getTime().toString()] = {'incoming': obj, 'parsed': message}
     localstorage.setItem(location, JSON.stringify(logHistory))
   } else {
     const log : log = {
-      [new Date().getTime().toString()]: message
+      [new Date().getTime().toString()]: {'incoming': obj, 'parsed': message}
     }
     localstorage.setItem(location, JSON.stringify(log))
   }
@@ -135,7 +137,7 @@ const handleType = (obj: any) => {
     title: z.string(),
     body: z.string(),
     icon: z.string(),
-    image: z.string(),
+    image: z.string().optional(),
     link: z.string(),
     time: z.number(),
     _id: z.string(),
@@ -145,7 +147,6 @@ const handleType = (obj: any) => {
 
   const message : Message = {
     ...typeMessage,
-    ...parseTitle(typeMessage.title),
     source: parseSource(typeMessage.type),
     url: typeMessage.link,
     symbols: parseSymbols(typeMessage.suggestions.map(suggestion => suggestion.symbols.map(s => s.symbol)).flat()),
@@ -170,21 +171,22 @@ tws.on('message', (data) => {
 
     let message : Message
     if ('source' in obj) {
+      console.log('Source message')
       message = handleSource(obj);
     } else if ('type' in obj){
+      console.log('Type message')
       message = handleType(obj);
     } else {
+      console.log('Unknown message')
       message = handleUnknown(obj);
     }
 
+    console.log(message)
     if (message && message.source !== 'UNKNOWN') {
       void caller.tree.message(message);
-      logMessage('handled_messages', obj)
-      //localstorage.setItem(new Date().getTime().toString()+'.json', JSON.stringify(obj))
+      logMessage('handled_messages.json', obj, message)
     }else{
-      console.log('Unknown message')
-      console.log(obj)
-      logMessage('unhandled_messages', obj)
+      logMessage('unhandled_messages.json', obj, message)
     }
 
   } catch (err) {

@@ -23,7 +23,7 @@ const filter = (text: string, source: source, filter: Map<source, string[]>) => 
 }
 
 
-export const parseMessage = (message: Message, settings: settings) => {
+export const checkMessage = (message: Message, settings: settings) => {
   let symbols = message.symbols
   if (!symbols || symbols.length === 0) {
     symbols = parseSymbolKeywords(message.title+message.body, settings)
@@ -32,7 +32,7 @@ export const parseMessage = (message: Message, settings: settings) => {
   return {
     symbols: filterSymbols(symbols, settings),
     pos_filter:  filter(message.title+message.body, message.source, settings.pos_filter),
-    neg_filter:  filter(message.title+message.body, message.source, settings.neg_filter),
+    neg_filter:  !filter(message.title+message.body, message.source, settings.neg_filter),
   }
 }
 
@@ -47,8 +47,8 @@ export const parseSymbols = (symbols: string[]) => {
     symbol.replace('_', ''),
   );
 
-  return symbols
-  
+  // Remove duplicates
+  return [... new Set(symbols)] as string[]
 }
 
 export const parseSource = (source: string): source => {
@@ -62,10 +62,16 @@ export const parseSource = (source: string): source => {
     case 'USGOV':
       return 'USGOV';
       break;
+    case 'BLOGS':
+      return 'BLOG';
+      break;
     case 'BLOG':
       return 'BLOG';
       break;
     case 'DIRECT':
+      return 'TWITTER';
+      break;
+    case 'TWITTER':
       return 'TWITTER';
       break;
     case 'TELEGRAM':

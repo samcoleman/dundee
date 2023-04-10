@@ -13,6 +13,7 @@ import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
 
 import { type AppRouter } from "../server/api/root";
+import { NextPageContext } from "next";
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return ""; // browser should use relative url
@@ -24,37 +25,19 @@ const getBaseUrl = () => {
  * A set of typesafe react-query hooks for your tRPC API
  */
 
-function getLinks() {
+function getEndingLink() {
   if (typeof window === 'undefined') {
-    return [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === "development" ||
-          (opts.direction === "down" && opts.result instanceof Error),
-      }),
-      httpBatchLink({
-        url: `${getBaseUrl()}/api/trpc`,
-      })
-    ]
-  }else{
-    const client = createWSClient({
-      url: 'ws://localhost:3005',
-    }); 
-    
-    return [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === "development" ||
-          (opts.direction === "down" && opts.result instanceof Error),
-      }),
-      httpBatchLink({
-        url: `${getBaseUrl()}/api/trpc`,
-      }),
-      wsLink<AppRouter>({client})
-    ]
+    return httpBatchLink({
+      url: `${getBaseUrl()}/api/trpc`,
+    });
   }
+  const client = createWSClient({
+    url: 'ws://localhost:3005',
+  });
+  return wsLink<AppRouter>({
+    client,
+  });
 }
-
 
 export const api = createTRPCNext<AppRouter>({
   config() {
@@ -69,14 +52,24 @@ export const api = createTRPCNext<AppRouter>({
        * Links used to determine request flow from client to server
        * @see https://trpc.io/docs/links
        * */
-      links: getLinks()
+      links: [
+        // adds pretty logs to your console in development and logs errors in production
+        loggerLink({
+          enabled: (opts) =>
+            (process.env.NODE_ENV === 'development' &&
+              typeof window !== 'undefined') ||
+            (opts.direction === 'down' && opts.result instanceof Error),
+        }),
+        getEndingLink(),
+      ],
+      queryClientConfig: { defaultOptions: { queries: { staleTime: 60 } } },
     };
   },
   /**
    * Whether tRPC should await queries when server rendering pages
    * @see https://trpc.io/docs/nextjs#ssr-boolean-default-false
    */
-  ssr: false,
+  ssr: true,
 });
 
 /**

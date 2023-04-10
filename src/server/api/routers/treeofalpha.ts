@@ -2,13 +2,27 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
 import { observable } from '@trpc/server/observable';
 import EventEmitter from 'events';
-import {sourceObj, type Message, type source } from 'utils/const';
+import {sourceObj, type Message } from 'utils/const';
 import { parseSource, parseSymbols, parseTitle } from 'utils/messageParse';
 
+interface MyEvents {
+  message: (data: Message) => void;
+}
+declare interface MyEventEmitter {
+  on<TEv extends keyof MyEvents>(event: TEv, listener: MyEvents[TEv]): this;
+  off<TEv extends keyof MyEvents>(event: TEv, listener: MyEvents[TEv]): this;
+  once<TEv extends keyof MyEvents>(event: TEv, listener: MyEvents[TEv]): this;
+  emit<TEv extends keyof MyEvents>(
+    event: TEv,
+    ...args: Parameters<MyEvents[TEv]>
+  ): boolean;
+}
+
+class MyEventEmitter extends EventEmitter {}
 
 
 // source: "Blog" / source: "Binance EN" / source: "Upbit" / source: "usGov"
-const ee = new EventEmitter();
+const ee = new MyEventEmitter();
 
 export const treeofalpha = createTRPCRouter({
   getUpdates: publicProcedure.query(async (): Promise<Message[]> => {
@@ -53,15 +67,16 @@ export const treeofalpha = createTRPCRouter({
   onMessage: publicProcedure.subscription(() => {
     // return an `observable` with a callback which is triggered immediately
     return observable<Message>((emit) => {
-      const onAdd = (data: Message) => {
+      const onMessage = (data: Message) => {
+        console.log("Message Emitted")
         // emit data to client
         emit.next(data);
       };
       // trigger `onAdd()` when `add` is triggered in our event emitter
-      ee.on('message', onAdd);
+      ee.on('message', onMessage);
       // unsubscribe function when client disconnects or stops subscribing
       return () => {
-        ee.off('add', onAdd);
+        ee.off('message', onMessage);
       };
     });
   }),
@@ -80,7 +95,8 @@ export const treeofalpha = createTRPCRouter({
       }),
     )
     .mutation(({ input }) => {
-      const message = { ...input }; /* [..] add to db */
+      const message = { ...input };
+      console.log("Message Called")
       ee.emit('message', message);
       return message;
     }),
