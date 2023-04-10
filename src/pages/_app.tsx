@@ -7,7 +7,6 @@ const MyApp: AppType = ({
   pageProps,
 }) => {
   return (
-   
       <Component {...pageProps} />
   );
 };

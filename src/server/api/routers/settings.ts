@@ -10,24 +10,41 @@ export type sym = {
 };
 
 export type settings = {
-  sources: source[];
-  symbols: Map<string, sym>;
+  notifications : {
+    adv_notifications: boolean;
+  
+    sources: source[];
+    pass_pos_filter: boolean;
+    pos_filter: Map<source, string[]>;
+    pass_neg_filter: boolean;
+    neg_filter: Map<source, string[]>;
+
+    symbol: "MATCH_LOOKUP" | "ANY_MATCH" | "NO_MATCH";
+  }
   symbol_keys: Map<string, string[]>;
-  pos_filter: Map<source, string[]>;
-  neg_filter: Map<source, string[]>;
+  symbols: Map<string, sym>;
 };
 
 const localstorage = new LocalStorage('./settings');
 
 let data: settings = {
-  sources: [],
+  notifications: {
+    adv_notifications: false,
+
+    sources: [],
+    pass_pos_filter: false,
+    pos_filter: new Map<source, string[]>(),
+    pass_neg_filter: false,
+    neg_filter: new Map<source, string[]>(),
+
+    symbol: "NO_MATCH",
+  },
+  
+  symbol_keys: new Map<string, string[]>(),
   symbols: new Map<
     string,
     { future_id: string; status: status; active: boolean }
   >(),
-  symbol_keys: new Map<string, string[]>(),
-  pos_filter: new Map<source, string[]>(),
-  neg_filter: new Map<source, string[]>(),
 };
 
 function replacer(key: any, value: any) : any {
@@ -142,16 +159,16 @@ export const settingsManager = createTRPCRouter({
     )
     .mutation(({ input }) => {
       if (input.source) {
-        const pos_filter = data.pos_filter.get(input.source);
+        const pos_filter = data.notifications.pos_filter.get(input.source);
         if (!pos_filter) {
-          data.pos_filter.set(input.source, [input.keyword.toUpperCase()]);
+          data.notifications.pos_filter.set(input.source, [input.keyword.toUpperCase()]);
           return;
         }
         if (!pos_filter.includes(input.keyword.toUpperCase())) {
           pos_filter.push(input.keyword.toUpperCase());
         }
       } else {
-        data.pos_filter.forEach((value) => {
+        data.notifications.pos_filter.forEach((value) => {
           if (!value.includes(input.keyword.toUpperCase())) {
             value.push(input.keyword.toUpperCase());
           }
@@ -167,14 +184,14 @@ export const settingsManager = createTRPCRouter({
     )
     .mutation(({ input }) => {
       if (input.source) {
-        const pos_filter = data.pos_filter.get(input.source);
+        const pos_filter = data.notifications.pos_filter.get(input.source);
         if (!pos_filter) {
           return;
         }
-        data.pos_filter.set(input.source, pos_filter.filter((key) => key !== input.keyword.toUpperCase()));
+        data.notifications.pos_filter.set(input.source, pos_filter.filter((key) => key !== input.keyword.toUpperCase()));
       } else {
-        data.pos_filter.forEach((value, key) => {
-          data.pos_filter.set(key, value.filter((key) => key !== input.keyword.toUpperCase()));
+        data.notifications.pos_filter.forEach((value, key) => {
+          data.notifications.pos_filter.set(key, value.filter((key) => key !== input.keyword.toUpperCase()));
         });
       }
     }),
@@ -187,9 +204,9 @@ export const settingsManager = createTRPCRouter({
     )
     .mutation(({ input }) => {
       if (input.source) {
-        const neg_filter = data.neg_filter.get(input.source);
+        const neg_filter = data.notifications.neg_filter.get(input.source);
         if (!neg_filter) {
-          data.neg_filter.set(input.source, [input.keyword.toUpperCase()]);
+          data.notifications.neg_filter.set(input.source, [input.keyword.toUpperCase()]);
           return;
         }
         if (!neg_filter.includes(input.keyword.toUpperCase())) {
@@ -197,7 +214,7 @@ export const settingsManager = createTRPCRouter({
         }
         neg_filter;
       } else {
-        data.neg_filter.forEach((value) => {
+        data.notifications.neg_filter.forEach((value) => {
           if (!value.includes(input.keyword.toUpperCase())) {
             value.push(input.keyword.toUpperCase());
           }
@@ -213,14 +230,14 @@ export const settingsManager = createTRPCRouter({
     )
     .mutation(({ input }) => {
       if (input.source) {
-        const neg_filter = data.neg_filter.get(input.source);
+        const neg_filter = data.notifications.neg_filter.get(input.source);
         if (!neg_filter) {
           return;
         }
-        data.neg_filter.set(input.source, neg_filter.filter((key) => key !== input.keyword.toUpperCase()))
+        data.notifications.neg_filter.set(input.source, neg_filter.filter((key) => key !== input.keyword.toUpperCase()))
       } else {
-        data.neg_filter.forEach((value, key) => {
-          data.neg_filter.set(key, value.filter((key) => key !== input.keyword.toUpperCase()));
+        data.notifications.neg_filter.forEach((value, key) => {
+          data.notifications.neg_filter.set(key, value.filter((key) => key !== input.keyword.toUpperCase()));
         });
       }
     }),
@@ -231,8 +248,8 @@ export const settingsManager = createTRPCRouter({
       }),
     )
     .mutation(({ input }) => {
-      if (!data.sources.includes(input.source)) {
-        data.sources.push(input.source);
+      if (!data.notifications.sources.includes(input.source)) {
+        data.notifications.sources.push(input.source);
       }
     }),
   removeSource: publicProcedure
@@ -242,6 +259,6 @@ export const settingsManager = createTRPCRouter({
       }),
     )
     .mutation(({ input }) => {
-      data.sources = data.sources.filter((source) => source !== input.source);
+      data.notifications.sources = data.notifications.sources.filter((source) => source !== input.source);
     }),
 });

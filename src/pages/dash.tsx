@@ -2,7 +2,7 @@ import Head from 'next/head';
 import React, { useEffect, useRef, useState } from 'react';
 import { IoIosArrowForward } from 'react-icons/io';
 import { api } from 'utils/api';
-import { type Message } from 'utils/const';
+import { parsedMessage, type Message } from 'utils/const';
 
 import dynamic from 'next/dynamic';
 import OptionPicker from 'components/optionPicker';
@@ -13,12 +13,6 @@ const AdvancedRealTimeChart = dynamic(
     import('react-ts-tradingview-widgets').then((w) => w.AdvancedRealTimeChart),
   { ssr: false },
 );
-
-type parsedMessage = {
-  message: Message;
-  parser: ReturnType<typeof checkMessage>;
-  checked: boolean;
-};
 
 const DashPage = () => {
   //trpc query for treeofaplha
@@ -46,7 +40,9 @@ const DashPage = () => {
   );
 
   const [parsedMessages, setParsedMessages] = useState<parsedMessage[]>([]);
-  const messageMap = useRef<Map<string, parsedMessage>>(new Map<string, parsedMessage>());
+  const messageMap = useRef<Map<string, parsedMessage>>(
+    new Map<string, parsedMessage>(),
+  );
 
   useEffect(() => {
     if (!settings) return;
@@ -60,27 +56,62 @@ const DashPage = () => {
         messageMap.current.set(message._id, {
           message: message,
           parser: checkMessage(message, settings),
-          checked: true,
-        })
+        });
       }
     }
 
-    updateParsedArray()
+    updateParsedArray();
     setMessageAndSymbol({
       message: treeOfAlphaData[0],
       parser: checkMessage(treeOfAlphaData[0], settings),
-      checked: true,
-    })
-
+    });
   }, [treeOfAlphaData]);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('./sw.js')
+        .then(
+          function (registration) {
+            console.log(
+              'Successfully registered Service Worker (scope: %s)',
+              registration.scope,
+            );
+          },
+          function (err) {
+            console.warn('Failed to register Service Worker:\n', err);
+          },
+        )
+        .catch((err) => {
+          console.warn('Failed to register Service Worker:\n', err);
+        });
+
+        navigator.serviceWorker.addEventListener('message', function (event) {
+          console.log('client-notification')
+          console.log(event.data)
+
+          // This could probably be done simpler
+          navigator.serviceWorker.getRegistration().then(
+            function (registration) {
+              registration?.getNotifications().then(function (notifications) {
+                notifications.forEach(notification => notification.close())
+              }).catch((err) => {
+                console.warn('Failed to close notifications:\n', err);
+              });
+            }).catch((err) => {
+              console.warn('Failed to get registration:\n', err);
+            })
+        });
+    }
+  }, []);
 
   // Regenerate the array if the map - very inefficient TODO: SLOW
   const updateParsedArray = () => {
     if (messageMap.current.size !== parsedMessages.length) {
       // Due to col-row-reverse auto-scrolling to bottom??? why
-      setParsedMessages(Array.from(messageMap.current.values()).reverse())
+      setParsedMessages(Array.from(messageMap.current.values()).reverse());
     }
-  }
+  };
 
   // Updates the page to the new message
   const setMessageAndSymbol = (parsedMessage: parsedMessage) => {
@@ -94,24 +125,53 @@ const DashPage = () => {
       setSelectedSymbol(undefined);
     }
     setPageMessage(parsedMessage);
-  }
+  };
+
+  // Write function called push show local web notification
+  const pushNotification = (message: Message) => {
+    if ('Notification' in window) {
+      Notification.requestPermission()
+        .then(async function (permission) {
+          if (permission === 'granted') {
+            console.log('start');
+            const reg = await navigator.serviceWorker.getRegistration();
+            console.log(reg);
+            if (!reg) return;
+
+            void reg.showNotification(message.title, {
+              body: message.body,
+              image: 'https://i.imgur.com/IySGBmp.jpeg',
+              actions: [
+                { action: 'Buy_A', title: 'Buy', type: 'text' },
+                { action: 'Buy_B', title: 'Sell' },
+              ],
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to register Service Worker:\n', err);
+        });
+    }
+  };
 
   // Called when a new message is received
   const addMessage = (message: Message) => {
+    console.log('Server Delta:' + (Date.now() - message.time).toString());
+    void pushNotification(message);
+
     if (!settings) return;
 
     const parsedMessage = {
       message,
       parser: checkMessage(message, settings),
       checked: true,
-    }
+    };
 
-    messageMap.current.set(parsedMessage.message._id, parsedMessage)
-    updateParsedArray()
+    messageMap.current.set(parsedMessage.message._id, parsedMessage);
+    updateParsedArray();
 
     if (!focus) {
-      console.log('Not focused')
-      setMessageAndSymbol(parsedMessage)
+      setMessageAndSymbol(parsedMessage);
     }
   };
 
@@ -127,7 +187,7 @@ const DashPage = () => {
 
   // Weird but stops the chart from re-rendering on ANY state change
   const [advancedRealtimeChart, setChart] = useState<JSX.Element>();
-  
+
   useEffect(() => {
     const widgetChart = (
       <AdvancedRealTimeChart
@@ -135,11 +195,10 @@ const DashPage = () => {
         theme="dark"
         autosize={true}
       />
-    )
+    );
 
     setChart(widgetChart);
   }, [selectedSymbol]);
-
 
   /*
     <Link href="/" className="flex justify-center h-full aspect-square text-2xl  p-2 items-center rounded-md hover:bg-white/5" >
@@ -153,12 +212,21 @@ const DashPage = () => {
         <title>{selectedSymbol ? selectedSymbol.toUpperCase() : 'Dash'}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <button
+        onClick={() => {
+          if (!pageMessage) return;
+          void pushNotification(pageMessage?.message);
+        }}
+      >
+        Notify
+      </button>
       <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white overflow-clip">
         <div className="flex flex-row gap-5">
-          <div 
-          onMouseEnter={() => setFocus(false)}
-          //onMouseLeave={() => setFocus(true)}
-          className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
+          <div
+            onMouseEnter={() => setFocus(false)}
+            //onMouseLeave={() => setFocus(true)}
+            className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1"
+          >
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>
@@ -191,7 +259,11 @@ const DashPage = () => {
               })}
             </div>
           </div>
-          <div className={`w-2/5 flex flex-col justify-between bg-white/5 rounded-md p-5 gap-5 ${focus ? 'outline' : ''}`}>
+          <div
+            className={`w-2/5 flex flex-col justify-between bg-white/5 rounded-md p-5 gap-5 ${
+              focus ? 'outline' : ''
+            }`}
+          >
             <div className="flex flex-row text-2xl font-bold gap-5">
               <button
                 onClick={() => void makeOrder()}
@@ -258,21 +330,29 @@ const DashPage = () => {
             )}
           </div>
 
-          <div className={`w-2/5 flex flex-col flex-auto bg-white/5 rounded-md p-5 gap-2 min-h-0 ${focus ? 'outline' : ''}`}>
+          <div
+            className={`w-2/5 flex flex-col flex-auto bg-white/5 rounded-md p-5 gap-2 min-h-0 ${
+              focus ? 'outline' : ''
+            }`}
+          >
             {pageMessage ? (
               <>
                 <div className="h-0.5 bg-white rounded-full" />
-                <a  href={pageMessage.message.url}
+                <a
+                  href={pageMessage.message.url}
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md px-3">
+                  className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md px-3"
+                >
                   {pageMessage.message.source?.toUpperCase()}
                   <h1 className="flex text-lg">
                     {pageMessage.message.time !== 0
                       ? new Date(pageMessage.message.time).toTimeString()
                       : null}
                   </h1>
-                  <div className='flex flex-row items-center gap-1'>Link <IoIosArrowForward /></div>
+                  <div className="flex flex-row items-center gap-1">
+                    Link <IoIosArrowForward />
+                  </div>
                 </a>
                 <div className="h-0.5 bg-white rounded-full" />
                 <div className="flex flex-row gap-3 text-lg flex-wrap">
@@ -294,45 +374,37 @@ const DashPage = () => {
                   >
                     Negative Filter
                   </div>
-                  {pageMessage.parser.symbols.length > 0 ? (
-                    pageMessage.parser.symbols.map((symbol, index) => {
-                      return (
-                        <button
-                          className={`rounded-md hover:bg-white/5 px-3 ${
-                            symbol === selectedSymbol
-                              ? 'outline outline-2 outline-offset-[-2px outline-white'
-                              : ''
-                          }`}
-                          key={index}
-                          onClick={() => void setSelectedSymbol(symbol)}
-                        >
-                          {symbol}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <p>No Symbols Parsed</p>
-                  )}
-                  <p>|</p>
-                  {pageMessage.message.symbols.length > 0 ? (
-                    pageMessage.message.symbols.map((symbol, index) => {
-                      return (
-                        <button
-                          className={`rounded-md hover:bg-white/5 px-3 ${
-                            symbol === selectedSymbol
-                              ? 'outline outline-2 outline-offset-[-2px outline-white'
-                              : ''
-                          }`}
-                          key={index}
-                          onClick={() => void setSelectedSymbol(symbol)}
-                        >
-                          {symbol}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <p>No Symbols Attached</p>
-                  )}
+
+                  {
+                    // Combine the symbols from the parser and the message & remove duplicates TODO: SLOW
+                    new Set([
+                      ...pageMessage.parser.symbols,
+                      ...pageMessage.message.symbols,
+                    ]).size > 0 ? (
+                      [
+                        ...new Set([
+                          ...pageMessage.parser.symbols,
+                          ...pageMessage.message.symbols,
+                        ]),
+                      ].map((symbol, index) => {
+                        return (
+                          <button
+                            className={`rounded-md hover:bg-white/5 px-3 ${
+                              symbol === selectedSymbol
+                                ? 'outline outline-2 outline-offset-[-2px outline-white'
+                                : ''
+                            }`}
+                            key={index}
+                            onClick={() => void setSelectedSymbol(symbol)}
+                          >
+                            {symbol}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p>No Symbols Found</p>
+                    )
+                  }
                 </div>
                 <div className="h-0.5 bg-white rounded-full" />
                 <h1 className="flex text-xl break-all">

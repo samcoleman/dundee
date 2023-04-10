@@ -1,4 +1,7 @@
 // source: "Blog" / source: "Binance EN" / source: "Upbit" / source: "usGov"
+
+import { type checkMessage } from "./messageParse";
+
 //export type feeds = 'BLOG' | "BINANCE" | "UPBIT" | "USGOV" | 'TWITTER' | 'TELEGRAM' | 'UNKNOWN';
 export const sourceObj = [
   'BLOG',
@@ -24,4 +27,9 @@ export type Message = {
   symbols: string[];
   icon?: string;
   image?: string;
+};
+
+export type parsedMessage = {
+  message: Message;
+  parser: ReturnType<typeof checkMessage>;
 };

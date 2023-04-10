@@ -54,7 +54,7 @@ const IndexPage = () => {
   const addFeed = api.settings.addSource.useMutation();
   const removeFeed = api.settings.removeSource.useMutation();
   const toggleFeed = async (source: source) => {
-    if (settings?.sources.includes(source)) {
+    if (settings?.notifications.sources.includes(source)) {
       const res = await removeFeed.mutateAsync({ source });
     } else {
       const res = await addFeed.mutateAsync({ source });
@@ -152,7 +152,7 @@ const IndexPage = () => {
 
   // create a timer for ever 10 seconds in useEffect
   useEffect(() => {
-    setToggles(settings?.sources || []);
+    setToggles(settings?.notifications.sources || []);
 
     let keywords = 0;
     settings?.symbol_keys.forEach((s) => {
@@ -161,13 +161,13 @@ const IndexPage = () => {
     setSymbolkeyCount(keywords);
 
     keywords = 0;
-    settings?.pos_filter.forEach((s) => {
+    settings?.notifications.pos_filter.forEach((s) => {
       keywords += s.length;
     });
     setPoskeyCount(keywords);
 
     keywords = 0;
-    settings?.neg_filter.forEach((s) => {
+    settings?.notifications.neg_filter.forEach((s) => {
       keywords += s.length;
     })
     setNegkeyCount(keywords);
@@ -447,8 +447,8 @@ const IndexPage = () => {
                 </div>
                 <table className="text-left w-full h-full">
                   <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                    {settings?.pos_filter ? (
-                      Array.from(settings.pos_filter.keys())
+                    {settings?.notifications.pos_filter ? (
+                      Array.from(settings.notifications.pos_filter.keys())
                         .filter((source) => {
                           if (!selectedSourcePos) {
                             return true;
@@ -456,7 +456,7 @@ const IndexPage = () => {
                           return source === selectedSourcePos;
                         })
                         .map((source, s_index) => {
-                          const keys = settings.pos_filter.get(source);
+                          const keys = settings.notifications.pos_filter.get(source);
                           if (!keys) return null;
 
                           return keys
@@ -540,8 +540,8 @@ const IndexPage = () => {
                 </div>
                 <table className="text-left w-full h-full">
                   <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                    {settings?.pos_filter ? (
-                      Array.from(settings.neg_filter.keys())
+                    {settings?.notifications.neg_filter ? (
+                      Array.from(settings.notifications.neg_filter.keys())
                         .filter((source) => {
                           if (!selectedSourceNeg) {
                             return true;
@@ -549,7 +549,7 @@ const IndexPage = () => {
                           return source === selectedSourceNeg;
                         })
                         .map((source, s_index) => {
-                          const keys = settings.neg_filter.get(source);
+                          const keys = settings.notifications.neg_filter.get(source);
                           if (!keys) return null;
 
                           return keys

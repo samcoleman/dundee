@@ -6,6 +6,8 @@ import { LocalStorage } from "node-localstorage";
 import { z } from 'zod';
 import { type Message } from 'utils/const';
 import { parseSource, parseSymbols } from 'utils/messageParse';
+import { notify } from 'utils/notifcation';
+import { settings } from './api/routers/settings';
 
 const caller = appRouter.createCaller({}); 
 
@@ -21,6 +23,19 @@ wss.on('connection', (ws) => {
     console.log(`- Client Connection (${wss.clients.size})`);
   });
 });
+
+
+let localSettings : settings;
+const updateSettings = () => {
+  const setting = async () => {
+    localSettings = await caller.settings.getSettings()
+  }
+
+  void setting()
+}
+  
+
+wss.on('updateSettings', updateSettings)
 
 console.log('✅ WebSocket Server listening on ws://localhost:3005');
 
@@ -155,6 +170,9 @@ const handleType = (obj: any) => {
   return message
 };
 
+
+
+
 const handleUnknown = (obj: any) => {
   console.log('Unknown message');
   return obj as Message
@@ -162,8 +180,9 @@ const handleUnknown = (obj: any) => {
 
 tws.on('open', () => {
   console.log('[TreeOfAlpha] connected');
-
+  updateSettings()
 });
+
 
 tws.on('message', (data) => {
   try {
@@ -182,7 +201,7 @@ tws.on('message', (data) => {
     }
 
     console.log(message)
-    if (message && message.source !== 'UNKNOWN') {
+    if (message) {
       void caller.tree.message(message);
       logMessage('handled_messages.json', obj, message)
     }else{
