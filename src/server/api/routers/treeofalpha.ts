@@ -68,7 +68,6 @@ export const treeofalpha = createTRPCRouter({
     // return an `observable` with a callback which is triggered immediately
     return observable<Message>((emit) => {
       const onMessage = (data: Message) => {
-        console.log("Message Emitted")
         // emit data to client
         emit.next(data);
       };
@@ -96,7 +95,6 @@ export const treeofalpha = createTRPCRouter({
     )
     .mutation(({ input }) => {
       const message = { ...input };
-      console.log("Message Called")
       ee.emit('message', message);
       return message;
     }),

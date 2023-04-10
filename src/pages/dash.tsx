@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IoIosArrowForward } from 'react-icons/io';
 import { api } from 'utils/api';
 import { type Message } from 'utils/const';
@@ -39,11 +39,15 @@ const DashPage = () => {
   };
 
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
+  const [focus, setFocus] = useState<boolean>(false);
 
   const [pageMessage, setPageMessage] = useState<parsedMessage | undefined>(
     undefined,
   );
+
   const [parsedMessages, setParsedMessages] = useState<parsedMessage[]>([]);
+  const messageMap = useRef<Map<string, parsedMessage>>(new Map<string, parsedMessage>());
+
   useEffect(() => {
     if (!settings) return;
 
@@ -56,14 +60,47 @@ const DashPage = () => {
       };
     });
 
-    setParsedMessages(newParsedMessages || []);
+    if (!newParsedMessages) return;
+
+    // This has to be done in reverse to ensure the most recent messages are at the top
+    for (let index = newParsedMessages.length - 1; index >= 0; index--) {
+      const parsedMessage = newParsedMessages[index];
+      if (!messageMap.current.has(parsedMessage.message._id)) {
+        messageMap.current.set(parsedMessage.message._id, parsedMessage)
+      }
+    }
+
+    updateParsedArray()
+    setPageMessage(newParsedMessages?.[0])
+
   }, [treeOfAlphaData]);
 
+  //If either the map or the parsed messages change, update the parsed messages
+  const updateParsedArray = () => {
+    if (messageMap.current.size !== parsedMessages.length) {
+      // Due to col-row-reverse auto-scrolling to bottom??? why
+      setParsedMessages(Array.from(messageMap.current.values()).reverse())
+    }
+  }
+
   const addMessage = (message: Message) => {
-    console.log(message);
+    if (!settings) return;
+
+    const parsedMessage = {
+      message,
+      parser: checkMessage(message, settings),
+      checked: true,
+    }
+
+    messageMap.current.set(parsedMessage.message._id, parsedMessage)
+    updateParsedArray()
+
+    if (!focus) {
+      setPageMessage(parsedMessage)
+    }
   };
 
-  api.tree.onMessage.useSubscription(typeof window !== 'undefined', {
+  api.tree.onMessage.useSubscription(undefined, {
     onData(message) {
       addMessage(message);
     },
@@ -73,6 +110,20 @@ const DashPage = () => {
     },
   });
 
+  // Weird but stops the chart from re-rendering on ANY state change
+  const [advancedRealtimeChart, setChart] = useState<JSX.Element>();
+  
+  useEffect(() => {
+    const widgetChart = (
+      <AdvancedRealTimeChart
+        symbol={selectedSymbol}
+        theme="dark"
+        autosize={true}
+      />
+    )
+
+    setChart(widgetChart);
+  }, [selectedSymbol]);
 
 
   /*
@@ -89,7 +140,10 @@ const DashPage = () => {
       </Head>
       <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white overflow-clip">
         <div className="flex flex-row gap-5">
-          <div className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
+          <div 
+          onMouseEnter={() => setFocus(false)}
+          onMouseLeave={() => setFocus(true)}
+          className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>
@@ -97,50 +151,43 @@ const DashPage = () => {
             </div>
             <div className="h-0.5 bg-white rounded-full" />
             <div className="flex flex-col overflow-y-auto h-64 clip">
-              {treeOfAlphaData?.map((item, index) => {
+              {parsedMessages?.map((item, index) => {
                 return (
                   <button
                     key={index}
                     onClick={() => {
                       if (!settings) return;
 
-                      const pm: parsedMessage = {
-                        message: item,
-                        parser: checkMessage(item, settings),
-                        checked: true,
-                      };
-
-                      if (pm.parser.symbols.length > 0) {
-                        setSelectedSymbol(pm.parser.symbols[0]);
-                      } else if (pm.message.symbols.length > 0) {
-                        setSelectedSymbol(pm.message.symbols[0]);
+                      if (item.parser.symbols.length > 0) {
+                        setSelectedSymbol(item.parser.symbols[0]);
+                      } else if (item.message.symbols.length > 0) {
+                        setSelectedSymbol(item.message.symbols[0]);
                       } else {
                         setSelectedSymbol(undefined);
                       }
-
-                      setPageMessage(pm);
+                      setPageMessage(item);
                     }}
                     className={`flex text-start flex-row gap-5 py-0.5 my-0.5 rounded-md ${
                       index % 2 === 0 ? 'bg-white/5' : ''
                     } ${
-                      pageMessage?.message._id === item._id
+                      pageMessage?.message._id === item.message._id
                         ? 'outline outline-2 outline-offset-[-2px] outline-blue-500'
                         : 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
                     }`}
                   >
                     <p className="w-1/12 min-w-max pl-2 overflow-hidden">
-                      {item.source?.toUpperCase()}
+                      {item.message.source?.toUpperCase()}
                     </p>
                     <div className="flex-1 overflow-hidden break-all">
-                      <p>{item.title}</p>
-                      <p>{item.body}</p>
+                      <p>{item.message.title}</p>
+                      <p>{item.message.body}</p>
                     </div>
                   </button>
                 );
               })}
             </div>
           </div>
-          <div className="w-2/5 flex flex-col justify-between bg-white/5 rounded-md p-5 gap-5">
+          <div className={`w-2/5 flex flex-col justify-between bg-white/5 rounded-md p-5 gap-5 ${focus ? 'outline' : ''}`}>
             <div className="flex flex-row text-2xl font-bold gap-5">
               <button
                 onClick={() => void makeOrder()}
@@ -197,30 +244,32 @@ const DashPage = () => {
           </div>
         </div>
         <div className="flex flex-1 flex-row gap-5">
-          <div className="w-3/5">
+          <div className={`w-3/5 rounded-md ${focus ? 'outline' : ''}`}>
             {selectedSymbol ? (
-              <AdvancedRealTimeChart
-                symbol={selectedSymbol}
-                theme="dark"
-                autosize={true}
-              />
+              advancedRealtimeChart
             ) : (
               <div className="flex flex-col h-full justify-center items-center bg-white/5 rounded-md">
                 <h1 className="text-2xl">Symbol Not Selected</h1>
               </div>
             )}
           </div>
-          <div className="w-2/5 flex flex-col flex-auto bg-white/5 rounded-md p-5 gap-2 min-h-0">
+
+          <div className={`w-2/5 flex flex-col flex-auto bg-white/5 rounded-md p-5 gap-2 min-h-0 ${focus ? 'outline' : ''}`}>
             {pageMessage ? (
               <>
-                <div className="flex flex-row justify-between gap-10 py-2 items-center bold">
+                <div className="h-0.5 bg-white rounded-full" />
+                <a  href={pageMessage.message.url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md px-3">
                   {pageMessage.message.source?.toUpperCase()}
                   <h1 className="flex text-lg">
                     {pageMessage.message.time !== 0
                       ? new Date(pageMessage.message.time).toTimeString()
                       : null}
                   </h1>
-                </div>
+                  <div className='flex flex-row items-center gap-1'>Link <IoIosArrowForward /></div>
+                </a>
                 <div className="h-0.5 bg-white rounded-full" />
                 <div className="flex flex-row gap-3 text-lg flex-wrap">
                   <div
@@ -288,15 +337,6 @@ const DashPage = () => {
                 <p className="flex flex-1 text-xl break-all overflow-y-auto min-h-0 ">
                   {pageMessage.message.body}
                 </p>
-                <div className="h-0.5 bg-white rounded-full" />
-                <a
-                  href={pageMessage.message.url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="flex flex-row justify-end items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md"
-                >
-                  Link <IoIosArrowForward />
-                </a>
               </>
             ) : null}
           </div>
