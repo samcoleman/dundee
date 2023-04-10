@@ -2,19 +2,10 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
 import { observable } from '@trpc/server/observable';
 import EventEmitter from 'events';
-import { source } from 'utils/const';
+import {sourceObj, type Message, type source } from 'utils/const';
+import { parseSource, parseSymbols, parseTitle } from 'utils/messageParse';
 
-export type Message = {
-  title: string;
-  body: string;
-  source: source;
-  url: string;
-  time: number;
-  _id: string;
-  symbols?: string[];
-  icon?: string;
-  image?: string;
-};
+
 
 // source: "Blog" / source: "Binance EN" / source: "Upbit" / source: "usGov"
 const ee = new EventEmitter();
@@ -45,56 +36,13 @@ export const treeofalpha = createTRPCRouter({
 
     // Cast to unified type
     const updates: Message[] = updatesAPI.map((update) => {
-      const titleIndex = update.title.indexOf(':');
-      let title = update.title;
-      let body = '';
-
-      if (titleIndex > 0) {
-        title = update.title.slice(0, titleIndex);
-        body = update.title.slice(titleIndex + 1, update.title.length + 1);
-      }
-
-      if (update.symbols) {
-        // Remove all symbols not containing USDT
-        update.symbols = update.symbols.filter((symbol) => {
-          return symbol.indexOf('USDT') > 0;
-        });
-        // Remove _ from symbol
-        update.symbols = update.symbols.map((symbol) =>
-          symbol.replace('_', ''),
-        );
-      }
-
-      let source: source;
-
-      switch (update.source) {
-        case 'Blogs':
-          source = 'BLOG';
-          break;
-        case 'Binance EN':
-          source = 'BINANCE';
-          break;
-        case 'Upbit':
-          source = 'UPBIT';
-          break;
-        case 'usGov':
-          source = 'USGOV';
-          break;
-        case 'Twitter':
-          source = 'TWITTER';
-          break;
-        default:
-          source = 'UNKNOWN';
-      }
-
       return {
-        title: title,
-        body: body,
-        source: source,
+        ...parseTitle(update.title),
+        source: parseSource(update.source),
         url: update.url,
         time: update.time,
         _id: update._id,
-        symbols: update.symbols || [],
+        symbols: parseSymbols(update.symbols ? update.symbols : []),
         icon: update.icon,
         image: update.image,
       };
@@ -121,11 +69,12 @@ export const treeofalpha = createTRPCRouter({
     .input(
       z.object({
         title: z.string(),
-        source: z.string().optional(),
+        body: z.string(),
+        source: z.string().and(z.enum(sourceObj)),
         url: z.string(),
         time: z.number(),
         _id: z.string(),
-        symbols: z.array(z.string()).optional(),
+        symbols: z.array(z.string()),
         icon: z.string().optional(),
         image: z.string().optional(),
       }),

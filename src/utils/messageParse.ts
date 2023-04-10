@@ -1,6 +1,5 @@
 import { type settings } from "server/api/routers/settings";
-import { type Message as Message } from "server/api/routers/treeofalpha";
-import { type source } from "./const";
+import { type source, type Message } from "./const";
 
 const parseSymbolKeywords = (text: string, settings: settings) => {
   const symbols : string[] = [];
@@ -34,5 +33,62 @@ export const parseMessage = (message: Message, settings: settings) => {
     symbols: filterSymbols(symbols, settings),
     pos_filter:  filter(message.title+message.body, message.source, settings.pos_filter),
     neg_filter:  filter(message.title+message.body, message.source, settings.neg_filter),
+  }
+}
+
+
+export const parseSymbols = (symbols: string[]) => {
+  // Remove all symbols not containing USDT
+  symbols = symbols.filter((symbol) => {
+    return symbol.indexOf('USDT') > 0;
+  });
+  // Remove _ from symbol
+  symbols = symbols.map((symbol) =>
+    symbol.replace('_', ''),
+  );
+
+  return symbols
+  
+}
+
+export const parseSource = (source: string): source => {
+  switch (source.toUpperCase()) {
+    case 'BINANCE EN':
+      return 'BINANCE';
+      break;
+    case 'UPBIT':
+      return 'UPBIT';
+      break
+    case 'USGOV':
+      return 'USGOV';
+      break;
+    case 'BLOG':
+      return 'BLOG';
+      break;
+    case 'DIRECT':
+      return 'TWITTER';
+      break;
+    case 'TELEGRAM':
+      return 'TELEGRAM';
+      break;
+    default: 
+      return 'UNKNOWN'
+      break;
+  }
+}
+
+export const parseTitle = (title: string) => {
+  const titleIndex = title.indexOf(':');
+  let titleText = title;
+  let bodyText = '';
+
+  if (titleIndex > 0) {
+    titleText = title.slice(0, titleIndex);
+    bodyText = title.slice(titleIndex + 1, title.length + 1);
+  }
+
+  return {
+    title: titleText,
+    body: bodyText,
   }
 }

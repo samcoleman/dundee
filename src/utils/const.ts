@@ -21,7 +21,7 @@ export type Message = {
   url: string;
   time: number;
   _id: string;
-  symbols?: string[];
+  symbols: string[];
   icon?: string;
   image?: string;
 };

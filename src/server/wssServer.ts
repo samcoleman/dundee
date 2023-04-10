@@ -2,9 +2,10 @@
 import { appRouter } from './api/root';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import ws, { WebSocket } from 'ws';
-import { LocalStorage } from "node-localstorage";
+import { LocalStorage, JSONStorage } from "node-localstorage";
 import { z } from 'zod';
-import { Message } from 'utils/const';
+import { source, type Message } from 'utils/const';
+import { parseSource, parseSymbols, parseTitle } from 'utils/messageParse';
 
 const caller = appRouter.createCaller({}); 
 const wss = new ws.Server({
@@ -36,6 +37,173 @@ const tws = new WebSocket(url, {
   },
 });
 
+type log = {
+  [key: string]: any
+}
+
+const logMessage = (location: string, message: any) => {
+  const logString  = localstorage.getItem(location)
+  const logHistory = logString ? JSON.parse(logString) as log : undefined
+
+  if (logHistory) {
+    logHistory[new Date().getTime().toString()] = message
+    localstorage.setItem(location, JSON.stringify(logHistory))
+  } else {
+    const log : log = {
+      [new Date().getTime().toString()]: message
+    }
+    localstorage.setItem(location, JSON.stringify(log))
+  }
+
+}
+
+const suggestions = z.array(z.object({
+  found: z.array(z.string()),
+  coin: z.string(),
+  symbols: z.array(z.object({
+    symbol: z.string(),
+    exchange: z.string()
+  }))}))
+
+const handleSource = (obj: any) => {
+  const sourceMessage = z.object({
+    title: z.string(),
+    source: z.string(),
+    url: z.string(),
+    time: z.number(),
+    symbols: z.array(z.string()),
+    en: z.string(),
+    _id: z.string(),
+    suggestions: suggestions})
+  .parse(obj)
+
+  const message : Message = {
+    ...sourceMessage,
+    source: parseSource(sourceMessage.source),
+    symbols: parseSymbols(sourceMessage.suggestions.map(suggestion => suggestion.symbols.map(s => s.symbol)).flat()),
+    body: ''
+  }
+
+  return message
+  /*
+  const pageData: pageData = {
+    symbol: 'BTCUSDT',
+    source: 'BLOG',
+    title: obj['title'],
+    time: obj['time'],
+    link: obj['link'],
+    payload_blog: {
+      symbols: "symbols" in obj ? obj['symbols'] : [],
+      prices:  "prices" in obj ? obj['prices'] : [],
+    },
+  };
+
+  const url = `http://localhost:3000/dash\?symbol=${pageData.symbol}\&source=${
+    pageData.source
+  }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
+    pageData.link
+  }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
+
+  */
+
+
+};
+
+const handleType = (obj: any) => {
+  /*
+  const pageData: pageData = {
+    symbol: 'BTCUSDT',
+    source: 'TWITTER',
+    title: obj['title'],
+    time: obj['time'],
+    link: obj['link'],
+    payload_twitter: {
+      body: obj['body'],
+      icon: obj['icon'],
+      image: obj['image'] as string,
+    },
+  };
+
+  const url = `http://localhost:3000/dash\?symbol=${pageData.symbol}\&source=${
+    pageData.source
+  }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
+    pageData.link
+  }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
+  */
+
+  const typeMessage = z.object({
+    title: z.string(),
+    body: z.string(),
+    icon: z.string(),
+    image: z.string(),
+    link: z.string(),
+    time: z.number(),
+    _id: z.string(),
+    type: z.string(),
+    suggestions: suggestions})
+  .parse(obj)
+
+  const message : Message = {
+    ...typeMessage,
+    ...parseTitle(typeMessage.title),
+    source: parseSource(typeMessage.type),
+    url: typeMessage.link,
+    symbols: parseSymbols(typeMessage.suggestions.map(suggestion => suggestion.symbols.map(s => s.symbol)).flat()),
+  }
+
+  return message
+};
+
+const handleUnknown = (obj: any) => {
+  console.log('Unknown message');
+  return obj as Message
+};
+
+tws.on('open', () => {
+  console.log('[TreeOfAlpha] connected');
+
+});
+
+tws.on('message', (data) => {
+  try {
+    const obj = JSON.parse(data.toString());
+
+    let message : Message
+    if ('source' in obj) {
+      message = handleSource(obj);
+    } else if ('type' in obj){
+      message = handleType(obj);
+    } else {
+      message = handleUnknown(obj);
+    }
+
+    if (message && message.source !== 'UNKNOWN') {
+      void caller.tree.message(message);
+      logMessage('handled_messages', obj)
+      //localstorage.setItem(new Date().getTime().toString()+'.json', JSON.stringify(obj))
+    }else{
+      console.log('Unknown message')
+      console.log(obj)
+      logMessage('unhandled_messages', obj)
+    }
+
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+tws.on('close', () => {
+  // Object
+  console.log('[TreeOfAlpha] disconnected');
+});
+
+tws.on('error', (err) => {
+  // Object
+  console.log('[TreeOfAlpha] error');
+});
+
+
+/*
 export type blog_payload = {
   symbols?: string[];
   prices?: number[];
@@ -72,145 +240,4 @@ export type pageData = {
   payload_unknown?: string;
 };
 
-const suggestions = z.array(z.object({
-  found: z.array(z.string()),
-  coin: z.string(),
-  symbols: z.array(z.object({
-    symbol: z.string(),
-    exchange: z.string()
-  }))}))
-
-const handleBlog = (obj: any) => {
-  const blogMessage = z.object({
-    title: z.string(),
-    source: z.string(),
-    url: z.string(),
-    time: z.number(),
-    symbols: z.array(z.string()),
-    en: z.string(),
-    _id: z.string(),
-    suggestions: suggestions})
-  .parse(obj)
-
-  const message : Message = {
-    ...blogMessage,
-    source: 'BLOG',
-    body: ''
-  }
-
-  return message
-  /*
-  const pageData: pageData = {
-    symbol: 'BTCUSDT',
-    source: 'BLOG',
-    title: obj['title'],
-    time: obj['time'],
-    link: obj['link'],
-    payload_blog: {
-      symbols: "symbols" in obj ? obj['symbols'] : [],
-      prices:  "prices" in obj ? obj['prices'] : [],
-    },
-  };
-
-  const url = `http://localhost:3000/dash\?symbol=${pageData.symbol}\&source=${
-    pageData.source
-  }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
-    pageData.link
-  }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
-
-  */
-
-
-};
-
-const handleTwitter = (obj: any) => {
-  /*
-  const pageData: pageData = {
-    symbol: 'BTCUSDT',
-    source: 'TWITTER',
-    title: obj['title'],
-    time: obj['time'],
-    link: obj['link'],
-    payload_twitter: {
-      body: obj['body'],
-      icon: obj['icon'],
-      image: obj['image'] as string,
-    },
-  };
-
-  const url = `http://localhost:3000/dash\?symbol=${pageData.symbol}\&source=${
-    pageData.source
-  }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
-    pageData.link
-  }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
-  */
-
-  const twitterMessage = z.object({
-    title: z.string(),
-    body: z.string(),
-    icon: z.string(),
-    image: z.string(),
-    link: z.string(),
-    time: z.number(),
-    _id: z.string(),
-    suggestions: suggestions})
-  .parse(obj)
-
-  const message : Message = {
-    ...twitterMessage,
-    source: 'TWITTER',
-    url: twitterMessage.link
-  }
-
-  return message
-};
-
-const handleUnknown = (obj: any) => {
-  console.log('Unknown message');
-  return obj as Message
-};
-
-tws.on('open', () => {
-  console.log('[TreeOfAlpha] connected');
-});
-
-tws.on('message', (data) => {
-  try {
-    const obj = JSON.parse(data.toString());
-    
-    void caller.tree.message(obj);
-    //Log data
-    console.log(obj);
-    localstorage.setItem(new Date().getTime().toString()+'.json', JSON.stringify(obj))
-
-    let message : Message
-    if ('source' in obj && obj['source'] === 'Blogs') {
-      message = handleBlog(obj);
-    } else if ('type' in obj && obj['type'] === 'direct'){
-      message = handleTwitter(obj);
-    //} else if ('type' in obj && obj['type'] === 'telegram'){
-    //  handleTelegram(obj as telegram);
-    } else {
-      message = handleUnknown(obj);
-    }
-
-    if (message) {
-      void caller.tree.message(message);
-    }
-
-  } catch (err) {
-    console.log(err);
-  }
-});
-
-tws.on('close', () => {
-  // Object
-  console.log('[TreeOfAlpha] disconnected');
-});
-
-tws.on('error', (err) => {
-  // Object
-  console.log('[TreeOfAlpha] error');
-});
-
-
+*/
