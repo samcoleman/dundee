@@ -4,6 +4,7 @@ import { observable } from '@trpc/server/observable';
 import EventEmitter from 'events';
 import {sourceObj, type Message } from 'utils/const';
 import { parseSource, parseSymbols, parseTitle } from 'utils/messageParse';
+import fetch from 'node-fetch'
 
 interface MyEvents {
   message: (data: Message) => void;
@@ -25,6 +26,26 @@ class MyEventEmitter extends EventEmitter {}
 const ee = new MyEventEmitter();
 
 export const treeofalpha = createTRPCRouter({
+  getImageUrl: publicProcedure
+  .input(z.object({
+    symbol: z.string()
+  }))
+  .mutation(async ({input}) => {
+    try {
+      const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY}`, {
+        method: 'GET',
+        headers: {
+          contentType: 'image/jpeg',
+        },
+      })
+      console.log(response.body)
+      const blob = await response.blob()
+      console.log(blob)
+      return blob
+    }catch (e) {
+      return undefined
+    }
+  }),
   getUpdates: publicProcedure.query(async (): Promise<Message[]> => {
     const res = await fetch('https://news.treeofalpha.com/api/news?limit=500', {
       headers: {

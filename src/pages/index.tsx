@@ -442,7 +442,7 @@ const IndexPage = () => {
               <div className="flex flex-1 flex-col h-full">
                 <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
                   <div className="flex text-start w-24">Source</div>
-                  <div className="flex-1 text-start">Keyword</div>
+                  <div className="flex-1 text-start">Pos Keyword</div>
                   <div className="text-end"> Count : {poskeyCount}</div>
                 </div>
                 <table className="text-left w-full h-full">
@@ -535,7 +535,7 @@ const IndexPage = () => {
               <div className="flex flex-1 flex-col h-full">
                 <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
                   <div className="flex text-start w-24">Source</div>
-                  <div className="flex-1 text-start">Keyword</div>
+                  <div className="flex-1 text-start">Neg Keyword</div>
                   <div className="text-end"> Count : {negkeyCount}</div>
                 </div>
                 <table className="text-left w-full h-full">

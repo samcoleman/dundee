@@ -127,23 +127,22 @@ const DashPage = () => {
     setPageMessage(parsedMessage);
   };
 
+  const imageUrl = api.tree.getImageUrl.useMutation();
   // Write function called push show local web notification
   const pushNotification = (message: Message) => {
     if ('Notification' in window) {
       Notification.requestPermission()
         .then(async function (permission) {
           if (permission === 'granted') {
-            console.log('start');
             const reg = await navigator.serviceWorker.getRegistration();
-            console.log(reg);
             if (!reg) return;
-
+            
             void reg.showNotification(message.title, {
               body: message.body,
-              image: 'https://i.imgur.com/IySGBmp.jpeg',
+              //image: "http://192.168.0.3:3000/example.png",
               actions: [
-                { action: 'Buy_A', title: 'Buy', type: 'text' },
-                { action: 'Buy_B', title: 'Sell' },
+                { action: 'Buy', title: 'Buy', type: 'text' },
+                { action: 'Sell', title: 'Sell' },
               ],
             });
           }
@@ -345,11 +344,7 @@ const DashPage = () => {
                   className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md px-3"
                 >
                   {pageMessage.message.source?.toUpperCase()}
-                  <h1 className="flex text-lg">
-                    {pageMessage.message.time !== 0
-                      ? new Date(pageMessage.message.time).toTimeString()
-                      : null}
-                  </h1>
+                  
                   <div className="flex flex-row items-center gap-1">
                     Link <IoIosArrowForward />
                   </div>
