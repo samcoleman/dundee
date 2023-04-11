@@ -57,11 +57,13 @@ const DashPage = () => {
   const getSettings = api.settings.getSettings.useMutation();
   useEffect(() => {
     getSettings
-    .mutateAsync()
-    .then((s) => {setSettings(s)})
-    .catch((e) => {
-      console.log(e);
-    });
+      .mutateAsync()
+      .then((s) => {
+        setSettings(s);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
@@ -80,13 +82,17 @@ const DashPage = () => {
         .catch((err) => {
           console.warn('Failed to register Service Worker:\n', err);
         });
-        
-        navigator.serviceWorker.addEventListener('message', function (event) {
-          console.log('client-notification')
 
-          const response = event.data as {reply: string | null, action: string, data: Message};
-          console.log(response)
-        });   
+      navigator.serviceWorker.addEventListener('message', function (event) {
+        console.log('client-notification');
+
+        const response = event.data as {
+          reply: string | null;
+          action: string;
+          data: Message;
+        };
+        console.log(response);
+      });
     }
   }, []);
 
@@ -97,7 +103,7 @@ const DashPage = () => {
     // This has to be done in reverse to ensure the most recent messages are at the top
     // Using map entry order to sort -> not great
     for (let index = treeOfAlphaData.length - 1; index >= 0; index--) {
-      const message : Message = treeOfAlphaData[index];
+      const message: Message = treeOfAlphaData[index];
       if (!messageMap.current.has(message._id)) {
         messageMap.current.set(message._id, {
           message: message,
@@ -111,7 +117,7 @@ const DashPage = () => {
       message: treeOfAlphaData[0],
       parser: checkMessage(treeOfAlphaData[0], settings),
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [treeOfAlphaData, settings]);
 
   // Regenerate the array if the map - very inefficient TODO: SLOW
@@ -141,7 +147,7 @@ const DashPage = () => {
     if (!settings) return;
 
     const filter = checkMessage(message, settings);
-    
+
     // Filter based on sources
     if (!settings.notifications.sources.includes(message.source)) return;
 
@@ -156,13 +162,13 @@ const DashPage = () => {
       case 'NO_MATCH':
         break;
       default:
-        break
+        break;
     }
 
     // Filter messages based on pos/neg filter
     if (settings.notifications.pass_pos_filter && !filter.pos_filter) return;
     if (settings.notifications.pass_neg_filter && !filter.neg_filter) return;
-    
+
     if ('Notification' in window) {
       Notification.requestPermission()
         .then(async function (permission) {
@@ -176,7 +182,11 @@ const DashPage = () => {
               //image: "http://192.168.0.3:3000/example.png",
               actions: [
                 //
-                { action: 'Buy', title: 'Buy', type: 'text' } as NotificationAction,
+                {
+                  action: 'Buy',
+                  title: 'Buy',
+                  type: 'text',
+                } as NotificationAction,
                 { action: 'Sell', title: 'Sell' },
               ],
             });
@@ -195,7 +205,7 @@ const DashPage = () => {
 
     if (!settings) return;
 
-    const parsedMessage : parsedMessage = {
+    const parsedMessage: parsedMessage = {
       message,
       parser: checkMessage(message, settings),
     };
@@ -238,6 +248,15 @@ const DashPage = () => {
                 <IoIosArrowBack />
               </Link>
   */
+
+  // Code golf shit to convert number to 1K , 1M etc
+  function format(num: number | undefined, dec: number){
+    if (num === undefined) return
+    let x=(''+num).length
+    const d = Math.pow(10,dec)
+    x-=x%3
+    return Math.round(num*d/Math.pow(10,x))/d+" kMGTPE"[x/3]
+  }
 
   return (
     <>
@@ -297,27 +316,27 @@ const DashPage = () => {
               focus ? 'outline' : ''
             }`}
           >
-            <div className="flex flex-row text-2xl font-bold gap-5">
+            <div className="flex flex-row text-lg font-bold gap-5">
               <button
                 onClick={() => void makeOrder()}
                 className="bg-green-500 hover:bg-green-400 rounded-md w-1/6 aspect-square"
               >
-                5k
+                {format(settings?.dash.actions.B_1, 4)}
               </button>
               <button className="bg-green-500 hover:bg-green-400 w-1/6 rounded-md aspect-square">
-                20k
+                {format(settings?.dash.actions.B_2, 4)}
               </button>
               <button className="bg-green-500 hover:bg-green-400 w-1/6 rounded-md aspect-square">
-                120k
+                {format(settings?.dash.actions.B_3, 4)}
               </button>
               <button className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square">
-                5k
+                {format(settings?.dash.actions.S_1, 4)}
               </button>
               <button className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square">
-                20k
+                {format(settings?.dash.actions.S_2, 4)}
               </button>
               <button className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square">
-                120k
+                {format(settings?.dash.actions.S_3, 4)}
               </button>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
@@ -378,7 +397,7 @@ const DashPage = () => {
                   className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 rounded-md px-3"
                 >
                   {pageMessage.message.source?.toUpperCase()}
-                  
+
                   <div className="flex flex-row items-center gap-1">
                     Link <IoIosArrowForward />
                   </div>
