@@ -1,14 +1,14 @@
-import React, { type SetStateAction, useState } from 'react';
+import React, { type SetStateAction, useState, PropsWithChildren } from 'react';
 import { GoSearch } from 'react-icons/go';
 
 // Would be nice with templates
-type OptionPickerProps = {
+type OptionPickerProps = PropsWithChildren<{
   options?: string[];
   selectedOption: any;
   setOption: (value: SetStateAction<any>) => void;
-};
+}>
 
-const OptionPicker: React.FC<OptionPickerProps> = (
+const OptionPicker = (
   props: OptionPickerProps,
 ) => {
   const [keywordOptionPopup, setKeywordOptionPopup] = useState(false);

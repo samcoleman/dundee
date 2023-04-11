@@ -2,11 +2,12 @@ import Head from 'next/head';
 import React, { useEffect, useRef, useState } from 'react';
 import { IoIosArrowForward } from 'react-icons/io';
 import { api } from 'utils/api';
-import { parsedMessage, type Message } from 'utils/const';
+import { type parsedMessage, type Message } from '../shared/types';
 
 import dynamic from 'next/dynamic';
 import OptionPicker from 'components/optionPicker';
-import { checkMessage } from 'utils/messageParse';
+import { checkMessage } from 'shared/messageParse';
+import { settings } from 'server/api/routers/settings';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -17,9 +18,6 @@ const AdvancedRealTimeChart = dynamic(
 const DashPage = () => {
   //trpc query for treeofaplha
   const { data: treeOfAlphaData } = api.tree.getUpdates.useQuery();
-
-  const { data: settings, refetch: settingsRefetch } =
-    api.settings.getSettings.useQuery();
 
   const order = api.binance.order.useMutation();
   const makeOrder = async () => {
@@ -44,30 +42,27 @@ const DashPage = () => {
     new Map<string, parsedMessage>(),
   );
 
+  const [settings, setSettings] = useState<settings | undefined>();
+  //subscribe to settings updates
+  api.settings.onUpdate.useSubscription(undefined, {
+    onData(settingsUpdate) {
+      setSettings(settingsUpdate);
+    },
+    onError(err) {
+      console.error('Subscription error:', err);
+      // we might have missed a message - invalidate cache
+    },
+  });
+
+  const getSettings = api.settings.getSettings.useMutation();
   useEffect(() => {
-    if (!settings) return;
-    if (!treeOfAlphaData) return;
-
-    // This has to be done in reverse to ensure the most recent messages are at the top
-    // Using map entry order to sort -> not great
-    for (let index = treeOfAlphaData.length - 1; index >= 0; index--) {
-      const message = treeOfAlphaData[index];
-      if (!messageMap.current.has(message._id)) {
-        messageMap.current.set(message._id, {
-          message: message,
-          parser: checkMessage(message, settings),
-        });
-      }
-    }
-
-    updateParsedArray();
-    setMessageAndSymbol({
-      message: treeOfAlphaData[0],
-      parser: checkMessage(treeOfAlphaData[0], settings),
+    getSettings
+    .mutateAsync()
+    .then((s) => {setSettings(s)})
+    .catch((e) => {
+      console.log(e);
     });
-  }, [treeOfAlphaData]);
 
-  useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('./sw.js')
@@ -85,25 +80,39 @@ const DashPage = () => {
         .catch((err) => {
           console.warn('Failed to register Service Worker:\n', err);
         });
-
+        
         navigator.serviceWorker.addEventListener('message', function (event) {
           console.log('client-notification')
-          console.log(event.data)
 
-          // This could probably be done simpler
-          navigator.serviceWorker.getRegistration().then(
-            function (registration) {
-              registration?.getNotifications().then(function (notifications) {
-                notifications.forEach(notification => notification.close())
-              }).catch((err) => {
-                console.warn('Failed to close notifications:\n', err);
-              });
-            }).catch((err) => {
-              console.warn('Failed to get registration:\n', err);
-            })
-        });
+          const response = event.data as {reply: string | null, action: string, data: Message};
+          console.log(response)
+        });   
     }
   }, []);
+
+  useEffect(() => {
+    if (!settings) return;
+    if (!treeOfAlphaData) return;
+
+    // This has to be done in reverse to ensure the most recent messages are at the top
+    // Using map entry order to sort -> not great
+    for (let index = treeOfAlphaData.length - 1; index >= 0; index--) {
+      const message : Message = treeOfAlphaData[index];
+      if (!messageMap.current.has(message._id)) {
+        messageMap.current.set(message._id, {
+          message: message,
+          parser: checkMessage(message, settings),
+        });
+      }
+    }
+
+    updateParsedArray();
+    setMessageAndSymbol({
+      message: treeOfAlphaData[0],
+      parser: checkMessage(treeOfAlphaData[0], settings),
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treeOfAlphaData, settings]);
 
   // Regenerate the array if the map - very inefficient TODO: SLOW
   const updateParsedArray = () => {
@@ -127,21 +136,47 @@ const DashPage = () => {
     setPageMessage(parsedMessage);
   };
 
-  const imageUrl = api.tree.getImageUrl.useMutation();
   // Write function called push show local web notification
   const pushNotification = (message: Message) => {
+    if (!settings) return;
+
+    const filter = checkMessage(message, settings);
+    
+    // Filter based on sources
+    if (!settings.notifications.sources.includes(message.source)) return;
+
+    // Filter messages based on settings
+    switch (settings.notifications.symbol) {
+      case 'MATCH_LOOKUP':
+        if (filter.symbols.length === 0) return;
+        break;
+      case 'ANY_MATCH':
+        if (filter.symbols.length + message.symbols.length === 0) return;
+        break;
+      case 'NO_MATCH':
+        break;
+      default:
+        break
+    }
+
+    // Filter messages based on pos/neg filter
+    if (settings.notifications.pass_pos_filter && !filter.pos_filter) return;
+    if (settings.notifications.pass_neg_filter && !filter.neg_filter) return;
+    
     if ('Notification' in window) {
       Notification.requestPermission()
         .then(async function (permission) {
           if (permission === 'granted') {
             const reg = await navigator.serviceWorker.getRegistration();
             if (!reg) return;
-            
+
             void reg.showNotification(message.title, {
               body: message.body,
+              data: message,
               //image: "http://192.168.0.3:3000/example.png",
               actions: [
-                { action: 'Buy', title: 'Buy', type: 'text' },
+                //
+                { action: 'Buy', title: 'Buy', type: 'text' } as NotificationAction,
                 { action: 'Sell', title: 'Sell' },
               ],
             });
@@ -160,10 +195,9 @@ const DashPage = () => {
 
     if (!settings) return;
 
-    const parsedMessage = {
+    const parsedMessage : parsedMessage = {
       message,
       parser: checkMessage(message, settings),
-      checked: true,
     };
 
     messageMap.current.set(parsedMessage.message._id, parsedMessage);
@@ -341,7 +375,7 @@ const DashPage = () => {
                   href={pageMessage.message.url}
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 py-1 rounded-md px-3"
+                  className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 rounded-md px-3"
                 >
                   {pageMessage.message.source?.toUpperCase()}
                   

@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
 import { observable } from '@trpc/server/observable';
 import EventEmitter from 'events';
-import {sourceObj, type Message } from 'utils/const';
-import { parseSource, parseSymbols, parseTitle } from 'utils/messageParse';
+import {sourceObj, type Message } from '../../../shared/types';
+import { parseSource, parseSymbols, parseTitle } from '../../../shared/messageParse';
 import fetch from 'node-fetch'
 
 interface MyEvents {
@@ -32,7 +32,7 @@ export const treeofalpha = createTRPCRouter({
   }))
   .mutation(async ({input}) => {
     try {
-      const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY}`, {
+      const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY as string}`, {
         method: 'GET',
         headers: {
           contentType: 'image/jpeg',

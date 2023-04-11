@@ -7,9 +7,10 @@ self.addEventListener("install", () => {
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 self.addEventListener('notificationclick', async function (event) {
-  console.log('sw-notification')
 
-  
+  //Closes the notification
+  event.notification.close();
+
   //Looks to see if the current is already open and focuses if it is
   event.waitUntil(
     clients
@@ -17,7 +18,7 @@ self.addEventListener('notificationclick', async function (event) {
       .then((clientList) => {
         for (const client of clientList) {
           if ("focus" in client && client.url.includes('dash')) {
-            client.postMessage({reply: event.reply, action: event.action});
+            client.postMessage({reply: event.reply, action: event.action, data: event.notification.data});
             return client.focus();
           }
         }

@@ -4,10 +4,8 @@ import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import ws, { WebSocket } from 'ws';
 import { LocalStorage } from "node-localstorage";
 import { z } from 'zod';
-import { type Message } from 'utils/const';
-import { parseSource, parseSymbols } from 'utils/messageParse';
-import { notify } from 'utils/notifcation';
-import { settings } from './api/routers/settings';
+import { type Message } from '../shared/types';
+import { parseSource, parseSymbols } from '../shared/messageParse';
 
 const caller = appRouter.createCaller({}); 
 
@@ -23,20 +21,7 @@ wss.on('connection', (ws) => {
     console.log(`- Client Connection (${wss.clients.size})`);
   });
 });
-
-
-let localSettings : settings;
-const updateSettings = () => {
-  const setting = async () => {
-    localSettings = await caller.settings.getSettings()
-  }
-
-  void setting()
-}
   
-
-wss.on('updateSettings', updateSettings)
-
 console.log('✅ WebSocket Server listening on ws://localhost:3005');
 
 process.on('SIGTERM', () => {
@@ -50,7 +35,7 @@ const localstorage = new LocalStorage('./socket_logs')
 
 const tws = new WebSocket(url, {
   headers: {
-    Cookie: `tree_login_cookie=${process.env.TREE_COOKIE}`,
+    Cookie: `tree_login_cookie=${process.env.TREE_COOKIE as string}`,
   },
 });
 
@@ -63,10 +48,12 @@ const logMessage = (location: string, obj: any, message: Message ) => {
   const logHistory = logString ? JSON.parse(logString) as log : undefined
 
   if (logHistory) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     logHistory[new Date().getTime().toString()] = {'incoming': obj, 'parsed': message}
     localstorage.setItem(location, JSON.stringify(logHistory))
   } else {
     const log : log = {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       [new Date().getTime().toString()]: {'incoming': obj, 'parsed': message}
     }
     localstorage.setItem(location, JSON.stringify(log))
@@ -102,52 +89,9 @@ const handleSource = (obj: any) => {
   }
 
   return message
-  /*
-  const pageData: pageData = {
-    symbol: 'BTCUSDT',
-    source: 'BLOG',
-    title: obj['title'],
-    time: obj['time'],
-    link: obj['link'],
-    payload_blog: {
-      symbols: "symbols" in obj ? obj['symbols'] : [],
-      prices:  "prices" in obj ? obj['prices'] : [],
-    },
-  };
-
-  const url = `http://localhost:3000/dash\?symbol=${pageData.symbol}\&source=${
-    pageData.source
-  }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
-    pageData.link
-  }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
-
-  */
-
-
 };
 
 const handleType = (obj: any) => {
-  /*
-  const pageData: pageData = {
-    symbol: 'BTCUSDT',
-    source: 'TWITTER',
-    title: obj['title'],
-    time: obj['time'],
-    link: obj['link'],
-    payload_twitter: {
-      body: obj['body'],
-      icon: obj['icon'],
-      image: obj['image'] as string,
-    },
-  };
-
-  const url = `http://localhost:3000/dash\?symbol=${pageData.symbol}\&source=${
-    pageData.source
-  }\&title=${encodeURIComponent(pageData.title)}\&time=${pageData.time}\&link=${
-    pageData.link
-  }\&payload_blog=${encodeURIComponent(JSON.stringify(pageData.payload_blog))}`;
-  */
-
   const typeMessage = z.object({
     title: z.string(),
     body: z.string(),
@@ -171,8 +115,6 @@ const handleType = (obj: any) => {
 };
 
 
-
-
 const handleUnknown = (obj: any) => {
   console.log('Unknown message');
   return obj as Message
@@ -180,12 +122,13 @@ const handleUnknown = (obj: any) => {
 
 tws.on('open', () => {
   console.log('[TreeOfAlpha] connected');
-  updateSettings()
 });
 
 
 tws.on('message', (data) => {
   try {
+    // This is as can be any shape
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const obj = JSON.parse(data.toString());
 
     let message : Message
@@ -223,42 +166,3 @@ tws.on('error', (err) => {
   console.log('[TreeOfAlpha] error');
 });
 
-
-/*
-export type blog_payload = {
-  symbols?: string[];
-  prices?: number[];
-};
-
-export type twitter_payload = {
-  body: string;
-  icon: string;
-  image?: string;
-};
-
-export type telegram_payload = {
-  body: string;
-  icon: string;
-  image?: string;
-};
-
-export type alert_payload = {
-  body: string;
-  icon: string;
-  image?: string;
-};
-
-export type pageData = {
-  symbol: string;
-  source: 'BLOG' | 'TWITTER' | 'TELEGRAM' | 'ALERT' | 'UNKNOWN';
-  title: string;
-  time: number;
-  link: string;
-  payload_blog?: blog_payload;
-  payload_twitter?: twitter_payload;
-  payload_telegram?: telegram_payload;
-  payload_alert?: alert_payload;
-  payload_unknown?: string;
-};
-
-*/

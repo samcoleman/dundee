@@ -3,15 +3,14 @@ import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
 import { GiWillowTree } from 'react-icons/gi';
 import { GoTerminal, GoSearch } from 'react-icons/go';
-import { FiRefreshCcw } from 'react-icons/fi';
+import { FiEdit2, FiRefreshCcw } from 'react-icons/fi';
 
 import OptionPicker from 'components/optionPicker';
-import { sourceObj, type source } from 'utils/const';
+import { sourceObj, type source } from '../shared/types';
+import { type settings } from 'server/api/routers/settings';
+import AmountEditor from 'components/amountEditor';
 
 const IndexPage = () => {
-  const { data: settings, refetch: settingsRefetch } =
-    api.settings.getSettings.useQuery();
-
   const [toggles, setToggles] = useState<source[]>([]);
 
   const [symbolkeyCount, setSymbolkeyCount] = useState(0);
@@ -25,8 +24,6 @@ const IndexPage = () => {
   const [selectedSourcePos, setSelectedSourcePos] = useState<
     source | undefined
   >();
-
-  const [keywordSymbolPopup, setKeywordSymbolPopup] = useState(false);
 
   const [socketStatus, setSocketStatus] = useState(true);
   const [binanceStatus, setBinanceStatus] = useState(true);
@@ -55,99 +52,81 @@ const IndexPage = () => {
   const removeFeed = api.settings.removeSource.useMutation();
   const toggleFeed = async (source: source) => {
     if (settings?.notifications.sources.includes(source)) {
-      const res = await removeFeed.mutateAsync({ source });
+      await removeFeed.mutateAsync({ source });
     } else {
-      const res = await addFeed.mutateAsync({ source });
+      await addFeed.mutateAsync({ source });
     }
-    void settingsRefetch();
   };
 
+  // SETTINGS
+  // Overkill but can move from client to worker / websocket later
   const addSym = api.settings.addSymbol.useMutation();
-  const addSymbol = async (symbol: string) => {
-    if (symbol === '') return;
-
-    const res = await addSym.mutateAsync({ symbol });
-    void settingsRefetch();
-  };
-
   const removeSym = api.settings.removeSymbol.useMutation();
-  const removeSymbol = async (symbol: string) => {
-    if (symbol === '') return;
-
-    const res = await removeSym.mutateAsync({ symbol });
-    void settingsRefetch();
-  };
 
   const addSymKey = api.settings.addSymbolKey.useMutation();
-  const addSymbolKey = async (keyword: string, symbol?: string) => {
-    if (!symbol) return;
-    if (keyword === '') return;
-
-    const res = await addSymKey.mutateAsync({ symbol, keyword });
-    void settingsRefetch();
-  };
-
   const removeSymKey = api.settings.removeSymbolKey.useMutation();
-  const removeSymbolKey = async (symbol: string, keyword: string) => {
-    if (symbol === '' || keyword === '') return;
-    const res = await removeSymKey.mutateAsync({ symbol, keyword });
-    void settingsRefetch();
-  };
 
   const addPosKey = api.settings.addPosKeyword.useMutation();
-  const addPosKeyword = async (keyword: string, source?: source) => {
-    if (keyword === '') return;
-    const res = await addPosKey.mutateAsync({ keyword, source });
-    void settingsRefetch();
-  };
-
   const removePosKey = api.settings.removePosKeyword.useMutation();
-  const removePosKeyword = async (keyword: string, source?: source) => {
-    //if (symbol === '' || keyword === '') return;
-
-    const res = await removePosKey.mutateAsync({ keyword, source });
-    void settingsRefetch();
-  };
 
   const addNegKey = api.settings.addNegKeyword.useMutation();
-  const addNegKeyword = async (keyword: string, source?: source) => {
-    if (keyword === '') return;
-
-    const res = await addNegKey.mutateAsync({ keyword, source });
-    void settingsRefetch();
-  };
   const removeNegKey = api.settings.removeNegKeyword.useMutation();
-  const removeNegKeyword = async (keyword: string, source?: source) => {
-    if (keyword === '') return;
 
-    const res = await removeNegKey.mutateAsync({ keyword, source });
-    void settingsRefetch();
-  };
+  const setNotificationAction =
+    api.settings.setNotificationAction.useMutation();
+  const setDashAction = api.settings.setDashAction.useMutation();
+
+  const setPosFilter = api.settings.setPosFilter.useMutation();
+  const setNegFilter = api.settings.setNegFilter.useMutation();
+
+  const setSymbolMatch = api.settings.setSymbolMatch.useMutation();
+
+  // SETTINGS END
 
   const checkSymbols = api.binance.checkSymbols.useMutation();
-  const updateSymbols = api.settings.updateSymbols.useMutation();
-  const checkSymbolStatus = async () => {
-    if (!settings) return;
-    const res = await checkSymbols.mutateAsync(settings.symbols);
-    await updateSymbols.mutateAsync(res);
-    void settingsRefetch();
+  const checkSymbolStatus = () => {
+    return;
   };
 
+  const [settings, setSettings] = useState<settings | undefined>();
+  //subscribe to settings updates
+  api.settings.onUpdate.useSubscription(undefined, {
+    onData(settingsUpdate) {
+      setSettings(settingsUpdate);
+    },
+    onError(err) {
+      console.error('Subscription error:', err);
+      // we might have missed a message - invalidate cache
+    },
+  });
+
+  const getSettings = api.settings.getSettings.useMutation();
   const bStatus = api.binance.status.useMutation();
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res2 = await bStatus.mutateAsync();
+        await bStatus.mutateAsync();
         setBinanceStatus(true);
       } catch (e) {
         setBinanceStatus(false);
       }
     };
-    void checkSymbolStatus();
+    //void checkSymbolStatus();
     const interval = setInterval(() => {
       void checkStatus();
     }, 10000 * 6);
+
+    getSettings
+      .mutateAsync()
+      .then((s) => {
+        setSettings(s);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // create a timer for ever 10 seconds in useEffect
@@ -169,9 +148,8 @@ const IndexPage = () => {
     keywords = 0;
     settings?.notifications.neg_filter.forEach((s) => {
       keywords += s.length;
-    })
+    });
     setNegkeyCount(keywords);
-
   }, [settings]);
 
   return (
@@ -209,26 +187,353 @@ const IndexPage = () => {
             </div>
             <div className="flex bg-white/[0.01] rounded-md flex-1"></div>
           </div>
-          <h1 className="text-2xl font-bold pl-5">Settings</h1>
-          <div className="flex flex-col bg-white/5 rounded-md p-5 gap-2 justify-start">
-            <div className="flex flex-row text-lg gap-5">
-              <h1 className="font-bold">Notification Feeds</h1>
-              {sourceObj.map((source, index) => (
-                <label key={index} className="flex flex-row gap-2 items-center">
-                  <input
-                    type="checkbox"
-                    onChange={() => void toggleFeed(source)}
-                    checked={toggles.includes(source)}
-                    className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded"
-                  />
-                  <p>{source}</p>
-                </label>
-              ))}
-              <div />
-            </div>
-          </div>
 
           <div className="grid-cols-2 grid gap-5">
+
+          <h1 className="text-2xl font-bold pl-5">Dash Settings</h1>
+            <div className="flex flex-col bg-white/5 rounded-md p-5 gap-2 justify-start text-lg col-span-2">
+              <div className="flex flex-row gap-5 items-center flex-wrap">
+                <h1 className="font-bold w-24">Amount</h1>
+                <AmountEditor action='B_1' value={settings?.dash.actions.B_1} onConfirm={(amount: number) => {setDashAction.mutate({key: 'B_1', amount})}}/>
+                <AmountEditor action='B_2' value={settings?.dash.actions.B_2} onConfirm={(amount: number) => {setDashAction.mutate({key: 'B_2', amount})}}/>
+                <AmountEditor action='B_3' value={settings?.dash.actions.B_3} onConfirm={(amount: number) => {setDashAction.mutate({key: 'B_3', amount})}}/>
+                <AmountEditor action='S_1' value={settings?.dash.actions.S_1} onConfirm={(amount: number) => {setDashAction.mutate({key: 'S_1', amount})}}/>
+                <AmountEditor action='S_2' value={settings?.dash.actions.S_2} onConfirm={(amount: number) => {setDashAction.mutate({key: 'S_2', amount})}}/>
+                <AmountEditor action='S_3' value={settings?.dash.actions.S_3} onConfirm={(amount: number) => {setDashAction.mutate({key: 'S_3', amount})}}/>
+              </div>
+            </div>
+
+            <h1 className="text-2xl font-bold pl-5">Notification Settings</h1>
+            <div className="flex flex-col bg-white/5 rounded-md p-5 gap-2 justify-start text-lg col-span-2 ">
+              <div className="flex flex-row items-center font-bold gap-5">
+                <h1 className="font-bold w-24">Keyword</h1>
+
+                <button
+                  onClick={() =>
+                    setPosFilter.mutate({
+                      state: !settings?.notifications.pass_pos_filter,
+                    })
+                  }
+                  className={`px-3 rounded-md ${
+                    settings?.notifications.pass_pos_filter
+                      ? 'bg-green-500'
+                      : 'bg-red-500'
+                  }`}
+                >
+                  MUST PASS POSITIVE
+                </button>
+                <button
+                  onClick={() =>
+                    setNegFilter.mutate({
+                      state: !settings?.notifications.pass_neg_filter,
+                    })
+                  }
+                  className={`px-3 rounded-md ${
+                    settings?.notifications.pass_neg_filter
+                      ? 'bg-green-500'
+                      : 'bg-red-500'
+                  }`}
+                >
+                  MUST PASS NEGATIVE
+                </button>
+              </div>
+
+              <div className="flex flex-row gap-5">
+                <h1 className="font-bold  w-24">Symbol</h1>
+                <button
+                  onClick={() =>
+                    setSymbolMatch.mutate({ sym_match: 'MATCH_LOOKUP' })
+                  }
+                  className={`hover:bg-white/5 px-3 rounded-md ${
+                    settings?.notifications.symbol === 'MATCH_LOOKUP'
+                      ? ' outline'
+                      : ''
+                  }`}
+                >
+                  KEYWORD FOUND SYMBOL
+                </button>
+                <button
+                  onClick={() =>
+                    setSymbolMatch.mutate({ sym_match: 'ANY_MATCH' })
+                  }
+                  className={`hover:bg-white/5 px-3 rounded-md ${
+                    settings?.notifications.symbol === 'ANY_MATCH'
+                      ? ' outline'
+                      : ''
+                  }`}
+                >
+                  ANY FOUND SYMBOL
+                </button>
+                <button
+                  onClick={() =>
+                    setSymbolMatch.mutate({ sym_match: 'NO_MATCH' })
+                  }
+                  className={`hover:bg-white/5 px-3 rounded-md ${
+                    settings?.notifications.symbol === 'NO_MATCH'
+                      ? ' outline'
+                      : ''
+                  }`}
+                >
+                  MATCH NOT REQUIRED
+                </button>
+              </div>
+              <div className="flex flex-row gap-5 s">
+                <h1 className="font-bold w-24">Source</h1>
+                {sourceObj.map((source, index) => (
+                  <label
+                    key={index}
+                    className="flex flex-row gap-2 items-center"
+                  >
+                    <input
+                      type="checkbox"
+                      onChange={() => void toggleFeed(source)}
+                      checked={toggles.includes(source)}
+                      className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded"
+                    />
+                    <p>{source}</p>
+                  </label>
+                ))}
+                <div />
+              </div>
+
+              <div className="flex flex-row gap-5">
+                <h1 className="font-bold w-24">Amount</h1>
+                <AmountEditor action='B_1' value={settings?.notifications.actions.B_1} onConfirm={(amount: number) => {setNotificationAction.mutate({key: 'B_1', amount})}}/>
+                <AmountEditor action='S_1' value={settings?.notifications.actions.S_1} onConfirm={(amount: number) => {setNotificationAction.mutate({key: 'S_1', amount})}}/>
+              </div>
+            </div>
+
+            <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
+              <div className="flex flex-row  gap-3">
+                <GoSearch className="text-2xl " />
+                <OptionPicker
+                  options={Array.from(sourceObj)}
+                  selectedOption={selectedSourcePos}
+                  setOption={setSelectedSourcePos}
+                />
+                <input
+                  value={posKeyworkInput}
+                  onChange={posKeywordUpdate}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (
+                        posKeyworkInput === '' ||
+                        selectedSourcePos === undefined
+                      )
+                        return;
+                      void addPosKey.mutateAsync({
+                        keyword: posKeyworkInput,
+                        source: selectedSourcePos,
+                      });
+                      setPosKeyworkInput('');
+                    }
+                  }}
+                  className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
+                  size={1}
+                />
+                <button
+                  onClick={() => {
+                    if (
+                      posKeyworkInput === '' ||
+                      selectedSourcePos === undefined
+                    )
+                      return;
+                    void addPosKey.mutateAsync({
+                      keyword: posKeyworkInput,
+                      source: selectedSourcePos,
+                    });
+                    setPosKeyworkInput('');
+                  }}
+                  className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
+                >
+                  ADD
+                </button>
+              </div>
+              <div className="flex flex-1 flex-col h-full">
+                <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
+                  <div className="flex text-start w-24">Source</div>
+                  <div className="flex-1 text-start">Pos Keyword</div>
+                  <div className="text-end"> Count : {poskeyCount}</div>
+                </div>
+                <table className="text-left w-full h-full">
+                  <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
+                    {settings?.notifications.pos_filter ? (
+                      Array.from(settings.notifications.pos_filter.keys())
+                        .filter((source) => {
+                          if (!selectedSourcePos) {
+                            return true;
+                          }
+                          return source === selectedSourcePos;
+                        })
+                        .map((source, s_index) => {
+                          const keys =
+                            settings.notifications.pos_filter.get(source);
+                          if (!keys) return null;
+
+                          return keys
+                            .filter((keyword) => {
+                              return keyword.includes(
+                                posKeyworkInput.toUpperCase(),
+                              );
+                            })
+                            .map((keyword, k_index) => {
+                              return (
+                                //Max 50000 keywords per symbol before repeating keys - will never happen
+                                <tr
+                                  key={s_index * 50000 + k_index}
+                                  className="flex flex-row w-full text-white gap-5"
+                                >
+                                  <td className="flex text-start w-24">
+                                    {source}
+                                  </td>
+                                  <td className="flex-1 text-start ">
+                                    {keyword}
+                                  </td>
+                                  <td className="flex justify-end">
+                                    <button
+                                      onClick={() => {
+                                        if (!source) return;
+                                        void removePosKey.mutateAsync({
+                                          keyword,
+                                          source,
+                                        });
+                                      }}
+                                      className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
+                                    >
+                                      Remove
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            });
+                        })
+                    ) : (
+                      <tr className="flex flex-row w-full">
+                        <td className="flex-1 text-start">Loading...</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start h-96">
+              <div className="flex flex-row items-center gap-3">
+                <GoSearch className="text-2xl " />
+                <OptionPicker
+                  options={Array.from(sourceObj)}
+                  selectedOption={selectedSourceNeg}
+                  setOption={setSelectedSourceNeg}
+                />
+                <input
+                  value={negKeywordInput}
+                  onChange={negKeywordUpdate}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (
+                        negKeywordInput === '' ||
+                        selectedSourceNeg === undefined
+                      )
+                        return;
+                      void addNegKey.mutateAsync({
+                        keyword: negKeywordInput,
+                        source: selectedSourceNeg,
+                      });
+                      setNegKeywordInput('');
+                    }
+                  }}
+                  className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
+                  size={1}
+                />
+                <button
+                  onClick={() => {
+                    if (
+                      negKeywordInput === '' ||
+                      selectedSourceNeg === undefined
+                    )
+                      return;
+                    void addNegKey.mutateAsync({
+                      keyword: negKeywordInput,
+                      source: selectedSourceNeg,
+                    });
+                    setNegKeywordInput('');
+                  }}
+                  className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
+                >
+                  ADD
+                </button>
+              </div>
+              <div className="flex flex-1 flex-col h-full">
+                <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
+                  <div className="flex text-start w-24">Source</div>
+                  <div className="flex-1 text-start">Neg Keyword</div>
+                  <div className="text-end"> Count : {negkeyCount}</div>
+                </div>
+                <table className="text-left w-full h-full">
+                  <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
+                    {settings?.notifications.neg_filter ? (
+                      Array.from(settings.notifications.neg_filter.keys())
+                        .filter((source) => {
+                          if (!selectedSourceNeg) {
+                            return true;
+                          }
+                          return source === selectedSourceNeg;
+                        })
+                        .map((source, s_index) => {
+                          const keys =
+                            settings.notifications.neg_filter.get(source);
+                          if (!keys) return null;
+
+                          return keys
+                            .filter((keyword) => {
+                              return keyword.includes(
+                                negKeywordInput.toUpperCase(),
+                              );
+                            })
+                            .map((keyword, k_index) => {
+                              return (
+                                //Max 50000 keywords per symbol before repeating keys - will never happen
+                                <tr
+                                  key={s_index * 50000 + k_index}
+                                  className="flex flex-row w-full text-white gap-5"
+                                >
+                                  <td className="flex text-start w-24">
+                                    {source}
+                                  </td>
+                                  <td className="flex-1 text-start ">
+                                    {keyword}
+                                  </td>
+                                  <td className="flex justify-end">
+                                    <button
+                                      onClick={() =>
+                                        void removeNegKey.mutateAsync({
+                                          keyword,
+                                          source,
+                                        })
+                                      }
+                                      className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
+                                    >
+                                      Remove
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            });
+                        })
+                    ) : (
+                      <tr className="flex flex-row w-full">
+                        <td className="flex-1 text-start">Loading...</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <h1 className="text-2xl font-bold pl-5 col-span-2">
+              Symbol Settings
+            </h1>
+
             <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start h-96">
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl" />
@@ -237,7 +542,10 @@ const IndexPage = () => {
                   onChange={symbolUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      void addSymbol(symbolInput);
+                      if (symbolInput === '') return;
+                      void addSym.mutateAsync({
+                        symbol: symbolInput,
+                      });
                       setSymbolInput('');
                     }
                   }}
@@ -246,7 +554,10 @@ const IndexPage = () => {
                 />
                 <button
                   onClick={() => {
-                    void addSymbol(symbolInput);
+                    if (symbolInput === '') return;
+                    void addSym.mutateAsync({
+                      symbol: symbolInput,
+                    });
                     setSymbolInput('');
                   }}
                   className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
@@ -297,7 +608,9 @@ const IndexPage = () => {
                               )}
                               <td className="flex flex-1 justify-end">
                                 <button
-                                  onClick={() => void removeSymbol(symbol)}
+                                  onClick={() =>
+                                    void removeSym.mutateAsync({ symbol })
+                                  }
                                   className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
                                 >
                                   Remove
@@ -329,7 +642,12 @@ const IndexPage = () => {
                   onChange={keywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      void addSymbolKey(keywordInput, selectedSymbol);
+                      if (keywordInput === '' || selectedSymbol === undefined)
+                        return;
+                      void addSymKey.mutateAsync({
+                        keyword: keywordInput,
+                        symbol: selectedSymbol,
+                      });
                       setKeywordInput('');
                     }
                   }}
@@ -338,7 +656,12 @@ const IndexPage = () => {
                 />
                 <button
                   onClick={() => {
-                    void addSymbolKey(keywordInput, selectedSymbol);
+                    if (keywordInput === '' || selectedSymbol === undefined)
+                      return;
+                    void addSymKey.mutateAsync({
+                      keyword: keywordInput,
+                      symbol: selectedSymbol,
+                    });
                     setKeywordInput('');
                   }}
                   className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
@@ -388,193 +711,10 @@ const IndexPage = () => {
                                   <td className="flex justify-end">
                                     <button
                                       onClick={() =>
-                                        void removeSymbolKey(symbol, keyword)
-                                      }
-                                      className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
-                                    >
-                                      Remove
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            });
-                        })
-                    ) : (
-                      <tr className="flex flex-row w-full">
-                        <td className="flex-1 text-start">Loading...</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
-              <div className="flex flex-row  gap-3">
-                <GoSearch className="text-2xl " />
-                <OptionPicker
-                  options={Array.from(sourceObj)}
-                  selectedOption={selectedSourcePos}
-                  setOption={setSelectedSourcePos}
-                />
-                <input
-                  value={posKeyworkInput}
-                  onChange={posKeywordUpdate}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      void addPosKeyword(posKeyworkInput, selectedSourcePos);
-                      setPosKeyworkInput('');
-                    }
-                  }}
-                  className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
-                  size={1}
-                />
-                <button
-                  onClick={() => {
-                    void addPosKeyword(posKeyworkInput, selectedSourcePos);
-                    setPosKeyworkInput('');
-                  }}
-                  className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
-                >
-                  ADD
-                </button>
-              </div>
-              <div className="flex flex-1 flex-col h-full">
-                <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
-                  <div className="flex text-start w-24">Source</div>
-                  <div className="flex-1 text-start">Pos Keyword</div>
-                  <div className="text-end"> Count : {poskeyCount}</div>
-                </div>
-                <table className="text-left w-full h-full">
-                  <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                    {settings?.notifications.pos_filter ? (
-                      Array.from(settings.notifications.pos_filter.keys())
-                        .filter((source) => {
-                          if (!selectedSourcePos) {
-                            return true;
-                          }
-                          return source === selectedSourcePos;
-                        })
-                        .map((source, s_index) => {
-                          const keys = settings.notifications.pos_filter.get(source);
-                          if (!keys) return null;
-
-                          return keys
-                            .filter((keyword) => {
-                              return keyword.includes(
-                                posKeyworkInput.toUpperCase(),
-                              );
-                            })
-                            .map((keyword, k_index) => {
-                              return (
-                                //Max 50000 keywords per symbol before repeating keys - will never happen
-                                <tr
-                                  key={s_index * 50000 + k_index}
-                                  className="flex flex-row w-full text-white gap-5"
-                                >
-                                  <td className="flex text-start w-24">
-                                    {source}
-                                  </td>
-                                  <td className="flex-1 text-start ">
-                                    {keyword}
-                                  </td>
-                                  <td className="flex justify-end">
-                                    <button
-                                      onClick={() =>
-                                        void removePosKeyword(keyword, source)
-                                      }
-                                      className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
-                                    >
-                                      Remove
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            });
-                        })
-                    ) : (
-                      <tr className="flex flex-row w-full">
-                        <td className="flex-1 text-start">Loading...</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col bg-white/5 rounded-md p-5 gap-5 justify-start h-96">
-              <div className="flex flex-row items-center gap-3">
-                <GoSearch className="text-2xl " />
-                <OptionPicker
-                  options={Array.from(sourceObj)}
-                  selectedOption={selectedSourceNeg}
-                  setOption={setSelectedSourceNeg}
-                />
-                <input
-                  value={negKeywordInput}
-                  onChange={negKeywordUpdate}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      void addNegKeyword(negKeywordInput, selectedSourceNeg);
-                      setNegKeywordInput('');
-                    }
-                  }}
-                  className="flex-1 text-lg bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-2 text-right"
-                  size={1}
-                />
-                <button
-                  onClick={() => {
-                    void addNegKeyword(negKeywordInput, selectedSourceNeg);
-                    setNegKeywordInput('');
-                  }}
-                  className="px-3 py-1 rounded-md bg-green-500 hover:bg-green-400"
-                >
-                  ADD
-                </button>
-              </div>
-              <div className="flex flex-1 flex-col h-full">
-                <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1">
-                  <div className="flex text-start w-24">Source</div>
-                  <div className="flex-1 text-start">Neg Keyword</div>
-                  <div className="text-end"> Count : {negkeyCount}</div>
-                </div>
-                <table className="text-left w-full h-full">
-                  <tbody className="bg-grey-light flex h-full gap-1 flex-col overflow-auto w-full px-3">
-                    {settings?.notifications.neg_filter ? (
-                      Array.from(settings.notifications.neg_filter.keys())
-                        .filter((source) => {
-                          if (!selectedSourceNeg) {
-                            return true;
-                          }
-                          return source === selectedSourceNeg;
-                        })
-                        .map((source, s_index) => {
-                          const keys = settings.notifications.neg_filter.get(source);
-                          if (!keys) return null;
-
-                          return keys
-                            .filter((keyword) => {
-                              return keyword.includes(
-                                negKeywordInput.toUpperCase(),
-                              );
-                            })
-                            .map((keyword, k_index) => {
-                              return (
-                                //Max 50000 keywords per symbol before repeating keys - will never happen
-                                <tr
-                                  key={s_index * 50000 + k_index}
-                                  className="flex flex-row w-full text-white gap-5"
-                                >
-                                  <td className="flex text-start w-24">
-                                    {source}
-                                  </td>
-                                  <td className="flex-1 text-start ">
-                                    {keyword}
-                                  </td>
-                                  <td className="flex justify-end">
-                                    <button
-                                      onClick={() =>
-                                        void removeNegKeyword(keyword, source)
+                                        void removeSymKey.mutateAsync({
+                                          symbol,
+                                          keyword,
+                                        })
                                       }
                                       className="flex font-bold bg-red-500 hover:bg-red-400 rounded-full justify-center px-5"
                                     >

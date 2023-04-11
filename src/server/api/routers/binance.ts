@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
 import { USDMClient, MainClient } from 'binance';
-import { statusObj } from 'utils/const';
+import { statusObj } from '../../../shared/types';
 
 const client = new MainClient({
   api_secret: process.env.BINANCE_SECRET,

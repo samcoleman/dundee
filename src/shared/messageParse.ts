@@ -1,5 +1,5 @@
 import { type settings } from "server/api/routers/settings";
-import { type source, type Message } from "./const";
+import { type source, type Message } from "./types";
 
 const parseSymbolKeywords = (text: string, settings: settings) => {
   const symbols : string[] = [];
