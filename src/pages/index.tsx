@@ -84,8 +84,14 @@ const IndexPage = () => {
   // SETTINGS END
 
   const checkSymbols = api.binance.checkSymbols.useMutation();
-  const checkSymbolStatus = () => {
-    return;
+  const updateSymbols = api.settings.updateSymbols.useMutation();
+  const checkSymbolStatus = async () => {
+    if (!settings) return
+
+    const updatedSymbols = await checkSymbols.mutateAsync(settings.symbols)
+    if (updatedSymbols) {
+      void updateSymbols.mutateAsync(updatedSymbols)
+    }
   };
 
   const [settings, setSettings] = useState<settings | undefined>();

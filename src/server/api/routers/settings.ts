@@ -5,6 +5,7 @@ import {
   type source,
   sourceObj,
   type status,
+  statusObj,
 } from '../../../shared/types';
 import { EventEmitter } from 'stream';
 import { observable } from '@trpc/server/observable';
@@ -147,6 +148,27 @@ export const settingsManager = createTRPCRouter({
   getSettings: publicProcedure.
   mutation(() => {
     return data;
+  }),
+  updateSymbols: publicProcedure
+  // Create zod input for this type  [symbol: string]: {future_id: string; status: status;active: boolean;};
+  .input(
+    z.map(
+      z.string(),
+      z.object({
+        future_id: z.string(),
+        status: z.string().and(z.enum(statusObj)),
+        active: z.boolean(),
+      }),
+    ),
+  )
+  .mutation(({ input }) => {
+    // TODO: SLOW
+    // This is dumb
+    input.forEach((value, key) => {
+      data.symbols.set(key, value);
+    });
+
+    ee.emit('update', data);
   }),
   addSymbol: publicProcedure
     .input(

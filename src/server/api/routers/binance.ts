@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../trpc';
-import { USDMClient, MainClient } from 'binance';
+import { USDMClient } from 'binance';
 import { statusObj } from '../../../shared/types';
 
-const client = new MainClient({
+const client = new USDMClient({
   api_secret: process.env.BINANCE_SECRET,
   api_key: process.env.BINANCE_KEY,
-  baseUrl: "https://testnet.binance.vision"
+  baseUrl: "https://testnet.binancefuture.com"
 });
 
 export const binance = createTRPCRouter({
@@ -59,7 +59,6 @@ export const binance = createTRPCRouter({
           symbol: input.symbol,
           side: input.side,
           type: "MARKET",
-          quoteOrderQty: input.quoteOrderQty,
         });
         return res;
       }catch(e){
