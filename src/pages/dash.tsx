@@ -9,6 +9,8 @@ import OptionPicker from '../components/optionPicker';
 import { checkMessage } from '../shared/messageParse';
 import { settings } from '../server/api/routers/settings';
 
+import ImageCharts from 'image-charts';
+
 const AdvancedRealTimeChart = dynamic(
   () =>
     import('react-ts-tradingview-widgets').then((w) => w.AdvancedRealTimeChart),
@@ -177,10 +179,24 @@ const DashPage = () => {
             const reg = await navigator.serviceWorker.getRegistration();
             if (!reg) return;
 
+        
+            const url = new ImageCharts()
+            .cht('lc')
+            .chd('a:40,60,60,45,47,75,70,72')
+            .chdl("NASDAQ")
+            .chxl("0:|Jan|July|Jan|1|10|20|30")
+            .chxt('x,y')
+            .chs('800x400')
+            .toURL();
+
+            console.log(url)
+
+            console.log(url)
+
             void reg.showNotification(message.title, {
               body: message.body,
               data: message,
-              //image: "http://192.168.0.3:3000/example.png",
+              image: url,
               actions: [
                 //
                 {
