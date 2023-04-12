@@ -6,6 +6,9 @@ import {sourceObj, type Message } from '../../../shared/types';
 import { parseSource, parseSymbols, parseTitle } from '../../../shared/messageParse';
 import fetch from 'node-fetch'
 
+import { loadEnvConfig } from '@next/env'
+loadEnvConfig('./', process.env.NODE_ENV !== 'production')
+
 interface MyEvents {
   message: (data: Message) => void;
 }
@@ -32,7 +35,7 @@ export const treeofalpha = createTRPCRouter({
   }))
   .mutation(async ({input}) => {
     try {
-      const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY as string}`, {
+      const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY}`, {
         method: 'GET',
         headers: {
           contentType: 'image/jpeg',
@@ -50,7 +53,7 @@ export const treeofalpha = createTRPCRouter({
     const res = await fetch('https://news.treeofalpha.com/api/news?limit=500', {
       headers: {
         Cookie:
-          'tree_login_cookie=s%3AkT_W-vPFN1oEgl2LER1tOIICWOxw3Ral.gL6yrs9481uvZA33BP%2FlMheSbgZIX97SialIk%2FhWYMU',
+          `tree_login_cookie=${process.env.TREE_COOKIE}`,
       },
     });
     // Typecheck that the API returns a response we expect

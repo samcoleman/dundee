@@ -9,6 +9,7 @@ import {
 } from '../../../shared/types';
 import { EventEmitter } from 'stream';
 import { observable } from '@trpc/server/observable';
+import { env } from '../../../env/server.mjs';
 
 export type sym = {
   future_id: string;
@@ -62,8 +63,8 @@ let data: settings = {
     symbol: 'NO_MATCH',
 
     actions: {
-      B: 50,
-      S: 50,
+      B_1: 50,
+      S_1: 50,
     },
   },
   dash: {

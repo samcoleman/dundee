@@ -5,10 +5,10 @@ import { GiWillowTree } from 'react-icons/gi';
 import { GoTerminal, GoSearch } from 'react-icons/go';
 import { FiEdit2, FiRefreshCcw } from 'react-icons/fi';
 
-import OptionPicker from 'components/optionPicker';
+import OptionPicker from '../components/optionPicker';
 import { sourceObj, type source } from '../shared/types';
-import { type settings } from 'server/api/routers/settings';
-import AmountEditor from 'components/amountEditor';
+import { type settings } from '../server/api/routers/settings';
+import AmountEditor from '../components/amountEditor';
 
 const IndexPage = () => {
   const [toggles, setToggles] = useState<source[]>([]);
@@ -109,6 +109,7 @@ const IndexPage = () => {
   const getSettings = api.settings.getSettings.useMutation();
   const bStatus = api.binance.status.useMutation();
   useEffect(() => {
+    console.log(process.env.NEXT_PUBLIC_TREE_COOKIE)
     const checkStatus = async () => {
       try {
         await bStatus.mutateAsync();

@@ -3,12 +3,16 @@ import { createTRPCRouter, publicProcedure } from '../trpc';
 import { USDMClient } from 'binance';
 import { statusObj } from '../../../shared/types';
 
+import { loadEnvConfig } from '@next/env'
+loadEnvConfig('./', process.env.NODE_ENV !== 'production')
+
 const client = new USDMClient({
   api_secret: process.env.BINANCE_SECRET,
-  api_key: process.env.BINANCE_KEY,
+  api_key:    process.env.BINANCE_KEY,
   baseUrl: "https://testnet.binancefuture.com"
 });
 
+client.submitNewOrder
 export const binance = createTRPCRouter({
   status: publicProcedure
   .mutation(async () => {

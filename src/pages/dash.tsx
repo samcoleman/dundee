@@ -1,13 +1,13 @@
 import Head from 'next/head';
 import React, { useEffect, useRef, useState } from 'react';
 import { IoIosArrowForward } from 'react-icons/io';
-import { api } from 'utils/api';
+import { api } from '../utils/api';
 import { type parsedMessage, type Message } from '../shared/types';
 
 import dynamic from 'next/dynamic';
-import OptionPicker from 'components/optionPicker';
-import { checkMessage } from 'shared/messageParse';
-import { settings } from 'server/api/routers/settings';
+import OptionPicker from '../components/optionPicker';
+import { checkMessage } from '../shared/messageParse';
+import { settings } from '../server/api/routers/settings';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -97,6 +97,7 @@ const DashPage = () => {
   }, []);
 
   useEffect(() => {
+    console.log(process.env.NEXT_PUBLIC_TREE_COOKIE)
     if (!settings) return;
     if (!treeOfAlphaData) return;
 
