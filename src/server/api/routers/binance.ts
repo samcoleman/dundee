@@ -12,10 +12,12 @@ const client = new USDMClient({
   baseUrl: 'https://testnet.binancefuture.com',
 });
 
-client.submitNewOrder;
 export const binance = createTRPCRouter({
   status: publicProcedure.mutation(async () => {
     return await client.testConnectivity();
+  }),
+  getSymbolInfo: publicProcedure.query(async () => {
+    return (await client.getExchangeInfo()).symbols;
   }),
   checkSymbols: publicProcedure
     .input(
@@ -52,7 +54,7 @@ export const binance = createTRPCRouter({
         symbol: z.string(),
         side: z.string().and(z.enum(['BUY', 'SELL'])),
         type: z.string(),
-        quoteOrderQty: z.number(),
+        quantity: z.number(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -62,13 +64,13 @@ export const binance = createTRPCRouter({
           symbol: input.symbol,
           side: input.side,
           type: 'MARKET',
+          quantity: input.quantity,
         });
         return res;
       } catch (e) {
         console.log(e);
       }
     }),
-
   getSymbolPrice: publicProcedure
     .input(
       z.object({
@@ -117,7 +119,7 @@ export const binance = createTRPCRouter({
         symbol: z.string().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       try {
         const inp = input.symbol ? { symbol: input.symbol } : undefined;
         const res = await client.getPositions(inp);

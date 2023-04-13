@@ -1,5 +1,6 @@
 import React, { PropsWithChildren, useState } from 'react';
 import { FiCheck, FiEdit2, FiX } from 'react-icons/fi';
+import { isNumeric } from '../utils/formatNumber';
 
 // Would be nice with templates
 type amountEditor = PropsWithChildren<{
@@ -22,14 +23,6 @@ const AmountEditor = ({ value, action, onConfirm, children }: amountEditor) => {
   };
 
   const onCheck = () => {
-    function isNumeric(str: string) {
-      if (typeof str != 'string') return false; // we only process strings!
-      return (
-        !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
-        !isNaN(parseFloat(str))
-      ); // ...and ensure strings of whitespace fail
-    }
-
     if (!isNumeric(input)) {
       return;
     }

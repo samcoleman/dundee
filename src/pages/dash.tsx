@@ -10,6 +10,10 @@ import { checkMessage } from '../shared/messageParse';
 import { settings } from '../shared/types';
 
 import ImageCharts from 'image-charts';
+import generateChart from '../utils/generateChart';
+import pushNotification from '../utils/pushNotification';
+import { formatNumber, isNumeric } from '../utils/formatNumber';
+import { FuturesPosition, FuturesSymbolExchangeInfo } from 'binance';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -20,27 +24,93 @@ const AdvancedRealTimeChart = dynamic(
 const DashPage = () => {
   //trpc query for treeofaplha
   const treeLoaded = useRef<boolean>(false);
+  const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
+
   const { data: treeOfAlphaData } = api.tree.getMessages.useQuery(undefined, {
     enabled: !treeLoaded.current,
   });
 
-  const getPriceHistory = api.binance.getPriceHistory.useMutation();
-
-  const order = api.binance.order.useMutation();
-  const makeOrder = async () => {
-    const res = await order.mutateAsync({
-      symbol: 'BTCUSDT',
-      side: 'BUY',
-      type: 'MARKET',
-      quoteOrderQty: 10,
+  // Create a map of symbolInfo
+  const symbolInfoMap = useRef<Map<string, FuturesSymbolExchangeInfo>>(
+    new Map<string, FuturesSymbolExchangeInfo>(),
+  );
+  const { data: symbolInfo } = api.binance.getSymbolInfo.useQuery();
+  useEffect(() => {
+    if (!symbolInfo) return;
+    symbolInfo.forEach((info) => {
+      symbolInfoMap.current.set(info.symbol, info);
     });
-    console.log(res);
+  }, [symbolInfo]);
+
+  // Create a map of symbolInfo
+  const positionsMap = useRef<Map<string, FuturesPosition>>(
+    new Map<string, FuturesPosition>(),
+  );
+  const {data: positions } = api.binance.getPositions.useQuery({});
+  useEffect(() => {
+    if (!positions) return;
+    positions.forEach((pos) => {
+      positionsMap.current.set(pos.symbol, pos);
+    });
+  }, [positions]);
+
+  const getPriceHistory = api.binance.getPriceHistory.useMutation();
+  const order = api.binance.order.useMutation();
+  const price = api.binance.getSymbolPrice.useMutation();
+  const makeOrder = async (
+    side: 'BUY' | 'SELL',
+    symbol: string | undefined,
+    quote_amount: number | undefined,
+  ) => {
+    if (!symbol || !quote_amount) return;
+
+    const symbolInfo = symbolInfoMap.current.get(symbol);
+    if (!symbolInfo || symbolInfo.status !== 'TRADING') return;
+
+    const res_price = await price.mutateAsync({ symbol: symbol });
+    if (!res_price) return;
+
+    let market_price: number | undefined;
+    if (res_price.constructor === Array) {
+      market_price = parseFloat(res_price[0]?.markPrice);
+    } else {
+      market_price = parseFloat(res_price.markPrice);
+    }
+    if (!market_price) return;
+
+    // Round to correct sf
+    const quant =
+      Math.round(
+        (quote_amount / market_price + Number.EPSILON) *
+          Math.pow(10, symbolInfo.quantityPrecision),
+      ) / Math.pow(10, symbolInfo.quantityPrecision);
+    const res_order = await order.mutateAsync({
+      symbol: symbol,
+      side: side,
+      type: 'MARKET',
+      quantity: quant,
+    });
+
+    console.log(res_order);
   };
 
-  const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
+  // proportion is between 0 and 1
+  const closePosition = (symbol: string | undefined, proportion: number) => {
+    if (!symbol || proportion < 0 || proportion > 1) return;
+
+    const symbolInfo = symbolInfoMap.current.get(symbol);
+    if (!symbolInfo || symbolInfo.status !== 'TRADING') return;
+
+    if (proportion === 1) {
+    }
+  };
 
   const [focus, setFocus] = useState<boolean>(false);
   const [useSettingFilter, setUseSettingFilter] = useState<boolean>(true);
+  const [orderAmount, setOrderAmount] = useState<string>('');
+  const updateOrderAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOrderAmount(e.target.value);
+  };
 
   const [pageMessage, setPageMessage] = useState<parsedMessage | undefined>(
     undefined,
@@ -156,89 +226,37 @@ const DashPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
 
-  // Write function called push show local web notification
-  const pushNotification = (message: Message) => {
-    if (!settings) return;
-
-    const filter = checkMessage(message, settings);
-
-    if ('Notification' in window) {
-      Notification.requestPermission()
-        .then(async function (permission) {
-          if (permission === 'granted') {
-            const reg = await navigator.serviceWorker.getRegistration();
-            if (!reg) return;
-
-            const data = await getPriceHistory.mutateAsync({
-              symbol: 'BTCUSDT',
-              startTime: Date.now() - 15 * 1000,
-              endTime: Date.now(),
-              limit: 100,
-            });
-            if (!data) return;
-
-            console.log(data);
-            const prices = data.map((d) => d.p);
-
-            const max = Math.max(...prices);
-            const min = Math.min(...prices);
-            console.log(max);
-
-            const delta = prices[prices.length - 1] - prices[0];
-            const deltaPercent = (delta * 100) / prices[prices.length - 1];
-
-            const url = new ImageCharts()
-              .cht('ls')
-              .chm('B,76A4FB,0,0,0')
-              .chco('76A4FB')
-              .chd('a:' + prices.join(','))
-              .chxr(`0,${min - (max - min) * 0.05},${max}`)
-              .chtt(
-                `BTCUSDT ${prices[prices.length - 1]}: Δ ${delta.toFixed(
-                  2,
-                )} / ${deltaPercent.toFixed(2)}%`,
-              )
-              .chts('ffffff,20,l')
-              .chf('bg,s,10172A')
-              .chdlp('t')
-              .chs('800x400')
-              .toURL();
-
-            console.log(url);
-
-            void reg.showNotification(message.title, {
-              body: message.body,
-              data: message,
-              image: url,
-              actions: [
-                //
-                {
-                  action: 'Buy',
-                  title: 'Buy',
-                  type: 'text',
-                } as NotificationAction,
-                { action: 'Sell', title: 'Sell' },
-              ],
-            });
-          }
-        })
-        .catch((err) => {
-          console.warn('Failed to register Service Worker:\n', err);
-        });
+  const generateNotification = async (
+    message: Message,
+    settings: settings,
+    symbol: string | undefined,
+  ) => {
+    let image_url: string | undefined;
+    if (symbol) {
+      const data = await getPriceHistory.mutateAsync({
+        symbol: symbol,
+        startTime: Date.now() - 60 * 1000,
+        endTime: Date.now(),
+        limit: 100,
+      });
+      image_url = data ? generateChart(data, symbol) : undefined;
     }
+
+    void pushNotification(message, settings, image_url);
   };
 
   // Called when a new message is received
-  const addMessage = (message: Message) => {
+  const addMessage = async (message: Message) => {
     if (!settings) return;
 
     console.log('Server Delta:' + (Date.now() - message.time).toString());
-    void pushNotification(message);
+
     const parsedMessage: parsedMessage = {
       message,
       ...checkMessage(message, settings),
     };
 
+    generateNotification(message, settings, parsedMessage.symbols[0]);
     messageMap.current.set(message._id, parsedMessage);
 
     // Trigger re-render
@@ -275,21 +293,6 @@ const DashPage = () => {
     setChart(widgetChart);
   }, [selectedSymbol]);
 
-  /*
-    <Link href="/" className="flex justify-center h-full aspect-square text-2xl  p-2 items-center rounded-md hover:bg-white/5" >
-                <IoIosArrowBack />
-              </Link>
-  */
-
-  // Code golf shit to convert number to 1K , 1M etc
-  function format(num: number | undefined, dec: number) {
-    if (num === undefined) return;
-    let x = ('' + num).length;
-    const d = Math.pow(10, dec);
-    x -= x % 3;
-    return Math.round((num * d) / Math.pow(10, x)) / d + ' kMGTPE'[x / 3];
-  }
-
   return (
     <>
       <Head>
@@ -298,8 +301,12 @@ const DashPage = () => {
       </Head>
       <button
         onClick={() => {
-          if (!pageMessage) return;
-          void pushNotification(pageMessage?.message);
+          if (!pageMessage || !settings) return;
+          void generateNotification(
+            pageMessage.message,
+            settings,
+            pageMessage.symbols[0],
+          );
         }}
       >
         Notify
@@ -360,34 +367,10 @@ const DashPage = () => {
             </div>
           </div>
           <div
-            className={`w-2/5 flex flex-col justify-between bg-white/5 rounded-md p-5 gap-5 ${
+            className={`w-2/5 flex flex-col bg-white/5 rounded-md p-5 gap-2 ${
               focus ? 'outline' : ''
             }`}
           >
-            <div className="flex flex-row text-lg font-bold gap-5">
-              <button
-                onClick={() => void makeOrder()}
-                className="bg-green-500 hover:bg-green-400 rounded-md w-1/6 aspect-square"
-              >
-                {format(settings?.dash.actions.B_1, 4)}
-              </button>
-              <button className="bg-green-500 hover:bg-green-400 w-1/6 rounded-md aspect-square">
-                {format(settings?.dash.actions.B_2, 4)}
-              </button>
-              <button className="bg-green-500 hover:bg-green-400 w-1/6 rounded-md aspect-square">
-                {format(settings?.dash.actions.B_3, 4)}
-              </button>
-              <button className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square">
-                {format(settings?.dash.actions.S_1, 4)}
-              </button>
-              <button className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square">
-                {format(settings?.dash.actions.S_2, 4)}
-              </button>
-              <button className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square">
-                {format(settings?.dash.actions.S_3, 4)}
-              </button>
-            </div>
-            <div className="h-0.5 bg-white rounded-full" />
             <div className="flex flex-row text-xl font-bold gap-5 items-center">
               <OptionPicker
                 options={settings ? Array.from(settings.symbols.keys()) : []}
@@ -396,28 +379,150 @@ const DashPage = () => {
                 setOption={setSelectedSymbol}
               />
               <input
+                value={orderAmount}
+                onChange={(e) => updateOrderAmount(e)}
                 className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 p-2 text-right"
                 size={1}
               />
-              <button className="flex bg-green-500 hover:bg-green-400 rounded-md text-2xl px-4 p-2">
+              <button
+                onClick={() => {
+                  if (isNumeric(orderAmount)) {
+                    void makeOrder(
+                      'BUY',
+                      selectedSymbol,
+                      parseFloat(orderAmount),
+                    );
+                  }
+                }}
+                className="flex bg-green-500 hover:bg-green-400 rounded-md text-2xl px-4 p-2"
+              >
                 Buy
               </button>
-              <button className="flex bg-red-500   hover:bg-red-400   rounded-md text-2xl px-4 p-2">
+              <button
+                onClick={() => {
+                  if (isNumeric(orderAmount)) {
+                    void makeOrder(
+                      'SELL',
+                      selectedSymbol,
+                      parseFloat(orderAmount),
+                    );
+                  }
+                }}
+                className="flex bg-red-500   hover:bg-red-400   rounded-md text-2xl px-4 p-2"
+              >
                 Sell
               </button>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
-            <div className="flex flex-row gap-5">
-              <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
-                Close 33%
-              </button>
-              <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
-                Close 50%
-              </button>
-              <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
-                Close 100%
-              </button>
-            </div>
+            {selectedSymbol ? (
+              <>
+                <div className="flex flex-row text-lg font-bold gap-5">
+                  <button
+                    onClick={() =>
+                      void makeOrder(
+                        'BUY',
+                        selectedSymbol,
+                        settings?.dash.actions.B_1,
+                      )
+                    }
+                    className="bg-green-500 hover:bg-green-400 rounded-md w-1/6 aspect-square"
+                  >
+                    {formatNumber(settings?.dash.actions.B_1, 4)}
+                  </button>
+                  <button
+                    onClick={() =>
+                      void makeOrder(
+                        'BUY',
+                        selectedSymbol,
+                        settings?.dash.actions.B_2,
+                      )
+                    }
+                    className="bg-green-500 hover:bg-green-400 w-1/6 rounded-md aspect-square"
+                  >
+                    {formatNumber(settings?.dash.actions.B_2, 4)}
+                  </button>
+                  <button
+                    onClick={() =>
+                      void makeOrder(
+                        'BUY',
+                        selectedSymbol,
+                        settings?.dash.actions.B_3,
+                      )
+                    }
+                    className="bg-green-500 hover:bg-green-400 w-1/6 rounded-md aspect-square"
+                  >
+                    {formatNumber(settings?.dash.actions.B_3, 4)}
+                  </button>
+                  <button
+                    onClick={() =>
+                      void makeOrder(
+                        'SELL',
+                        selectedSymbol,
+                        settings?.dash.actions.S_1,
+                      )
+                    }
+                    className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square"
+                  >
+                    {formatNumber(settings?.dash.actions.S_1, 4)}
+                  </button>
+                  <button
+                    onClick={() =>
+                      void makeOrder(
+                        'SELL',
+                        selectedSymbol,
+                        settings?.dash.actions.S_2,
+                      )
+                    }
+                    className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square"
+                  >
+                    {formatNumber(settings?.dash.actions.S_2, 4)}
+                  </button>
+                  <button
+                    onClick={() =>
+                      void makeOrder(
+                        'SELL',
+                        selectedSymbol,
+                        settings?.dash.actions.S_3,
+                      )
+                    }
+                    className="bg-red-500   hover:bg-red-400  w-1/6 rounded-md aspect-square"
+                  >
+                    {formatNumber(settings?.dash.actions.S_3, 4)}
+                  </button>
+                </div>
+                <div className="h-0.5 bg-white rounded-full" />
+
+                <div className="flex flex-row gap-5">
+                  <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
+                    Close 33%
+                  </button>
+                  <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
+                    Close 50%
+                  </button>
+                  <button
+                    onClick={() => void closePosition(selectedSymbol, 1)}
+                    className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold"
+                  >
+                    Close 100%
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+              {[...positionsMap.current.values()]
+                .filter((position) => parseFloat(position.positionAmt) !== 0)
+                .map((position) => {
+                return (
+                  <div className="flex flex-row gap-5">
+                    <p>{position.symbol}</p>
+                    <p>{position.positionSide}</p>
+                    <p>{position.positionAmt}</p>
+                    <p>{position.notional}</p>
+                  </div>
+                )
+              })}
+              </>
+            )}
           </div>
         </div>
         <div className="flex flex-1 flex-row gap-5">
