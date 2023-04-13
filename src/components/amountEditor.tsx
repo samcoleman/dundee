@@ -40,7 +40,7 @@ const AmountEditor = ({ value, action, onConfirm, children }: amountEditor) => {
 
   return (
     <div
-      className={`flex flex-row items-center gap-3 rounded-md px-3 font-bold ${action.includes('B') ? 'bg-green-500' : 'bg-red-500'}`}
+      className={`flex flex-row items-center gap-3 rounded-md px-3 py-2 font-bold ${action.includes('B') ? 'bg-green-500' : 'bg-red-500'}`}
       onMouseLeave={resetEditor}
     >
       {action + ' : '}
@@ -57,13 +57,13 @@ const AmountEditor = ({ value, action, onConfirm, children }: amountEditor) => {
             className="bg-transparent hover:bg-white/5 min-w-0 outline outline-2 outline-offset-[-2px] justify-right rounded-md px-2 text-right text-lg"
           />
           <button
-            className="hover:bg-white rounded-md  p-2"
+            className="hover:bg-white/30 rounded-md  p-2"
             onClick={() => onCheck()}
           >
             <FiCheck />
           </button>
           <button
-            className="hover:bg-white/5 rounded-md  p-2"
+            className="hover:bg-white/30 rounded-md  p-2"
             onClick={resetEditor}
           >
             <FiX />
@@ -73,7 +73,7 @@ const AmountEditor = ({ value, action, onConfirm, children }: amountEditor) => {
         <>
           <p>{value?.toLocaleString()} USDT</p>
           <button
-            className="hover:bg-white/5 rounded-md p-2"
+            className="hover:bg-white/30 rounded-md p-2"
             onClick={() => setEditable(true)}
           >
             <FiEdit2 />
