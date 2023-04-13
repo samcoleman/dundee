@@ -7,7 +7,7 @@ import { type parsedMessage, type Message } from '../shared/types';
 import dynamic from 'next/dynamic';
 import OptionPicker from '../components/optionPicker';
 import { checkMessage } from '../shared/messageParse';
-import { settings } from '../server/api/routers/settings';
+import { settings } from '../shared/types';
 
 import ImageCharts from 'image-charts';
 
@@ -180,7 +180,7 @@ const DashPage = () => {
           if (permission === 'granted') {
             const reg = await navigator.serviceWorker.getRegistration();
             if (!reg) return;
-
+            
             const data = await getPriceHistory.mutateAsync({symbol: "BTCUSDT", startTime: Date.now() - 15 * 1000, endTime: Date.now(), limit: 100})
             if (!data) return
 
