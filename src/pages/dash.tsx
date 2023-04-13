@@ -112,7 +112,7 @@ const DashPage = () => {
       if (!messageMap.current.has(message._id)) {
         messageMap.current.set(message._id, {
           message: message,
-          parser: checkMessage(message, settings),
+          ...checkMessage(message, settings),
         });
       }
     }
@@ -120,7 +120,7 @@ const DashPage = () => {
     updateParsedArray();
     setMessageAndSymbol({
       message: treeOfAlphaData[0],
-      parser: checkMessage(treeOfAlphaData[0], settings),
+      ...checkMessage(treeOfAlphaData[0], settings),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [treeOfAlphaData, settings]);
@@ -137,13 +137,7 @@ const DashPage = () => {
   const setMessageAndSymbol = (parsedMessage: parsedMessage) => {
     if (!settings) return;
 
-    if (parsedMessage.parser.symbols.length > 0) {
-      setSelectedSymbol(parsedMessage.parser.symbols[0]);
-    } else if (parsedMessage.message.symbols.length > 0) {
-      setSelectedSymbol(parsedMessage.message.symbols[0]);
-    } else {
-      setSelectedSymbol(undefined);
-    }
+    setSelectedSymbol(parsedMessage.symbols[0]);
     setPageMessage(parsedMessage);
   };
 
@@ -240,7 +234,7 @@ const DashPage = () => {
 
     const parsedMessage: parsedMessage = {
       message,
-      parser: checkMessage(message, settings),
+      ...checkMessage(message, settings),
     };
 
     messageMap.current.set(parsedMessage.message._id, parsedMessage);
@@ -376,6 +370,7 @@ const DashPage = () => {
             <div className="flex flex-row text-xl font-bold gap-5 items-center">
               <OptionPicker
                 options={settings ? Array.from(settings.symbols.keys()) : []}
+                suggestedOptions={pageMessage?.symbols}
                 selectedOption={selectedSymbol}
                 setOption={setSelectedSymbol}
               />
@@ -439,7 +434,7 @@ const DashPage = () => {
                 <div className="flex flex-row gap-3 text-lg flex-wrap">
                   <div
                     className={`px-3 rounded-md ${
-                      pageMessage.parser.pos_filter
+                      pageMessage.pos_filter
                         ? 'bg-green-500'
                         : 'bg-red-500'
                     }`}
@@ -448,7 +443,7 @@ const DashPage = () => {
                   </div>
                   <div
                     className={`px-3 rounded-md ${
-                      pageMessage.parser.neg_filter
+                      pageMessage.neg_filter
                         ? 'bg-green-500'
                         : 'bg-red-500'
                     }`}
@@ -457,17 +452,9 @@ const DashPage = () => {
                   </div>
 
                   {
-                    // Combine the symbols from the parser and the message & remove duplicates TODO: SLOW
-                    new Set([
-                      ...pageMessage.parser.symbols,
-                      ...pageMessage.message.symbols,
-                    ]).size > 0 ? (
-                      [
-                        ...new Set([
-                          ...pageMessage.parser.symbols,
-                          ...pageMessage.message.symbols,
-                        ]),
-                      ].map((symbol, index) => {
+                    pageMessage.symbols.length > 0
+                    ?
+                    pageMessage.symbols.map((symbol, index) => {
                         return (
                           <button
                             className={`rounded-md hover:bg-white/5 px-3 ${
@@ -482,9 +469,8 @@ const DashPage = () => {
                           </button>
                         );
                       })
-                    ) : (
-                      <p>No Symbols Found</p>
-                    )
+                    : 
+                    <p>No Symbols Found</p>
                   }
                 </div>
                 <div className="h-0.5 bg-white rounded-full" />

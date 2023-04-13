@@ -36,3 +36,6 @@ yarn-error.log*
 *.db
 *.db-journal
 .env
+
+/socket_logs
+/settings

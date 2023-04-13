@@ -30,7 +30,7 @@ export const checkMessage = (message: Message, settings: settings) => {
   }
   
   return {
-    symbols: filterSymbols(symbols, settings),
+    symbols:     filterSymbols(symbols, settings),
     pos_filter:  filter(message.title+message.body, message.source, settings.notifications.pos_filter),
     neg_filter:  !filter(message.title+message.body, message.source, settings.notifications.neg_filter),
   }

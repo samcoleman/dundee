@@ -247,18 +247,7 @@ const IndexPage = () => {
 
               <div className="flex flex-row gap-5">
                 <h1 className="font-bold  w-24">Symbol</h1>
-                <button
-                  onClick={() =>
-                    setSymbolMatch.mutate({ sym_match: 'MATCH_LOOKUP' })
-                  }
-                  className={`hover:bg-white/5 px-3 rounded-md ${
-                    settings?.notifications.symbol === 'MATCH_LOOKUP'
-                      ? ' outline'
-                      : ''
-                  }`}
-                >
-                  KEYWORD FOUND SYMBOL
-                </button>
+              
                 <button
                   onClick={() =>
                     setSymbolMatch.mutate({ sym_match: 'ANY_MATCH' })
