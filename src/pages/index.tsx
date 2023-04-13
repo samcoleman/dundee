@@ -30,22 +30,22 @@ const IndexPage = () => {
 
   const [symbolInput, setSymbolInput] = useState('');
   const symbolUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSymbolInput(e.target.value);
+    setSymbolInput(e.target.value.toUpperCase());
   };
 
   const [keywordInput, setKeywordInput] = useState('');
   const keywordUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeywordInput(e.target.value);
+    setKeywordInput(e.target.value.toUpperCase());
   };
 
   const [posKeyworkInput, setPosKeyworkInput] = useState('');
   const posKeywordUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPosKeyworkInput(e.target.value);
+    setPosKeyworkInput(e.target.value.toUpperCase());
   };
 
   const [negKeywordInput, setNegKeywordInput] = useState('');
   const negKeywordUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNegKeywordInput(e.target.value);
+    setNegKeywordInput(e.target.value.toUpperCase());
   };
 
   const addFeed = api.settings.addSource.useMutation();
@@ -308,7 +308,7 @@ const IndexPage = () => {
                   setOption={setSelectedSourcePos}
                 />
                 <input
-                  value={posKeyworkInput.toUpperCase()}
+                  value={posKeyworkInput}
                   onChange={posKeywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -422,7 +422,7 @@ const IndexPage = () => {
                   setOption={setSelectedSourceNeg}
                 />
                 <input
-                  value={negKeywordInput.toUpperCase()}
+                  value={negKeywordInput}
                   onChange={negKeywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -534,7 +534,7 @@ const IndexPage = () => {
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl" />
                 <input
-                  value={symbolInput.toUpperCase()}
+                  value={symbolInput}
                   onChange={symbolUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -634,7 +634,7 @@ const IndexPage = () => {
                   setOption={setSelectedSymbol}
                 />
                 <input
-                  value={keywordInput.toUpperCase()}
+                  value={keywordInput}
                   onChange={keywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
