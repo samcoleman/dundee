@@ -300,7 +300,7 @@ const IndexPage = () => {
             </div>
 
             <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
-              <div className="flex flex-row  gap-3">
+              <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl " />
                 <OptionPicker
                   options={Array.from(sourceObj)}
@@ -308,7 +308,7 @@ const IndexPage = () => {
                   setOption={setSelectedSourcePos}
                 />
                 <input
-                  value={posKeyworkInput}
+                  value={posKeyworkInput.toUpperCase()}
                   onChange={posKeywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -422,7 +422,7 @@ const IndexPage = () => {
                   setOption={setSelectedSourceNeg}
                 />
                 <input
-                  value={negKeywordInput}
+                  value={negKeywordInput.toUpperCase()}
                   onChange={negKeywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -534,7 +534,7 @@ const IndexPage = () => {
               <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl" />
                 <input
-                  value={symbolInput}
+                  value={symbolInput.toUpperCase()}
                   onChange={symbolUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -626,7 +626,7 @@ const IndexPage = () => {
             </div>
 
             <div className="flex flex-col bg-white/5 rounded-md p-5 gap-5 justify-start">
-              <div className="flex flex-row  gap-3">
+              <div className="flex flex-row items-center gap-3">
                 <GoSearch className="text-2xl " />
                 <OptionPicker
                   options={settings ? Array.from(settings.symbols.keys()) : []}
@@ -634,7 +634,7 @@ const IndexPage = () => {
                   setOption={setSelectedSymbol}
                 />
                 <input
-                  value={keywordInput}
+                  value={keywordInput.toUpperCase()}
                   onChange={keywordUpdate}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
