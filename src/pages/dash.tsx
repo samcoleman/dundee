@@ -19,7 +19,10 @@ const AdvancedRealTimeChart = dynamic(
 
 const DashPage = () => {
   //trpc query for treeofaplha
-  const { data: treeOfAlphaData } = api.tree.getUpdates.useQuery();
+  const treeLoaded = useRef<boolean>(false);
+  const { data: treeOfAlphaData } = api.tree.getMessages.useQuery(undefined, {
+    enabled: !treeLoaded.current,
+  });
 
   const getPriceHistory = api.binance.getPriceHistory.useMutation();
 
@@ -35,7 +38,9 @@ const DashPage = () => {
   };
 
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
+
   const [focus, setFocus] = useState<boolean>(false);
+  const [useSettingFilter, setUseSettingFilter] = useState<boolean>(true);
 
   const [pageMessage, setPageMessage] = useState<parsedMessage | undefined>(
     undefined,
@@ -45,6 +50,11 @@ const DashPage = () => {
   const messageMap = useRef<Map<string, parsedMessage>>(
     new Map<string, parsedMessage>(),
   );
+
+  // Dumb but state doesnt update otherwise
+  const updateParsedMessages = () => {
+    setParsedMessages([...messageMap.current.values()].reverse());
+  };
 
   const [settings, setSettings] = useState<settings | undefined>();
   //subscribe to settings updates
@@ -58,6 +68,31 @@ const DashPage = () => {
     },
   });
 
+  // Load all data
+  useEffect(() => {
+    if (!treeOfAlphaData || !settings || treeLoaded.current) return;
+
+    // iterate over treeofalpha in reverse
+    for (let i = treeOfAlphaData.length - 1; i >= 0; i--) {
+      const message = treeOfAlphaData[i];
+      if (!message) continue;
+
+      const parsedMessage = {
+        message: message,
+        ...checkMessage(message, settings),
+      };
+
+      // Do not overwrite as this call has less data
+      if (!messageMap.current.has(message._id)) {
+        messageMap.current.set(message._id, parsedMessage);
+      }
+    }
+    treeLoaded.current = true;
+
+    updateParsedMessages();
+  }, [treeOfAlphaData, settings]);
+
+  // Load settings and service worker
   const getSettings = api.settings.getSettings.useMutation();
   useEffect(() => {
     getSettings
@@ -100,46 +135,26 @@ const DashPage = () => {
     }
   }, []);
 
+  // On settings change update the map
   useEffect(() => {
-    console.log(process.env.NEXT_PUBLIC_TREE_COOKIE)
     if (!settings) return;
-    if (!treeOfAlphaData) return;
 
-    // This has to be done in reverse to ensure the most recent messages are at the top
-    // Using map entry order to sort -> not great
-    for (let index = treeOfAlphaData.length - 1; index >= 0; index--) {
-      const message: Message = treeOfAlphaData[index];
-      if (!messageMap.current.has(message._id)) {
-        messageMap.current.set(message._id, {
-          message: message,
-          ...checkMessage(message, settings),
-        });
+    let count = 0;
+    messageMap.current.forEach((value, key) => {
+      const newParsedMessage = {
+        message: value.message,
+        ...checkMessage(value.message, settings),
+      };
+      messageMap.current.set(key, newParsedMessage);
+      if (count === messageMap.current.size - 1) {
+        setSelectedSymbol(newParsedMessage.symbols[0]);
+        setPageMessage(newParsedMessage);
       }
-    }
-
-    updateParsedArray();
-    setMessageAndSymbol({
-      message: treeOfAlphaData[0],
-      ...checkMessage(treeOfAlphaData[0], settings),
     });
+
+    updateParsedMessages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [treeOfAlphaData, settings]);
-
-  // Regenerate the array if the map - very inefficient TODO: SLOW
-  const updateParsedArray = () => {
-    if (messageMap.current.size !== parsedMessages.length) {
-      // Due to col-row-reverse auto-scrolling to bottom??? why
-      setParsedMessages(Array.from(messageMap.current.values()).reverse());
-    }
-  };
-
-  // Updates the page to the new message
-  const setMessageAndSymbol = (parsedMessage: parsedMessage) => {
-    if (!settings) return;
-
-    setSelectedSymbol(parsedMessage.symbols[0]);
-    setPageMessage(parsedMessage);
-  };
+  }, [settings]);
 
   // Write function called push show local web notification
   const pushNotification = (message: Message) => {
@@ -147,61 +162,49 @@ const DashPage = () => {
 
     const filter = checkMessage(message, settings);
 
-    // Filter based on sources
-    if (!settings.notifications.sources.includes(message.source)) return;
-
-    // Filter messages based on settings
-    switch (settings.notifications.symbol) {
-      case 'MATCH_LOOKUP':
-        if (filter.symbols.length === 0) return;
-        break;
-      case 'ANY_MATCH':
-        if (filter.symbols.length + message.symbols.length === 0) return;
-        break;
-      case 'NO_MATCH':
-        break;
-      default:
-        break;
-    }
-
-    // Filter messages based on pos/neg filter
-    if (settings.notifications.pass_pos_filter && !filter.pos_filter) return;
-    if (settings.notifications.pass_neg_filter && !filter.neg_filter) return;
-
     if ('Notification' in window) {
       Notification.requestPermission()
         .then(async function (permission) {
           if (permission === 'granted') {
             const reg = await navigator.serviceWorker.getRegistration();
             if (!reg) return;
-            
-            const data = await getPriceHistory.mutateAsync({symbol: "BTCUSDT", startTime: Date.now() - 15 * 1000, endTime: Date.now(), limit: 100})
-            if (!data) return
 
-            console.log(data)
-            const prices = data.map((d) => d.p)
-         
-            const max = Math.max(...prices)
-            const min = Math.min(...prices)
-            console.log(max)
+            const data = await getPriceHistory.mutateAsync({
+              symbol: 'BTCUSDT',
+              startTime: Date.now() - 15 * 1000,
+              endTime: Date.now(),
+              limit: 100,
+            });
+            if (!data) return;
 
-            const delta = prices[prices.length - 1] - prices[0]
-            const deltaPercent = delta * 100 / prices[prices.length - 1] 
+            console.log(data);
+            const prices = data.map((d) => d.p);
+
+            const max = Math.max(...prices);
+            const min = Math.min(...prices);
+            console.log(max);
+
+            const delta = prices[prices.length - 1] - prices[0];
+            const deltaPercent = (delta * 100) / prices[prices.length - 1];
 
             const url = new ImageCharts()
-            .cht('ls')
-            .chm('B,76A4FB,0,0,0')
-            .chco('76A4FB')
-            .chd('a:'+prices.join(','))
-            .chxr(`0,${min-(max-min)*.05},${max}`)
-            .chtt(`BTCUSDT ${prices[prices.length - 1]}: Δ ${delta.toFixed(2)} / ${deltaPercent.toFixed(2)}%`)
-            .chts('ffffff,20,l')
-            .chf('bg,s,10172A')
-            .chdlp('t')
-            .chs('800x400')
-            .toURL();
+              .cht('ls')
+              .chm('B,76A4FB,0,0,0')
+              .chco('76A4FB')
+              .chd('a:' + prices.join(','))
+              .chxr(`0,${min - (max - min) * 0.05},${max}`)
+              .chtt(
+                `BTCUSDT ${prices[prices.length - 1]}: Δ ${delta.toFixed(
+                  2,
+                )} / ${deltaPercent.toFixed(2)}%`,
+              )
+              .chts('ffffff,20,l')
+              .chf('bg,s,10172A')
+              .chdlp('t')
+              .chs('800x400')
+              .toURL();
 
-            console.log(url)
+            console.log(url);
 
             void reg.showNotification(message.title, {
               body: message.body,
@@ -227,21 +230,23 @@ const DashPage = () => {
 
   // Called when a new message is received
   const addMessage = (message: Message) => {
-    console.log('Server Delta:' + (Date.now() - message.time).toString());
-    void pushNotification(message);
-
     if (!settings) return;
 
+    console.log('Server Delta:' + (Date.now() - message.time).toString());
+    void pushNotification(message);
     const parsedMessage: parsedMessage = {
       message,
       ...checkMessage(message, settings),
     };
 
-    messageMap.current.set(parsedMessage.message._id, parsedMessage);
-    updateParsedArray();
+    messageMap.current.set(message._id, parsedMessage);
 
-    if (!focus) {
-      setMessageAndSymbol(parsedMessage);
+    // Trigger re-render
+    updateParsedMessages();
+    if (/*!focus && */ parsedMessage.pass_settings) {
+      // Set focus
+      setPageMessage(parsedMessage);
+      setSelectedSymbol(parsedMessage.symbols[0]);
     }
   };
 
@@ -277,12 +282,12 @@ const DashPage = () => {
   */
 
   // Code golf shit to convert number to 1K , 1M etc
-  function format(num: number | undefined, dec: number){
-    if (num === undefined) return
-    let x=(''+num).length
-    const d = Math.pow(10,dec)
-    x-=x%3
-    return Math.round(num*d/Math.pow(10,x))/d+" kMGTPE"[x/3]
+  function format(num: number | undefined, dec: number) {
+    if (num === undefined) return;
+    let x = ('' + num).length;
+    const d = Math.pow(10, dec);
+    x -= x % 3;
+    return Math.round((num * d) / Math.pow(10, x)) / d + ' kMGTPE'[x / 3];
   }
 
   return (
@@ -303,39 +308,55 @@ const DashPage = () => {
         <div className="flex flex-row gap-5">
           <div
             onMouseEnter={() => setFocus(false)}
-            //onMouseLeave={() => setFocus(true)}
             className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1"
           >
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>
-              <p className="w-1/12">Filters</p>
+              <div className="w-1/12 flex flex-1 flex-row justify-end px-3 items-center gap-2">
+                <input
+                  checked={useSettingFilter}
+                  onClick={() => {
+                    setUseSettingFilter(!useSettingFilter);
+                  }}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded"
+                  type="checkbox"
+                />
+                <p>Filter</p>
+              </div>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
             <div className="flex flex-col overflow-y-auto h-64 clip">
-              {parsedMessages?.map((item, index) => {
-                return (
-                  <button
-                    key={index}
-                    onClick={() => setMessageAndSymbol(item)}
-                    className={`flex text-start flex-row gap-5 py-0.5 my-0.5 rounded-md ${
-                      index % 2 === 0 ? 'bg-white/5' : ''
-                    } ${
-                      pageMessage?.message._id === item.message._id
-                        ? 'outline outline-2 outline-offset-[-2px] outline-blue-500'
-                        : 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
-                    }`}
-                  >
-                    <p className="w-1/12 min-w-max pl-2 overflow-hidden">
-                      {item.message.source?.toUpperCase()}
-                    </p>
-                    <div className="flex-1 overflow-hidden break-all">
-                      <p>{item.message.title}</p>
-                      <p>{item.message.body}</p>
-                    </div>
-                  </button>
-                );
-              })}
+              {parsedMessages
+                .filter((message) => {
+                  return message.pass_settings || !useSettingFilter;
+                })
+                .map((item, index) => {
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setPageMessage(item);
+                        setSelectedSymbol(item.symbols[0]);
+                      }}
+                      className={`flex text-start flex-row gap-5 py-0.5 my-0.5 rounded-md ${
+                        index % 2 === 0 ? 'bg-white/5' : ''
+                      } ${
+                        pageMessage?.message._id === item.message._id
+                          ? 'outline outline-2 outline-offset-[-2px] outline-blue-500'
+                          : 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
+                      }`}
+                    >
+                      <p className="w-1/12 min-w-max pl-2 overflow-hidden">
+                        {item.message.source?.toUpperCase()}
+                      </p>
+                      <div className="flex-1 overflow-hidden break-all">
+                        <p>{item.message.title}</p>
+                        <p>{item.message.body}</p>
+                      </div>
+                    </button>
+                  );
+                })}
             </div>
           </div>
           <div
@@ -422,11 +443,17 @@ const DashPage = () => {
                   href={pageMessage.message.url}
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 rounded-md px-3"
+                  className="flex flex-row justify-between items-center text-lg gap-5 hover:bg-white/5 rounded-md"
                 >
-                  {pageMessage.message.source?.toUpperCase()}
+                  <div
+                    className={`rounded-md px-3 ${
+                      pageMessage.source_filter ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  >
+                    {pageMessage.message.source?.toUpperCase()}
+                  </div>
 
-                  <div className="flex flex-row items-center gap-1">
+                  <div className="flex flex-row items-center gap-1 pr-3">
                     Link <IoIosArrowForward />
                   </div>
                 </a>
@@ -434,44 +461,38 @@ const DashPage = () => {
                 <div className="flex flex-row gap-3 text-lg flex-wrap">
                   <div
                     className={`px-3 rounded-md ${
-                      pageMessage.pos_filter
-                        ? 'bg-green-500'
-                        : 'bg-red-500'
+                      pageMessage.pos_filter ? 'bg-green-500' : 'bg-red-500'
                     }`}
                   >
                     Positive Filter
                   </div>
                   <div
                     className={`px-3 rounded-md ${
-                      pageMessage.neg_filter
-                        ? 'bg-green-500'
-                        : 'bg-red-500'
+                      pageMessage.neg_filter ? 'bg-green-500' : 'bg-red-500'
                     }`}
                   >
                     Negative Filter
                   </div>
 
-                  {
-                    pageMessage.symbols.length > 0
-                    ?
+                  {pageMessage.symbols.length > 0 ? (
                     pageMessage.symbols.map((symbol, index) => {
-                        return (
-                          <button
-                            className={`rounded-md hover:bg-white/5 px-3 ${
-                              symbol === selectedSymbol
-                                ? 'outline outline-2 outline-offset-[-2px outline-white'
-                                : ''
-                            }`}
-                            key={index}
-                            onClick={() => void setSelectedSymbol(symbol)}
-                          >
-                            {symbol}
-                          </button>
-                        );
-                      })
-                    : 
+                      return (
+                        <button
+                          className={`rounded-md hover:bg-white/5 px-3 ${
+                            symbol === selectedSymbol
+                              ? 'outline outline-2 outline-offset-[-2px outline-white'
+                              : ''
+                          }`}
+                          key={index}
+                          onClick={() => void setSelectedSymbol(symbol)}
+                        >
+                          {symbol}
+                        </button>
+                      );
+                    })
+                  ) : (
                     <p>No Symbols Found</p>
-                  }
+                  )}
                 </div>
                 <div className="h-0.5 bg-white rounded-full" />
                 <h1 className="flex text-xl break-all">

@@ -245,9 +245,21 @@ const IndexPage = () => {
                 </button>
               </div>
 
-              <div className="flex flex-row gap-5">
+              <div className="flex flex-row gap-5 items-center">
                 <h1 className="font-bold  w-24">Symbol</h1>
-              
+
+                <button
+                  onClick={() =>
+                    setSymbolMatch.mutate({ sym_match: 'MATCH_LOOKUP' })
+                  }
+                  className={`hover:bg-white/5 px-3 rounded-md ${
+                    settings?.notifications.symbol === 'MATCH_LOOKUP'
+                      ? ' outline'
+                      : ''
+                  }`}
+                >
+                  MATCH SYMBOL LIST
+                </button>
                 <button
                   onClick={() =>
                     setSymbolMatch.mutate({ sym_match: 'ANY_MATCH' })
@@ -273,7 +285,7 @@ const IndexPage = () => {
                   MATCH NOT REQUIRED
                 </button>
               </div>
-              <div className="flex flex-row gap-5 s">
+              <div className="flex flex-row gap-5  items-center">
                 <h1 className="font-bold w-24">Source</h1>
                 {sourceObj.map((source, index) => (
                   <label
@@ -292,7 +304,7 @@ const IndexPage = () => {
                 <div />
               </div>
 
-              <div className="flex flex-row gap-5">
+              <div className="flex flex-row gap-5  items-center">
                 <h1 className="font-bold w-24">Amount</h1>
                 <AmountEditor action='B_1' value={settings?.notifications.actions.B_1} onConfirm={(amount: number) => {setNotificationAction.mutate({key: 'B_1', amount})}}/>
                 <AmountEditor action='S_1' value={settings?.notifications.actions.S_1} onConfirm={(amount: number) => {setNotificationAction.mutate({key: 'S_1', amount})}}/>

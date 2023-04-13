@@ -31,10 +31,7 @@ export type Message = {
 
 export type parsedMessage = {
   message: Message;
-  symbols: string[];
-  pos_filter: boolean;
-  neg_filter: boolean;
-};
+} & ReturnType<typeof checkMessage>;
 
 export type sym = {
   future_id: string;

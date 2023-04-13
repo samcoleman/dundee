@@ -49,7 +49,7 @@ export const treeofalpha = createTRPCRouter({
       return undefined
     }
   }),
-  getUpdates: publicProcedure.query(async (): Promise<Message[]> => {
+  getMessages: publicProcedure.query(async (): Promise<Message[]> => {
     const res = await fetch('https://news.treeofalpha.com/api/news?limit=500', {
       headers: {
         Cookie:

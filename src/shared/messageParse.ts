@@ -1,41 +1,72 @@
-import { type settings } from "./types";
-import { type source, type Message } from "./types";
+import { type settings } from './types';
+import { type source, type Message } from './types';
 
 const parseSymbolKeywords = (text: string, settings: settings) => {
-  const symbols : string[] = [];
+  const symbols: string[] = [];
   settings.symbol_keys.forEach((keywords, symbol) => {
-    if (keywords.some(key => text.toUpperCase().includes(key))) {
-      symbols.push(symbol)
-    }})
-  return symbols
-}
+    if (keywords.some((key) => text.toUpperCase().includes(key))) {
+      symbols.push(symbol);
+    }
+  });
+  return symbols;
+};
 
 const filterSymbols = (symbolText: string[], settings: settings) => {
-  return symbolText.filter(sym => settings.symbols.has(sym))
-}
+  return symbolText.filter((sym) => settings.symbols.has(sym));
+};
 
-const filter = (text: string, source: source, filter: Map<source, string[]>) => {
+const filter = (
+  text: string,
+  source: source,
+  filter: Map<source, string[]>,
+) => {
   const keywords = filter.get(source);
   if (!keywords) {
-    return false
+    return false;
   }
-  return keywords.some(key => text.toUpperCase().includes(key))
-}
-
+  return keywords.some((key) => text.toUpperCase().includes(key));
+};
 
 export const checkMessage = (message: Message, settings: settings) => {
-  let symbols = message.symbols
+  let symbols = message.symbols;
   if (!symbols || symbols.length === 0) {
-    symbols = parseSymbolKeywords(message.title+message.body, settings)
+    symbols = parseSymbolKeywords(message.title + message.body, settings);
   }
-  
-  return {
-    symbols:     filterSymbols(symbols, settings),
-    pos_filter:  filter(message.title+message.body, message.source, settings.notifications.pos_filter),
-    neg_filter:  !filter(message.title+message.body, message.source, settings.notifications.neg_filter),
-  }
-}
 
+  let symbol_filter = true;
+  switch (settings.notifications.symbol) {
+    case 'MATCH_LOOKUP':
+      symbol_filter = filterSymbols(symbols, settings).length > 0;
+      break;
+    case 'ANY_MATCH':
+      symbol_filter = symbols.length > 0;
+      break;
+    case 'NO_MATCH':
+      symbol_filter = true;
+      break;
+  }
+
+  const pos_filter = filter(
+    message.title + message.body,
+    message.source,
+    settings.notifications.pos_filter,
+  );
+  const neg_filter = !filter(
+    message.title + message.body,
+    message.source,
+    settings.notifications.neg_filter,
+  );
+  const source_filter = settings.notifications.sources.includes(message.source);
+
+  return {
+    symbols: symbols,
+    symbol_filtered: filterSymbols(symbols, settings),
+    pos_filter: pos_filter,
+    neg_filter: neg_filter,
+    source_filter: source_filter,
+    pass_settings: symbol_filter && source_filter && (settings.notifications.pass_pos_filter ? pos_filter : true) && (settings.notifications.pass_neg_filter ? neg_filter : true)
+  };
+};
 
 export const parseSymbols = (symbols: string[]) => {
   // Remove all symbols not containing USDT
@@ -43,13 +74,11 @@ export const parseSymbols = (symbols: string[]) => {
     return symbol.indexOf('USDT') > 0;
   });
   // Remove _ from symbol
-  symbols = symbols.map((symbol) =>
-    symbol.replace('_', ''),
-  );
+  symbols = symbols.map((symbol) => symbol.replace('_', ''));
 
   // Remove duplicates
-  return [... new Set(symbols)] as string[]
-}
+  return [...new Set(symbols)] as string[];
+};
 
 export const parseSource = (source: string): source => {
   switch (source.toUpperCase()) {
@@ -58,7 +87,7 @@ export const parseSource = (source: string): source => {
       break;
     case 'UPBIT':
       return 'UPBIT';
-      break
+      break;
     case 'USGOV':
       return 'USGOV';
       break;
@@ -77,11 +106,11 @@ export const parseSource = (source: string): source => {
     case 'TELEGRAM':
       return 'TELEGRAM';
       break;
-    default: 
-      return 'UNKNOWN'
+    default:
+      return 'UNKNOWN';
       break;
   }
-}
+};
 
 export const parseTitle = (title: string) => {
   const titleIndex = title.indexOf(':');
@@ -96,5 +125,5 @@ export const parseTitle = (title: string) => {
   return {
     title: titleText,
     body: bodyText,
-  }
-}
+  };
+};
