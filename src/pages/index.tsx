@@ -7,7 +7,7 @@ import { FiEdit2, FiRefreshCcw } from 'react-icons/fi';
 
 import OptionPicker from '../components/optionPicker';
 import { sourceObj, type source } from '../shared/types';
-import { type settings } from '../server/api/routers/settings';
+import { type settings } from '../shared/types';
 import AmountEditor from '../components/amountEditor';
 
 const IndexPage = () => {
