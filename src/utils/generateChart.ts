@@ -3,10 +3,10 @@ import ImageCharts from "image-charts";
 
 
 const generateChart = (data: AggregateFuturesTrade[], symbol: string) => {
-  const prices = data.map((d) => d.p);
+  const prices = data.map((d) => d.p) as number[];
   const max = Math.max(...prices);
   const min = Math.min(...prices);
-
+  
   const delta = prices[prices.length - 1] - prices[0];
   const deltaPercent = (delta * 100) / prices[prices.length - 1];
 

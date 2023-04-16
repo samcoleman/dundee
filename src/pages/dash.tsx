@@ -13,7 +13,9 @@ import ImageCharts from 'image-charts';
 import generateChart from '../utils/generateChart';
 import pushNotification from '../utils/pushNotification';
 import { formatNumber, isNumeric } from '../utils/formatNumber';
-import { FuturesPosition, FuturesSymbolExchangeInfo } from 'binance';
+import { FuturesPosition, FuturesSymbolExchangeInfo, MarkPrice } from 'binance';
+
+import { RxCross2 } from 'react-icons/rx';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -46,7 +48,8 @@ const DashPage = () => {
   const positionsMap = useRef<Map<string, FuturesPosition>>(
     new Map<string, FuturesPosition>(),
   );
-  const {data: positions } = api.binance.getPositions.useQuery({});
+  const { data: positions, refetch: refetchPositions } =
+    api.binance.getPositions.useQuery({});
   useEffect(() => {
     if (!positions) return;
     positions.forEach((pos) => {
@@ -67,21 +70,27 @@ const DashPage = () => {
     const symbolInfo = symbolInfoMap.current.get(symbol);
     if (!symbolInfo || symbolInfo.status !== 'TRADING') return;
 
-    const res_price = await price.mutateAsync({ symbol: symbol });
-    if (!res_price) return;
+    // ONLY WORKS IF POSITION IS OPEN
+    //const market_price = positionsMap.current.get(symbol)?.markPrice;
+    //if (!market_price) return;
 
-    let market_price: number | undefined;
-    if (res_price.constructor === Array) {
-      market_price = parseFloat(res_price[0]?.markPrice);
+    const market_price = await price.mutateAsync({
+      symbol: symbol,
+    });
+
+    let market: MarkPrice | undefined;
+    if (Array.isArray(market_price)) {
+      market = market_price[0];
     } else {
-      market_price = parseFloat(res_price.markPrice);
+      market = market_price;
     }
-    if (!market_price) return;
 
+    if (!market) return;
+    const mp = parseFloat(market.markPrice as string);
     // Round to correct sf
     const quant =
       Math.round(
-        (quote_amount / market_price + Number.EPSILON) *
+        (quote_amount / mp + Number.EPSILON) *
           Math.pow(10, symbolInfo.quantityPrecision),
       ) / Math.pow(10, symbolInfo.quantityPrecision);
     const res_order = await order.mutateAsync({
@@ -95,14 +104,32 @@ const DashPage = () => {
   };
 
   // proportion is between 0 and 1
-  const closePosition = (symbol: string | undefined, proportion: number) => {
-    if (!symbol || proportion < 0 || proportion > 1) return;
+  const closePosition = async (
+    symbol: string | undefined,
+    proportion: number,
+  ) => {
+    if (!symbol || proportion < 0 || proportion > 1.05) return;
 
     const symbolInfo = symbolInfoMap.current.get(symbol);
     if (!symbolInfo || symbolInfo.status !== 'TRADING') return;
 
-    if (proportion === 1) {
-    }
+    const position_amount = positionsMap.current.get(symbol)?.positionAmt;
+    if (!position_amount) return;
+
+    const pm = parseFloat(position_amount as string);
+
+    const quant =
+      Math.round(pm * proportion * Math.pow(10, symbolInfo.quantityPrecision)) /
+      Math.pow(10, symbolInfo.quantityPrecision);
+
+    const res_order = await order.mutateAsync({
+      symbol: symbol,
+      side: pm > 0 ? 'SELL' : 'BUY',
+      type: 'MARKET',
+      quantity: quant,
+    });
+
+    console.log(res_order);
   };
 
   const [focus, setFocus] = useState<boolean>(false);
@@ -174,6 +201,11 @@ const DashPage = () => {
         console.log(e);
       });
 
+    // Create an inveral of 1s to refetch positions
+    const interval = setInterval(() => {
+      refetchPositions();
+    }, 2000);
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('./sw.js')
@@ -203,6 +235,10 @@ const DashPage = () => {
         console.log(response);
       });
     }
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   // On settings change update the map
@@ -333,7 +369,7 @@ const DashPage = () => {
               </div>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
-            <div className="flex flex-col overflow-y-auto h-64 clip">
+            <div className="flex flex-col overflow-y-auto h-72 clip">
               {parsedMessages
                 .filter((message) => {
                   return message.pass_settings || !useSettingFilter;
@@ -381,7 +417,7 @@ const DashPage = () => {
               <input
                 value={orderAmount}
                 onChange={(e) => updateOrderAmount(e)}
-                className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2 justify-right rounded-md px-5 p-2 text-right"
+                className="flex-1 bg-transparent hover:bg-white/5 min-w-0 outline outline-2  p-1 justify-right rounded-md px-5 text-right"
                 size={1}
               />
               <button
@@ -394,7 +430,7 @@ const DashPage = () => {
                     );
                   }
                 }}
-                className="flex bg-green-500 hover:bg-green-400 rounded-md text-2xl px-4 p-2"
+                className="flex bg-green-500 hover:bg-green-400 rounded-md text-2xl px-4 p-1"
               >
                 Buy
               </button>
@@ -408,14 +444,128 @@ const DashPage = () => {
                     );
                   }
                 }}
-                className="flex bg-red-500   hover:bg-red-400   rounded-md text-2xl px-4 p-2"
+                className="flex bg-red-500   hover:bg-red-400   rounded-md text-2xl px-4  p-1"
               >
                 Sell
               </button>
             </div>
             <div className="h-0.5 bg-white rounded-full" />
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-row text-sm">
+                <div className="w-32 overflow-clip text-end">SYMBOL</div>
+                <div className="w-2 h-full ml-2" />
+                <div className="flex-1 overflow-clip text-end">SIZE</div>
+                <div className="flex-1 overflow-clip text-end">PNL</div>
+                <div className="w-24 overflow-clip text-end">ENTRY PRICE</div>
+                <div className="w-24 overflow-clip text-end">MARK PRICE</div>
+                <div className="w-20 overflow-clip text-end" />
+              </div>
+              <div className="h-0.5 bg-white rounded-full" />
+              <div
+                className={`flex flex-col ${
+                  selectedSymbol ? '' : 'h-52 overflow-y-auto'
+                } gap-1`}
+              >
+                {[...positionsMap.current.values()]
+                  .filter((position) => {
+                    return selectedSymbol
+                      ? position.symbol === selectedSymbol
+                      : position.notional != 0;
+                  })
+                  .sort((a, b) => {
+                    console.log('hello');
+                    return (
+                      Math.abs(b.notional as number) -
+                      Math.abs(a.notional as number)
+                    );
+                  })
+                  .map((position, key, arr) => {
+                    console.log(position);
+                    return arr.length == 0 ? (
+                      <div className="text-center">No active position(s)</div>
+                    ) : (
+                      <button
+                        disabled={selectedSymbol !== undefined}
+                        onClick={() => {
+                          setSelectedSymbol(position.symbol);
+                        }}
+                        className={`flex flex-row text-sm rounded-md ${
+                          !selectedSymbol &&
+                          'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
+                        } ${key % 2 === 0 && !selectedSymbol && 'bg-white/5'}`}
+                      >
+                        <div className="w-32 overflow-clip text-end py-1">
+                          {position.symbol}
+                        </div>
+                        <div
+                          className={`w-2 h-full ml-2 rounded-sm ${
+                            (position.notional as number) < 0
+                              ? 'bg-red-500'
+                              : 'bg-green-500'
+                          }`}
+                        />
+                        <div
+                          className={`flex-1 overflow-clip text-end py-1 ${
+                            (position.notional as number) < 0
+                              ? 'text-red-500'
+                              : 'text-green-500'
+                          }`}
+                        >
+                          {parseFloat(position.notional as string).toFixed(2)}
+                        </div>
+                        <div
+                          className={`flex-1 overflow-clip text-end py-1 ${
+                            (position.unRealizedProfit as number) < 0
+                              ? 'text-red-500'
+                              : 'text-green-500'
+                          }`}
+                        >
+                          {parseFloat(
+                            position.unRealizedProfit as string,
+                          ).toFixed(2)}
+                        </div>
+                        <div className="w-24 overflow-clip text-end py-1">
+                          {parseFloat(position.entryPrice as string).toFixed(
+                            symbolInfoMap.current.get(position.symbol)
+                              ?.quantityPrecision,
+                          )}
+                        </div>
+                        <div className="w-24 overflow-clip text-end py-1">
+                          {parseFloat(position.markPrice as string).toFixed(
+                            symbolInfoMap.current.get(position.symbol)
+                              ?.quantityPrecision,
+                          )}
+                        </div>
+                        <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
+                          {selectedSymbol ? null : (
+                            /*<button
+                              onClick={() => {
+                                setSelectedSymbol(undefined);
+                              }}
+                              className="flex hover:bg-white/5 aspect-square  w-fit h-4 rounded-full justify-center items-center text-4xl"
+                            >
+                              <RxCross2 />
+                            </button>
+                            */
+                            <button
+                              onClick={() => {
+                                closePosition(selectedSymbol, 1);
+                              }}
+                              className="bg-red-500 hover:bg-red-400 py-1 rounded-md px-3"
+                            >
+                              CLOSE
+                            </button>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+
             {selectedSymbol ? (
               <>
+                <div className="h-0.5 bg-white rounded-full" />
                 <div className="flex flex-row text-lg font-bold gap-5">
                   <button
                     onClick={() =>
@@ -493,10 +643,20 @@ const DashPage = () => {
                 <div className="h-0.5 bg-white rounded-full" />
 
                 <div className="flex flex-row gap-5">
-                  <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
+                  <button
+                    onClick={() => {
+                      closePosition(selectedSymbol, 0.33);
+                    }}
+                    className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold"
+                  >
                     Close 33%
                   </button>
-                  <button className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold">
+                  <button
+                    onClick={() => {
+                      closePosition(selectedSymbol, 0.5);
+                    }}
+                    className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold"
+                  >
                     Close 50%
                   </button>
                   <button
@@ -507,22 +667,7 @@ const DashPage = () => {
                   </button>
                 </div>
               </>
-            ) : (
-              <>
-              {[...positionsMap.current.values()]
-                .filter((position) => parseFloat(position.positionAmt) !== 0)
-                .map((position) => {
-                return (
-                  <div className="flex flex-row gap-5">
-                    <p>{position.symbol}</p>
-                    <p>{position.positionSide}</p>
-                    <p>{position.positionAmt}</p>
-                    <p>{position.notional}</p>
-                  </div>
-                )
-              })}
-              </>
-            )}
+            ) : null}
           </div>
         </div>
         <div className="flex flex-1 flex-row gap-5">
