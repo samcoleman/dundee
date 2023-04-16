@@ -455,7 +455,7 @@ const DashPage = () => {
                 <div className="w-32 overflow-clip text-end">SYMBOL</div>
                 <div className="w-2 h-full ml-2" />
                 <div className="flex-1 overflow-clip text-end">SIZE</div>
-                <div className="flex-1 overflow-clip text-end">PNL</div>
+                <div className="flex-1 overflow-clip text-end">(MARK) PNL</div>
                 <div className="w-24 overflow-clip text-end">ENTRY PRICE</div>
                 <div className="w-24 overflow-clip text-end">MARK PRICE</div>
                 <div className="w-20 overflow-clip text-end" />
@@ -473,14 +473,13 @@ const DashPage = () => {
                       : position.notional != 0;
                   })
                   .sort((a, b) => {
-                    console.log('hello');
                     return (
                       Math.abs(b.notional as number) -
                       Math.abs(a.notional as number)
                     );
                   })
                   .map((position, key, arr) => {
-                    console.log(position);
+              
                     return arr.length == 0 ? (
                       <div className="text-center">No active position(s)</div>
                     ) : (
@@ -527,13 +526,15 @@ const DashPage = () => {
                         <div className="w-24 overflow-clip text-end py-1">
                           {parseFloat(position.entryPrice as string).toFixed(
                             symbolInfoMap.current.get(position.symbol)
-                              ?.quantityPrecision,
+                              ?.quantityPrecision || symbolInfoMap.current.get(position.symbol)
+                              ?.quotePrecision ,
                           )}
                         </div>
                         <div className="w-24 overflow-clip text-end py-1">
                           {parseFloat(position.markPrice as string).toFixed(
                             symbolInfoMap.current.get(position.symbol)
-                              ?.quantityPrecision,
+                              ?.quantityPrecision || symbolInfoMap.current.get(position.symbol)
+                              ?.quotePrecision ,
                           )}
                         </div>
                         <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
@@ -549,7 +550,7 @@ const DashPage = () => {
                             */
                             <button
                               onClick={() => {
-                                closePosition(selectedSymbol, 1);
+                                void closePosition(position.symbol, 1);
                               }}
                               className="bg-red-500 hover:bg-red-400 py-1 rounded-md px-3"
                             >
@@ -645,7 +646,7 @@ const DashPage = () => {
                 <div className="flex flex-row gap-5">
                   <button
                     onClick={() => {
-                      closePosition(selectedSymbol, 0.33);
+                      void closePosition(selectedSymbol, 0.33);
                     }}
                     className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold"
                   >
@@ -653,7 +654,7 @@ const DashPage = () => {
                   </button>
                   <button
                     onClick={() => {
-                      closePosition(selectedSymbol, 0.5);
+                      void closePosition(selectedSymbol, 0.5);
                     }}
                     className="flex-1 bg-red-500 justify-center  hover:bg-red-400 rounded-md py-2 text-2xl font-bold"
                   >
