@@ -4,31 +4,49 @@ exports.parseTitle = exports.parseSource = exports.parseSymbols = exports.checkM
 const parseSymbolKeywords = (text, settings) => {
     const symbols = [];
     settings.symbol_keys.forEach((keywords, symbol) => {
-        if (keywords.some(key => text.toUpperCase().includes(key))) {
+        if (keywords.some((key) => text.toUpperCase().includes(key))) {
             symbols.push(symbol);
         }
     });
     return symbols;
 };
 const filterSymbols = (symbolText, settings) => {
-    return symbolText.filter(sym => settings.symbols.has(sym));
+    return symbolText.filter((sym) => settings.symbols.has(sym));
 };
 const filter = (text, source, filter) => {
     const keywords = filter.get(source);
     if (!keywords) {
         return false;
     }
-    return keywords.some(key => text.toUpperCase().includes(key));
+    return keywords.some((key) => text.toUpperCase().includes(key));
 };
 const checkMessage = (message, settings) => {
     let symbols = message.symbols;
     if (!symbols || symbols.length === 0) {
         symbols = parseSymbolKeywords(message.title + message.body, settings);
     }
+    let symbol_filter = true;
+    switch (settings.notifications.symbol) {
+        case 'MATCH_LOOKUP':
+            symbol_filter = filterSymbols(symbols, settings).length > 0;
+            break;
+        case 'ANY_MATCH':
+            symbol_filter = symbols.length > 0;
+            break;
+        case 'NO_MATCH':
+            symbol_filter = true;
+            break;
+    }
+    const pos_filter = filter(message.title + message.body, message.source, settings.notifications.pos_filter);
+    const neg_filter = !filter(message.title + message.body, message.source, settings.notifications.neg_filter);
+    const source_filter = settings.notifications.sources.includes(message.source);
     return {
-        symbols: filterSymbols(symbols, settings),
-        pos_filter: filter(message.title + message.body, message.source, settings.notifications.pos_filter),
-        neg_filter: !filter(message.title + message.body, message.source, settings.notifications.neg_filter),
+        symbols: symbols,
+        symbol_filtered: filterSymbols(symbols, settings),
+        pos_filter: pos_filter,
+        neg_filter: neg_filter,
+        source_filter: source_filter,
+        pass_settings: symbol_filter && source_filter && (settings.notifications.pass_pos_filter ? pos_filter : true) && (settings.notifications.pass_neg_filter ? neg_filter : true)
     };
 };
 exports.checkMessage = checkMessage;

@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@dhaiwat10/react-link-preview': ^1.15.0
+  '@next/env': ^12.0.7
   '@playwright/test': ^1.26.1
   '@prisma/client': ^4.10.1
   '@tanstack/react-query': ^4.18.0
@@ -44,6 +45,7 @@ specifiers:
   react: ^18.2.0
   react-dom: ^18.2.0
   react-icons: ^4.8.0
+  react-notifications-component: ^4.0.1
   react-ts-tradingview-widgets: ^1.0.14
   start-server-and-test: ^1.12.0
   superjson: ^1.7.4
@@ -56,6 +58,7 @@ specifiers:
 
 dependencies:
   '@dhaiwat10/react-link-preview': 1.15.0_biqbaboplfbrettd7655fr4n2y
+  '@next/env': 12.3.4
   '@prisma/client': 4.11.0_prisma@4.11.0
   '@tanstack/react-query': 4.28.0_biqbaboplfbrettd7655fr4n2y
   '@trpc/client': 10.18.0_@trpc+server@10.18.0
@@ -75,6 +78,7 @@ dependencies:
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-icons: 4.8.0_react@18.2.0
+  react-notifications-component: 4.0.1_react@18.2.0
   react-ts-tradingview-widgets: 1.0.14_biqbaboplfbrettd7655fr4n2y
   superjson: 1.12.2
   tls: 0.0.1
@@ -415,6 +419,10 @@ packages:
   /@humanwhocodes/object-schema/1.2.1:
     resolution: {integrity: sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==}
     dev: true
+
+  /@next/env/12.3.4:
+    resolution: {integrity: sha512-H/69Lc5Q02dq3o+dxxy5O/oNxFsZpdL6WREtOOtOM1B/weonIwDXkekr1KV5DPVPr12IHFPrMrcJQ6bgPMfn7A==}
+    dev: false
 
   /@next/env/13.2.4:
     resolution: {integrity: sha512-+Mq3TtpkeeKFZanPturjcXt+KHfKYnLlX6jMLyCrmpq6OOs4i1GqBOAauSkii9QeKCMTYzGppar21JU57b/GEA==}
@@ -3580,6 +3588,14 @@ packages:
     resolution: {integrity: sha512-kN12x4Ud69jbksr2EdhYywAFeW4bPdvFQ9p3ID1OM/QeFjgwFSmSUY2a6P6uOb5ACzWp3ozY8C+7+04KR6+PHA==}
     peerDependencies:
       react: '>=16.8.0'
+    dependencies:
+      react: 18.2.0
+    dev: false
+
+  /react-notifications-component/4.0.1_react@18.2.0:
+    resolution: {integrity: sha512-NRBkWO19AsXmN0b8YQ0L12eoCAhrnmIZtGm77ATWSfQEXPL5PYSyeACpx7tePP+R2De9b0IP4yk9vY4TtzC02w==}
+    peerDependencies:
+      react: ^18.0.1
     dependencies:
       react: 18.2.0
     dev: false

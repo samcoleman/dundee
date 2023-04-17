@@ -10,6 +10,9 @@ const observable_1 = require("@trpc/server/observable");
 const events_1 = __importDefault(require("events"));
 const types_1 = require("../../../shared/types");
 const messageParse_1 = require("../../../shared/messageParse");
+const node_fetch_1 = __importDefault(require("node-fetch"));
+const env_1 = require("@next/env");
+(0, env_1.loadEnvConfig)('./', process.env.NODE_ENV !== 'production');
 class MyEventEmitter extends events_1.default {
 }
 // source: "Blog" / source: "Binance EN" / source: "Upbit" / source: "usGov"
@@ -21,7 +24,7 @@ exports.treeofalpha = (0, trpc_1.createTRPCRouter)({
     }))
         .mutation(async ({ input }) => {
         try {
-            const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY}`, {
+            const response = await (0, node_fetch_1.default)(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY}`, {
                 method: 'GET',
                 headers: {
                     contentType: 'image/jpeg',
@@ -36,10 +39,10 @@ exports.treeofalpha = (0, trpc_1.createTRPCRouter)({
             return undefined;
         }
     }),
-    getUpdates: trpc_1.publicProcedure.query(async () => {
-        const res = await fetch('https://news.treeofalpha.com/api/news?limit=500', {
+    getMessages: trpc_1.publicProcedure.query(async () => {
+        const res = await (0, node_fetch_1.default)('https://news.treeofalpha.com/api/news?limit=500', {
             headers: {
-                Cookie: 'tree_login_cookie=s%3AkT_W-vPFN1oEgl2LER1tOIICWOxw3Ral.gL6yrs9481uvZA33BP%2FlMheSbgZIX97SialIk%2FhWYMU',
+                Cookie: `tree_login_cookie=${process.env.TREE_COOKIE}`,
             },
         });
         // Typecheck that the API returns a response we expect

@@ -5,6 +5,8 @@ const zod_1 = require("zod");
 const trpc_1 = require("../trpc");
 const node_localstorage_1 = require("node-localstorage");
 const types_1 = require("../../../shared/types");
+const stream_1 = require("stream");
+const observable_1 = require("@trpc/server/observable");
 const localstorage = new node_localstorage_1.LocalStorage('./settings');
 let data = {
     notifications: {
@@ -16,8 +18,8 @@ let data = {
         neg_filter: new Map(),
         symbol: 'NO_MATCH',
         actions: {
-            B: 50,
-            S: 50,
+            B_1: 50,
+            S_1: 50,
         },
     },
     dash: {
@@ -55,9 +57,27 @@ function reviver(key, value) {
     return value;
 }
 data = JSON.parse(localstorage.getItem('settings') || JSON.stringify(data, replacer), reviver);
+class MyEventEmitter extends stream_1.EventEmitter {
+}
+const ee = new MyEventEmitter();
 exports.settingsManager = (0, trpc_1.createTRPCRouter)({
-    getSettings: trpc_1.publicProcedure.query(() => {
-        localstorage.setItem('settings', JSON.stringify(data, replacer));
+    onUpdate: trpc_1.publicProcedure.subscription(() => {
+        // return an `observable` with a callback which is triggered immediately
+        return (0, observable_1.observable)((emit) => {
+            const onUpdate = (data) => {
+                localstorage.setItem('settings', JSON.stringify(data, replacer));
+                emit.next(data);
+            };
+            // trigger `onAdd()` when `add` is triggered in our event emitter
+            ee.on('update', onUpdate);
+            // unsubscribe function when client disconnects or stops subscribing
+            return () => {
+                ee.off('update', onUpdate);
+            };
+        });
+    }),
+    getSettings: trpc_1.publicProcedure.
+        mutation(() => {
         return data;
     }),
     updateSymbols: trpc_1.publicProcedure
@@ -68,7 +88,12 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
         active: zod_1.z.boolean(),
     })))
         .mutation(({ input }) => {
-        data.symbols = input;
+        // TODO: SLOW
+        // This is dumb
+        input.forEach((value, key) => {
+            data.symbols.set(key, value);
+        });
+        ee.emit('update', data);
     }),
     addSymbol: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -80,6 +105,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
             status: 'UNKNOWN',
             active: true,
         });
+        ee.emit('update', data);
     }),
     removeSymbol: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -88,6 +114,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
         .mutation(({ input }) => {
         data.symbols.delete(input.symbol.toUpperCase());
         data.symbol_keys.delete(input.symbol.toUpperCase());
+        ee.emit('update', data);
     }),
     addSymbolKey: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -100,11 +127,13 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
             data.symbol_keys.set(input.symbol.toUpperCase(), [
                 input.keyword.toUpperCase(),
             ]);
+            ee.emit('update', data);
             return;
         }
         if (!keys.includes(input.keyword.toUpperCase())) {
             keys.push(input.keyword.toUpperCase());
         }
+        ee.emit('update', data);
     }),
     removeSymbolKey: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -117,6 +146,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
             return;
         }
         data.symbol_keys.set(input.symbol.toUpperCase(), keys.filter((key) => key !== input.keyword.toUpperCase()));
+        ee.emit('update', data);
     }),
     addPosKeyword: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -130,6 +160,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
                 data.notifications.pos_filter.set(input.source, [
                     input.keyword.toUpperCase(),
                 ]);
+                ee.emit('update', data);
                 return;
             }
             if (!pos_filter.includes(input.keyword.toUpperCase())) {
@@ -143,6 +174,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
                 }
             });
         }
+        ee.emit('update', data);
     }),
     removePosKeyword: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -162,6 +194,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
                 data.notifications.pos_filter.set(key, value.filter((key) => key !== input.keyword.toUpperCase()));
             });
         }
+        ee.emit('update', data);
     }),
     addNegKeyword: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -175,6 +208,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
                 data.notifications.neg_filter.set(input.source, [
                     input.keyword.toUpperCase(),
                 ]);
+                ee.emit('update', data);
                 return;
             }
             if (!neg_filter.includes(input.keyword.toUpperCase())) {
@@ -189,6 +223,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
                 }
             });
         }
+        ee.emit('update', data);
     }),
     removeNegKeyword: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -208,6 +243,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
                 data.notifications.neg_filter.set(key, value.filter((key) => key !== input.keyword.toUpperCase()));
             });
         }
+        ee.emit('update', data);
     }),
     addSource: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -217,6 +253,7 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
         if (!data.notifications.sources.includes(input.source)) {
             data.notifications.sources.push(input.source);
         }
+        ee.emit('update', data);
     }),
     removeSource: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -224,14 +261,16 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
     }))
         .mutation(({ input }) => {
         data.notifications.sources = data.notifications.sources.filter((source) => source !== input.source);
+        ee.emit('update', data);
     }),
     setNotificationAction: trpc_1.publicProcedure
         .input(zod_1.z.object({
-        key: zod_1.z.string().and(zod_1.z.enum(['B', 'S'])),
+        key: zod_1.z.string().and(zod_1.z.enum(['B_1', 'S_1'])),
         amount: zod_1.z.number(),
     }))
         .mutation(({ input }) => {
         data.notifications.actions[input.key] = input.amount;
+        ee.emit('update', data);
     }),
     setDashAction: trpc_1.publicProcedure
         .input(zod_1.z.object({
@@ -240,5 +279,30 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
     }))
         .mutation(({ input }) => {
         data.dash.actions[input.key] = input.amount;
+        ee.emit('update', data);
     }),
+    setPosFilter: trpc_1.publicProcedure
+        .input(zod_1.z.object({
+        state: zod_1.z.boolean(),
+    }))
+        .mutation(({ input }) => {
+        data.notifications.pass_pos_filter = input.state;
+        ee.emit('update', data);
+    }),
+    setNegFilter: trpc_1.publicProcedure
+        .input(zod_1.z.object({
+        state: zod_1.z.boolean(),
+    }))
+        .mutation(({ input }) => {
+        data.notifications.pass_neg_filter = input.state;
+        ee.emit('update', data);
+    }),
+    setSymbolMatch: trpc_1.publicProcedure
+        .input(zod_1.z.object({
+        sym_match: zod_1.z.string().and(zod_1.z.enum(['MATCH_LOOKUP', 'ANY_MATCH', 'NO_MATCH'])),
+    }))
+        .mutation(({ input }) => {
+        data.notifications.symbol = input.sym_match;
+        ee.emit('update', data);
+    })
 });

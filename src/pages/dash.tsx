@@ -9,6 +9,7 @@ import OptionPicker from '../components/optionPicker';
 import { checkMessage } from '../shared/messageParse';
 import { settings } from '../shared/types';
 
+
 import ImageCharts from 'image-charts';
 import generateChart from '../utils/generateChart';
 import pushNotification from '../utils/pushNotification';
@@ -16,6 +17,7 @@ import { formatNumber, isNumeric } from '../utils/formatNumber';
 import { FuturesPosition, FuturesSymbolExchangeInfo, MarkPrice } from 'binance';
 
 import { RxCross2 } from 'react-icons/rx';
+import { Store } from 'react-notifications-component';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -65,6 +67,27 @@ const DashPage = () => {
     symbol: string | undefined,
     quote_amount: number | undefined,
   ) => {
+    const id = Store.addNotification({
+      title: 'Making Order',
+      message: `${side} ${quote_amount} USDT ${symbol}`,
+      type: 'info',
+      insert: 'top',
+      container: 'bottom-right',
+      slidingEnter: {
+        duration: 50,
+        timingFunction: 'ease-out',
+        delay: 0,
+      },
+      slidingExit: {
+        duration: 50,
+        timingFunction: 'ease-out',
+        delay: 0,
+      },
+      dismiss: {
+        duration: 0,
+      }
+    })
+
     if (!symbol || !quote_amount) return;
 
     const symbolInfo = symbolInfoMap.current.get(symbol);
@@ -99,6 +122,30 @@ const DashPage = () => {
       type: 'MARKET',
       quantity: quant,
     });
+
+    Store.removeNotification(id);
+    Store.addNotification({
+      title: 'Order Success',
+      message: `${side} ${quote_amount} USDT ${symbol}`,
+      type: 'success',
+      insert: 'top',
+      container: 'bottom-right',
+      slidingEnter: {
+        duration: 50,
+        timingFunction: 'ease-out',
+        delay: 0,
+      },
+      slidingExit: {
+        duration: 50,
+        timingFunction: 'ease-out',
+        delay: 0,
+      },
+      dismiss: {
+        duration: 5000,
+        onScreen: true
+      }
+    })
+    refetchPositions();
 
     console.log(res_order);
   };

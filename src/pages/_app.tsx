@@ -2,12 +2,15 @@ import '../styles/global.css';
 import type { AppType } from 'next/app';
 import { api } from '../utils/api';
 
-const MyApp: AppType = ({
-  Component,
-  pageProps,
-}) => {
+import 'react-notifications-component/dist/theme.css';
+import { ReactNotifications } from 'react-notifications-component';
+
+const MyApp: AppType = ({ Component, pageProps }) => {
   return (
+    <>
+      <ReactNotifications />
       <Component {...pageProps} />
+    </>
   );
 };
 

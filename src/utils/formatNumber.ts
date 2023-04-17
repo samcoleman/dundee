@@ -4,6 +4,7 @@ export function formatNumber(num: number | undefined, dec: number) {
   let x = ('' + num).length;
   const d = Math.pow(10, dec);
   x -= x % 3;
+
   return Math.round((num * d) / Math.pow(10, x)) / d + ' kMGTPE'[x / 3];
 }
 
