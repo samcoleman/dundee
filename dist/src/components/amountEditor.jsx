@@ -26,7 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const react_1 = __importStar(require("react"));
 const fi_1 = require("react-icons/fi");
 const formatNumber_1 = require("../utils/formatNumber");
-const AmountEditor = ({ value, action, onConfirm }) => {
+const AmountEditor = ({ value, action, onConfirm, children }) => {
     const [editable, setEditable] = (0, react_1.useState)(false);
     const [input, setInput] = (0, react_1.useState)('');
     const inputUpdate = (e) => {

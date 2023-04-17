@@ -40,10 +40,10 @@ const tws = new WebSocket(url, {
 });
 
 type log = {
-  [key: string]: {'incoming': any, 'parsed': Message} 
+  [key: string]: {'incoming': unknown, 'parsed': Message} 
 }
 
-const logMessage = (location: string, obj: any, message: Message ) => {
+const logMessage = (location: string, obj: unknown, message: Message ) => {
   const logString  = localstorage.getItem(location)
   const logHistory = logString ? JSON.parse(logString) as log : undefined
 
@@ -69,7 +69,7 @@ const suggestions = z.array(z.object({
     exchange: z.string()
   }))}))
 
-const handleSource = (obj: any) => {
+const handleSource = (obj: unknown) => {
   const sourceMessage = z.object({
     title: z.string(),
     source: z.string(),
@@ -91,7 +91,7 @@ const handleSource = (obj: any) => {
   return message
 };
 
-const handleType = (obj: any) => {
+const handleType = (obj: unknown) => {
   const typeMessage = z.object({
     title: z.string(),
     body: z.string(),
@@ -115,7 +115,7 @@ const handleType = (obj: any) => {
 };
 
 
-const handleUnknown = (obj: any) => {
+const handleUnknown = (obj: unknown) => {
   console.log('Unknown message');
   return obj as Message
 };
@@ -161,7 +161,7 @@ tws.on('close', () => {
   console.log('[TreeOfAlpha] disconnected');
 });
 
-tws.on('error', (err) => {
+tws.on('error', () => {
   // Object
   console.log('[TreeOfAlpha] error');
 });

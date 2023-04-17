@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
 import { GiWillowTree } from 'react-icons/gi';
 import { GoTerminal, GoSearch } from 'react-icons/go';
-import { FiEdit2, FiRefreshCcw } from 'react-icons/fi';
+import { FiRefreshCcw } from 'react-icons/fi';
 
 import OptionPicker from '../components/optionPicker';
 import { sourceObj, type source } from '../shared/types';
@@ -17,12 +17,12 @@ const IndexPage = () => {
   const [poskeyCount, setPoskeyCount] = useState(0);
   const [negkeyCount, setNegkeyCount] = useState(0);
 
-  const [selectedSymbol, setSelectedSymbol] = useState();
+  const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
   const [selectedSourceNeg, setSelectedSourceNeg] = useState<
-    source | undefined
+    string | undefined
   >();
   const [selectedSourcePos, setSelectedSourcePos] = useState<
-    source | undefined
+    string | undefined
   >();
 
   const [socketStatus, setSocketStatus] = useState(true);
@@ -85,11 +85,11 @@ const IndexPage = () => {
   const checkSymbols = api.binance.checkSymbols.useMutation();
   const updateSymbols = api.settings.updateSymbols.useMutation();
   const checkSymbolStatus = async () => {
-    if (!settings) return
+    if (!settings) return;
 
-    const updatedSymbols = await checkSymbols.mutateAsync(settings.symbols)
+    const updatedSymbols = await checkSymbols.mutateAsync(settings.symbols);
     if (updatedSymbols) {
-      void updateSymbols.mutateAsync(updatedSymbols)
+      void updateSymbols.mutateAsync(updatedSymbols);
     }
   };
 
@@ -108,7 +108,7 @@ const IndexPage = () => {
   const getSettings = api.settings.getSettings.useMutation();
   const bStatus = api.binance.status.useMutation();
   useEffect(() => {
-    console.log(process.env.NEXT_PUBLIC_TREE_COOKIE)
+    console.log(process.env.NEXT_PUBLIC_TREE_COOKIE);
     const checkStatus = async () => {
       try {
         await bStatus.mutateAsync();
@@ -195,17 +195,52 @@ const IndexPage = () => {
           </div>
 
           <div className="grid-cols-2 grid gap-5">
-
-          <h1 className="text-2xl font-bold pl-5">Dash Settings</h1>
+            <h1 className="text-2xl font-bold pl-5">Dash Settings</h1>
             <div className="flex flex-col bg-white/5 rounded-md p-5 gap-2 justify-start text-lg col-span-2">
               <div className="flex flex-row gap-5 items-center flex-wrap">
                 <h1 className="font-bold w-24">Amount</h1>
-                <AmountEditor action='B_1' value={settings?.dash.actions.B_1} onConfirm={(amount: number) => {setDashAction.mutate({key: 'B_1', amount})}}/>
-                <AmountEditor action='B_2' value={settings?.dash.actions.B_2} onConfirm={(amount: number) => {setDashAction.mutate({key: 'B_2', amount})}}/>
-                <AmountEditor action='B_3' value={settings?.dash.actions.B_3} onConfirm={(amount: number) => {setDashAction.mutate({key: 'B_3', amount})}}/>
-                <AmountEditor action='S_1' value={settings?.dash.actions.S_1} onConfirm={(amount: number) => {setDashAction.mutate({key: 'S_1', amount})}}/>
-                <AmountEditor action='S_2' value={settings?.dash.actions.S_2} onConfirm={(amount: number) => {setDashAction.mutate({key: 'S_2', amount})}}/>
-                <AmountEditor action='S_3' value={settings?.dash.actions.S_3} onConfirm={(amount: number) => {setDashAction.mutate({key: 'S_3', amount})}}/>
+                <AmountEditor
+                  action="B_1"
+                  value={settings?.dash.actions.B_1}
+                  onConfirm={(amount: number) => {
+                    setDashAction.mutate({ key: 'B_1', amount });
+                  }}
+                />
+                <AmountEditor
+                  action="B_2"
+                  value={settings?.dash.actions.B_2}
+                  onConfirm={(amount: number) => {
+                    setDashAction.mutate({ key: 'B_2', amount });
+                  }}
+                />
+                <AmountEditor
+                  action="B_3"
+                  value={settings?.dash.actions.B_3}
+                  onConfirm={(amount: number) => {
+                    setDashAction.mutate({ key: 'B_3', amount });
+                  }}
+                />
+                <AmountEditor
+                  action="S_1"
+                  value={settings?.dash.actions.S_1}
+                  onConfirm={(amount: number) => {
+                    setDashAction.mutate({ key: 'S_1', amount });
+                  }}
+                />
+                <AmountEditor
+                  action="S_2"
+                  value={settings?.dash.actions.S_2}
+                  onConfirm={(amount: number) => {
+                    setDashAction.mutate({ key: 'S_2', amount });
+                  }}
+                />
+                <AmountEditor
+                  action="S_3"
+                  value={settings?.dash.actions.S_3}
+                  onConfirm={(amount: number) => {
+                    setDashAction.mutate({ key: 'S_3', amount });
+                  }}
+                />
               </div>
             </div>
 
@@ -304,8 +339,20 @@ const IndexPage = () => {
 
               <div className="flex flex-row gap-5  items-center">
                 <h1 className="font-bold w-24">Amount</h1>
-                <AmountEditor action='B_1' value={settings?.notifications.actions.B_1} onConfirm={(amount: number) => {setNotificationAction.mutate({key: 'B_1', amount})}}/>
-                <AmountEditor action='S_1' value={settings?.notifications.actions.S_1} onConfirm={(amount: number) => {setNotificationAction.mutate({key: 'S_1', amount})}}/>
+                <AmountEditor
+                  action="B_1"
+                  value={settings?.notifications.actions.B_1}
+                  onConfirm={(amount: number) => {
+                    setNotificationAction.mutate({ key: 'B_1', amount });
+                  }}
+                />
+                <AmountEditor
+                  action="S_1"
+                  value={settings?.notifications.actions.S_1}
+                  onConfirm={(amount: number) => {
+                    setNotificationAction.mutate({ key: 'S_1', amount });
+                  }}
+                />
               </div>
             </div>
 
@@ -325,11 +372,13 @@ const IndexPage = () => {
                       if (
                         posKeyworkInput === '' ||
                         selectedSourcePos === undefined
-                      )
+                      ) {
                         return;
+                      }
+                      // Impossible to not be source
                       void addPosKey.mutateAsync({
                         keyword: posKeyworkInput,
-                        source: selectedSourcePos,
+                        source: selectedSourcePos as source,
                       });
                       setPosKeyworkInput('');
                     }
@@ -346,7 +395,7 @@ const IndexPage = () => {
                       return;
                     void addPosKey.mutateAsync({
                       keyword: posKeyworkInput,
-                      source: selectedSourcePos,
+                      source: selectedSourcePos as source,
                     });
                     setPosKeyworkInput('');
                   }}
@@ -443,7 +492,7 @@ const IndexPage = () => {
                         return;
                       void addNegKey.mutateAsync({
                         keyword: negKeywordInput,
-                        source: selectedSourceNeg,
+                        source: selectedSourceNeg as source,
                       });
                       setNegKeywordInput('');
                     }
@@ -460,7 +509,7 @@ const IndexPage = () => {
                       return;
                     void addNegKey.mutateAsync({
                       keyword: negKeywordInput,
-                      source: selectedSourceNeg,
+                      source: selectedSourceNeg as source,
                     });
                     setNegKeywordInput('');
                   }}

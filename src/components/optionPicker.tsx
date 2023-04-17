@@ -1,17 +1,20 @@
-import React, { type SetStateAction, useState, PropsWithChildren } from 'react';
+import React, {
+  type SetStateAction,
+  useState,
+  type PropsWithChildren,
+} from 'react';
 import { GoSearch } from 'react-icons/go';
+import { type source } from '../shared/types';
 
 // Would be nice with templates
 type OptionPickerProps = PropsWithChildren<{
   options?: string[];
   suggestedOptions?: string[];
-  selectedOption: any;
-  setOption: (value: SetStateAction<any>) => void;
-}>
+  selectedOption: source | string | undefined;
+  setOption: (value: SetStateAction<source | string | undefined>) => void;
+}>;
 
-const OptionPicker = (
-  props: OptionPickerProps,
-) => {
+const OptionPicker = (props: OptionPickerProps) => {
   const [keywordOptionPopup, setKeywordOptionPopup] = useState(false);
 
   const [keywordOptionInput, setKeywordOptionInput] = useState('');
@@ -24,11 +27,11 @@ const OptionPicker = (
       onMouseEnter={() => setKeywordOptionPopup(true)}
       onMouseLeave={() => {
         setKeywordOptionPopup(false);
-        setKeywordOptionInput('')
+        setKeywordOptionInput('');
       }}
     >
       <button className="px-3 hover:bg-white/5 rounded-md">
-        {props.selectedOption ? props.selectedOption : 'XXXXXX' }
+        {props.selectedOption ? props.selectedOption : 'XXXXXX'}
       </button>
       {keywordOptionPopup ? (
         <div className="absolute h-56 w-72 bg-[#1A2335] outline outline-2 p-3 rounded-md flex flex-col gap-2">
@@ -42,48 +45,39 @@ const OptionPicker = (
             />
           </div>
           <div className="h-0.5 bg-white rounded-full" />
-          {
-            props.suggestedOptions && props.suggestedOptions.length > 0 
-            ? 
-            (
-              <>
-                <div className="flex flex-row flex-wrap text-lg font-normal">
-                  {props.suggestedOptions.map((option, index) => {
-                    return (
-                      <button
-                        className={`hover:bg-white/5 rounded-md px-1 ${
-                          props.selectedOption === option
-                            ? 'outline outline-2 outline-offset-[-2px]'
-                            : ''
-                        }`}
-                        key={index}
-                        onClick={() => {
-                          if (props.selectedOption === option) {
-                            props.setOption(undefined);
-                            return;
-                          }
-                          props.setOption(option);
-                        }}
-                      >
-                        {option}
-                      </button>
-                    )
-                  }
-                  )}
-                </div>
-                <div className="h-0.5 bg-white rounded-full" />
-              </>
-            ) 
-            : 
-            null
-          }
+          {props.suggestedOptions && props.suggestedOptions.length > 0 ? (
+            <>
+              <div className="flex flex-row flex-wrap text-lg font-normal">
+                {props.suggestedOptions.map((option, index) => {
+                  return (
+                    <button
+                      className={`hover:bg-white/5 rounded-md px-1 ${
+                        props.selectedOption === option
+                          ? 'outline outline-2 outline-offset-[-2px]'
+                          : ''
+                      }`}
+                      key={index}
+                      onClick={() => {
+                        if (props.selectedOption === option) {
+                          props.setOption(undefined);
+                          return;
+                        }
+                        props.setOption(option);
+                      }}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="h-0.5 bg-white rounded-full" />
+            </>
+          ) : null}
           <div className="flex flex-row flex-wrap h-full text-lg font-normal overflow-auto justify-start items-start gap-2 bg-grey-light w-full">
             {props.options ? (
               props.options
                 .filter((Option) => {
-                  return Option.includes(
-                    keywordOptionInput.toUpperCase(),
-                  );
+                  return Option.includes(keywordOptionInput.toUpperCase());
                 })
                 .map((Option, index) => {
                   return (

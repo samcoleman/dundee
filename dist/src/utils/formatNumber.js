@@ -5,19 +5,17 @@ exports.isNumeric = exports.formatNumber = void 0;
 function formatNumber(num, dec) {
     if (num === undefined)
         return '';
-    let x = `${num}`.length;
+    let x = ('' + num).length;
     const d = Math.pow(10, dec);
-    x -= (x % 3);
+    x -= x % 3;
     const ending = ' kMGTPE'[x / 3] || "?";
-    return `${(Math.round((num * d) / Math.pow(10, x)) / d)}` + ending;
+    return Math.round((num * d) / Math.pow(10, x)) / d + ending;
 }
 exports.formatNumber = formatNumber;
 function isNumeric(str) {
     if (typeof str != 'string')
         return false; // we only process strings!
-    return (
-    // eslint-disable-next-line 
-    !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    return (!isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
         !isNaN(parseFloat(str))); // ...and ensure strings of whitespace fail
 }
 exports.isNumeric = isNumeric;

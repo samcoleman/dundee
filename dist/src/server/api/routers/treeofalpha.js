@@ -19,9 +19,12 @@ class MyEventEmitter extends events_1.default {
 const ee = new MyEventEmitter();
 exports.treeofalpha = (0, trpc_1.createTRPCRouter)({
     getImageUrl: trpc_1.publicProcedure
-        .mutation(async () => {
+        .input(zod_1.z.object({
+        symbol: zod_1.z.string()
+    }))
+        .mutation(async ({ input }) => {
         try {
-            const response = await (0, node_fetch_1.default)(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY || ""}`, {
+            const response = await (0, node_fetch_1.default)(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY}`, {
                 method: 'GET',
                 headers: {
                     contentType: 'image/jpeg',
@@ -39,7 +42,7 @@ exports.treeofalpha = (0, trpc_1.createTRPCRouter)({
     getMessages: trpc_1.publicProcedure.query(async () => {
         const res = await (0, node_fetch_1.default)('https://news.treeofalpha.com/api/news?limit=250', {
             headers: {
-                Cookie: `tree_login_cookie=${process.env.TREE_COOKIE || ""}`,
+                Cookie: `tree_login_cookie=${process.env.TREE_COOKIE}`,
             },
         });
         // Typecheck that the API returns a response we expect

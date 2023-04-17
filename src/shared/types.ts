@@ -25,8 +25,8 @@ export type Message = {
   time: number;
   _id: string;
   symbols: string[];
-  icon: string | undefined | null;
-  image: string | undefined | null;
+  icon?: string | null;
+  image?: string | null;
 };
 
 export type parsedMessage = {

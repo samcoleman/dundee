@@ -1,7 +1,6 @@
-import ImageCharts from 'image-charts';
+
 import { checkMessage } from '../shared/messageParse';
-import { Message, settings } from '../shared/types';
-import { api } from './api';
+import { type Message, type settings } from '../shared/types';
 import {formatNumber} from './formatNumber';
 
 // Write function called push show local web notification
@@ -40,7 +39,7 @@ const pushNotification = async (
       ],
     } : undefined
 
-    void reg.showNotification(`${symbol ? symbol : "NA"}:${message.title}`, {
+    void reg.showNotification(`${symbol ? symbol+":" : ""}${message.title}`, {
       body: message.body,
       data: message,
       image: image_url,

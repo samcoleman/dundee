@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState } from 'react';
+import React, { type PropsWithChildren, useState } from 'react';
 import { FiCheck, FiEdit2, FiX } from 'react-icons/fi';
 import { isNumeric } from '../utils/formatNumber';
 
@@ -9,7 +9,7 @@ type amountEditor = PropsWithChildren<{
   onConfirm: (amount: number) => void;
 }>;
 
-const AmountEditor = ({ value, action, onConfirm, children }: amountEditor) => {
+const AmountEditor = ({ value, action, onConfirm }: amountEditor) => {
   const [editable, setEditable] = useState(false);
 
   const [input, setInput] = useState('');

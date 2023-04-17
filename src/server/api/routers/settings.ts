@@ -47,7 +47,7 @@ let data: settings = {
   >(),
 };
 
-function replacer(key: any, value: any): any {
+function replacer(key: unknown, value: unknown): unknown {
   if (value instanceof Map) {
     return {
       dataType: 'Map',
@@ -58,12 +58,13 @@ function replacer(key: any, value: any): any {
   }
 }
 
-function reviver(key: any, value: any): any {
+function reviver(key: unknown, value: unknown): unknown {
   if (typeof value === 'object' && value !== null) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (value.dataType === 'Map') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-      return new Map(value.value);
+    if ("dataType" in value && value.dataType === 'Map') {
+      if ("value" in value && Array.isArray(value.value)) {
+        return new Map(value.value);
+      }
     }
   }
   return value;

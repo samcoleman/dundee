@@ -30,12 +30,9 @@ const ee = new MyEventEmitter();
 
 export const treeofalpha = createTRPCRouter({
   getImageUrl: publicProcedure
-  .input(z.object({
-    symbol: z.string()
-  }))
-  .mutation(async ({input}) => {
+  .mutation(async () => {
     try {
-      const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY}`, {
+      const response = await fetch(`https://api.chart-img.com/v1/tradingview/mini-chart?width=500&height=300&key=${process.env.IMAGE_KEY || ""}`, {
         method: 'GET',
         headers: {
           contentType: 'image/jpeg',
@@ -53,7 +50,7 @@ export const treeofalpha = createTRPCRouter({
     const res = await fetch('https://news.treeofalpha.com/api/news?limit=250', {
       headers: {
         Cookie:
-          `tree_login_cookie=${process.env.TREE_COOKIE}`,
+          `tree_login_cookie=${process.env.TREE_COOKIE || ""}`,
       },
     });
     // Typecheck that the API returns a response we expect

@@ -160,7 +160,7 @@ tws.on('close', () => {
     // Object
     console.log('[TreeOfAlpha] disconnected');
 });
-tws.on('error', () => {
+tws.on('error', (err) => {
     // Object
     console.log('[TreeOfAlpha] error');
 });

@@ -49,10 +49,9 @@ function replacer(key, value) {
 function reviver(key, value) {
     if (typeof value === 'object' && value !== null) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if ("dataType" in value && value.dataType === 'Map') {
-            if ("value" in value && Array.isArray(value.value)) {
-                return new Map(value.value);
-            }
+        if (value.dataType === 'Map') {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+            return new Map(value.value);
         }
     }
     return value;

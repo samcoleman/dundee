@@ -69,11 +69,12 @@ const DashPage = () => {
     const getPriceHistory = api_1.api.binance.getPriceHistory.useMutation();
     const order = api_1.api.binance.order.useMutation();
     const price = api_1.api.binance.getSymbolPrice.useMutation();
+    const [orderError, setOrderError] = (0, react_1.useState)(undefined);
     const makeOrder = async (side, symbol, quote_amount) => {
         var _a;
         const id = react_notifications_component_1.Store.addNotification({
             title: 'Placing Order',
-            message: `${side} ${quote_amount || ''} USDT ${symbol || ''}`,
+            message: `${side} ${quote_amount} USDT ${symbol}`,
             type: 'info',
             insert: 'top',
             container: 'bottom-right',
@@ -89,7 +90,7 @@ const DashPage = () => {
             },
             dismiss: {
                 duration: 10000,
-            },
+            }
         });
         try {
             if (!symbol) {
@@ -121,11 +122,12 @@ const DashPage = () => {
             if (!market) {
                 throw new Error('Could not find market_price to calc quantity');
             }
+            ;
             const mp = parseFloat(market);
             // Round to correct sf
             const quant = Math.round((quote_amount / mp + Number.EPSILON) *
                 Math.pow(10, symbolInfo.quantityPrecision)) / Math.pow(10, symbolInfo.quantityPrecision);
-            await order.mutateAsync({
+            const res_order = await order.mutateAsync({
                 symbol: symbol,
                 side: side,
                 quantity: quant,
@@ -149,20 +151,20 @@ const DashPage = () => {
                 },
                 dismiss: {
                     duration: 5000,
-                    onScreen: true,
-                },
+                    onScreen: true
+                }
             });
-            void refetchPositions();
+            refetchPositions();
         }
         catch (e) {
             react_notifications_component_1.Store.removeNotification(id);
-            let message = 'UNKNOWN_ERROR';
+            let message = "UNKNOWN_ERROR";
             if (e instanceof Error) {
                 message = e.message;
             }
             react_notifications_component_1.Store.addNotification({
                 title: 'New Order Failure',
-                message: `${side} ${quote_amount || ''} USDT ${symbol || ''}: ${message}`,
+                message: `${side} ${quote_amount} USDT ${symbol}: ${message}`,
                 type: 'danger',
                 insert: 'top',
                 container: 'bottom-right',
@@ -178,8 +180,8 @@ const DashPage = () => {
                 },
                 dismiss: {
                     duration: 10000,
-                    onScreen: true,
-                },
+                    onScreen: true
+                }
             });
         }
     };
@@ -188,10 +190,7 @@ const DashPage = () => {
         var _a;
         const id = react_notifications_component_1.Store.addNotification({
             title: 'Closing Position',
-            message: `Close ${proportion.toLocaleString(undefined, {
-                style: 'percent',
-                minimumFractionDigits: 0,
-            })} ${symbol || ''}`,
+            message: `Close ${proportion.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 0 })} ${symbol}`,
             type: 'info',
             insert: 'top',
             container: 'bottom-right',
@@ -207,7 +206,7 @@ const DashPage = () => {
             },
             dismiss: {
                 duration: 10000,
-            },
+            }
         });
         try {
             if (!symbol) {
@@ -224,9 +223,11 @@ const DashPage = () => {
             if (!position_amount) {
                 throw new Error('Could not find postion');
             }
+            ;
             const pm = parseFloat(position_amount);
-            const quant = Math.round(pm * proportion * Math.pow(10, symbolInfo.quantityPrecision)) / Math.pow(10, symbolInfo.quantityPrecision);
-            await order.mutateAsync({
+            const quant = Math.round(pm * proportion * Math.pow(10, symbolInfo.quantityPrecision)) /
+                Math.pow(10, symbolInfo.quantityPrecision);
+            const res_order = await order.mutateAsync({
                 symbol: symbol,
                 side: pm > 0 ? 'SELL' : 'BUY',
                 quantity: quant,
@@ -234,10 +235,7 @@ const DashPage = () => {
             react_notifications_component_1.Store.removeNotification(id);
             react_notifications_component_1.Store.addNotification({
                 title: 'Close Position Placed',
-                message: `Close ${proportion.toLocaleString(undefined, {
-                    style: 'percent',
-                    minimumFractionDigits: 0,
-                })} ${symbol}`,
+                message: `Close ${proportion.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 0 })} ${symbol}`,
                 type: 'success',
                 insert: 'top',
                 container: 'bottom-right',
@@ -253,23 +251,20 @@ const DashPage = () => {
                 },
                 dismiss: {
                     duration: 5000,
-                    onScreen: true,
-                },
+                    onScreen: true
+                }
             });
-            void refetchPositions();
+            refetchPositions();
         }
         catch (e) {
             react_notifications_component_1.Store.removeNotification(id);
-            let message = 'UNKNOWN_ERROR';
+            let message = "UNKNOWN_ERROR";
             if (e instanceof Error) {
                 message = e.message;
             }
             react_notifications_component_1.Store.addNotification({
                 title: 'Close Position Failure',
-                message: `Close ${proportion.toLocaleString(undefined, {
-                    style: 'percent',
-                    minimumFractionDigits: 0,
-                })} ${symbol || ''}: ${message}`,
+                message: `Close ${proportion.toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 0 })} ${symbol}: ${message}`,
                 type: 'danger',
                 insert: 'top',
                 container: 'bottom-right',
@@ -285,8 +280,8 @@ const DashPage = () => {
                 },
                 dismiss: {
                     duration: 10000,
-                    onScreen: true,
-                },
+                    onScreen: true
+                }
             });
         }
     };
@@ -348,7 +343,7 @@ const DashPage = () => {
         });
         // Create an inveral of 1s to refetch positions
         const interval = setInterval(() => {
-            void refetchPositions();
+            refetchPositions();
         }, 2000);
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker
@@ -370,7 +365,6 @@ const DashPage = () => {
         return () => {
             clearInterval(interval);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // On settings change update the map
     (0, react_1.useEffect)(() => {
@@ -387,7 +381,6 @@ const DashPage = () => {
                 setSelectedSymbol(newParsedMessage.symbols[0]);
                 setPageMessage(newParsedMessage);
             }
-            count++;
         });
         updateParsedMessages();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -401,12 +394,12 @@ const DashPage = () => {
                 endTime: Date.now(),
                 limit: 100,
             });
-            image_url = data ? (0, generateChart_1.default)(data) : undefined;
+            image_url = data ? (0, generateChart_1.default)(data, symbol) : undefined;
         }
         void (0, pushNotification_1.default)(message, settings, symbol, image_url);
     };
     // Called when a new message is received
-    const addMessage = (message) => {
+    const addMessage = async (message) => {
         if (!settings)
             return;
         console.log('Server Delta:' + (Date.now() - message.time).toString());
@@ -420,7 +413,7 @@ const DashPage = () => {
         // If message doesnt pass settings do nothing
         if (!parsedMessage.pass_settings)
             return;
-        void generateNotification(message, settings, parsedMessage.symbols[0]);
+        generateNotification(message, settings, parsedMessage.symbols[0]);
         // If we are already focused on a sell page do nothing
         if (focus)
             return;
@@ -439,7 +432,7 @@ const DashPage = () => {
     // Weird but stops the chart from re-rendering on ANY state change
     const [advancedRealtimeChart, setChart] = (0, react_1.useState)();
     (0, react_1.useEffect)(() => {
-        const widgetChart = (<AdvancedRealTimeChart symbol={selectedSymbol === null || selectedSymbol === void 0 ? void 0 : selectedSymbol.replace('1000', '')} theme="dark" autosize={true}/>);
+        const widgetChart = (<AdvancedRealTimeChart symbol={selectedSymbol === null || selectedSymbol === void 0 ? void 0 : selectedSymbol.replace("1000", "")} theme="dark" autosize={true}/>);
         setChart(widgetChart);
     }, [selectedSymbol]);
     return (<>
@@ -538,9 +531,8 @@ const DashPage = () => {
             var _a, _b, _c, _d;
             return arr.length == 0 ? (<div className="text-center">No active position(s)</div>) : (<button disabled={selectedSymbol !== undefined} onClick={() => {
                     setSelectedSymbol(position.symbol);
-                }} className={`flex flex-row text-sm rounded-md ${!selectedSymbol
-                    ? 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
-                    : ''} ${key % 2 === 0 && !selectedSymbol ? 'bg-white/5' : ''}`}>
+                }} className={`flex flex-row text-sm rounded-md ${!selectedSymbol &&
+                    'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'} ${key % 2 === 0 && !selectedSymbol && 'bg-white/5'}`}>
                         <div className="w-28 overflow-clip text-end py-1">
                           {position.symbol}
                         </div>
@@ -558,12 +550,10 @@ const DashPage = () => {
                           {parseFloat(position.unRealizedProfit).toFixed(2)}
                         </div>
                         <div className="w-24 overflow-clip text-end py-1">
-                          {parseFloat(position.entryPrice).toFixed(((_a = symbolInfoMap.current.get(position.symbol)) === null || _a === void 0 ? void 0 : _a.quantityPrecision) ||
-                    ((_b = symbolInfoMap.current.get(position.symbol)) === null || _b === void 0 ? void 0 : _b.quotePrecision))}
+                          {parseFloat(position.entryPrice).toFixed(((_a = symbolInfoMap.current.get(position.symbol)) === null || _a === void 0 ? void 0 : _a.quantityPrecision) || ((_b = symbolInfoMap.current.get(position.symbol)) === null || _b === void 0 ? void 0 : _b.quotePrecision))}
                         </div>
                         <div className="w-24 overflow-clip text-end py-1">
-                          {parseFloat(position.markPrice).toFixed(((_c = symbolInfoMap.current.get(position.symbol)) === null || _c === void 0 ? void 0 : _c.quantityPrecision) ||
-                    ((_d = symbolInfoMap.current.get(position.symbol)) === null || _d === void 0 ? void 0 : _d.quotePrecision))}
+                          {parseFloat(position.markPrice).toFixed(((_c = symbolInfoMap.current.get(position.symbol)) === null || _c === void 0 ? void 0 : _c.quantityPrecision) || ((_d = symbolInfoMap.current.get(position.symbol)) === null || _d === void 0 ? void 0 : _d.quotePrecision))}
                         </div>
                         <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
                           {selectedSymbol ? null : (

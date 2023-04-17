@@ -7,18 +7,18 @@ import { type parsedMessage, type Message } from '../shared/types';
 import dynamic from 'next/dynamic';
 import OptionPicker from '../components/optionPicker';
 import { checkMessage } from '../shared/messageParse';
-import { settings } from '../shared/types';
+import { type settings } from '../shared/types';
 
-
-import ImageCharts from 'image-charts';
 import generateChart from '../utils/generateChart';
 import pushNotification from '../utils/pushNotification';
 import { formatNumber, isNumeric } from '../utils/formatNumber';
-import { FuturesPosition, FuturesSymbolExchangeInfo, MarkPrice, numberInString } from 'binance';
+import {
+  type FuturesPosition,
+  type FuturesSymbolExchangeInfo,
+  type numberInString,
+} from 'binance';
 
-import { RxCross2 } from 'react-icons/rx';
 import { Store } from 'react-notifications-component';
-import { TRPCError } from '@trpc/server';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -65,7 +65,6 @@ const DashPage = () => {
   const order = api.binance.order.useMutation();
   const price = api.binance.getSymbolPrice.useMutation();
 
-  const [orderError, setOrderError] = useState<{body: string} | undefined>(undefined);
   const makeOrder = async (
     side: 'BUY' | 'SELL',
     symbol: string | undefined,
@@ -73,7 +72,7 @@ const DashPage = () => {
   ) => {
     const id = Store.addNotification({
       title: 'Placing Order',
-      message: `${side} ${quote_amount} USDT ${symbol}`,
+      message: `${side} ${quote_amount || ''} USDT ${symbol || ''}`,
       type: 'info',
       insert: 'top',
       container: 'bottom-right',
@@ -89,36 +88,45 @@ const DashPage = () => {
       },
       dismiss: {
         duration: 10000,
-      }
-    })
+      },
+    });
 
     try {
-      if (!symbol) {throw new Error('Symbol Undefined')}
-      if (!quote_amount) {throw new Error('Quote Amount Undefined')}
+      if (!symbol) {
+        throw new Error('Symbol Undefined');
+      }
+      if (!quote_amount) {
+        throw new Error('Quote Amount Undefined');
+      }
 
       const symbolInfo = symbolInfoMap.current.get(symbol);
-      if (!symbolInfo || symbolInfo.status !== 'TRADING') {throw new Error('Symbol not trading')}
-  
+      if (!symbolInfo || symbolInfo.status !== 'TRADING') {
+        throw new Error('Symbol not trading');
+      }
+
       // ONLY WORKS IF POSITION IS OPEN
       // const market_price = positionsMap.current.get(symbol)?.markPrice;
       // if (!market_price) return;
 
-      let market : numberInString | undefined = positionsMap.current.get(symbol)?.markPrice;
+      let market: numberInString | undefined =
+        positionsMap.current.get(symbol)?.markPrice;
 
-      if(!market || market == 0){
+      // If current price isnt stored in positions, get it from api
+      if (!market || market == 0) {
         const market_price = await price.mutateAsync({
           symbol: symbol,
         });
 
         if (Array.isArray(market_price)) {
-          throw new Error('Multiple Mark Prices Returned')
+          throw new Error('Multiple Mark Prices Returned');
         } else {
-          market = market_price.markPrice
+          market = market_price.markPrice;
         }
-
       }
 
-      if (!market) {throw new Error('Could not find market_price to calc quantity')};
+      if (!market) {
+        throw new Error('Could not find market_price to calc quantity');
+      }
 
       const mp = parseFloat(market as string);
       // Round to correct sf
@@ -128,14 +136,11 @@ const DashPage = () => {
             Math.pow(10, symbolInfo.quantityPrecision),
         ) / Math.pow(10, symbolInfo.quantityPrecision);
 
-
-
-      const res_order = await order.mutateAsync({
+      await order.mutateAsync({
         symbol: symbol,
         side: side,
         quantity: quant,
       });
-     
 
       Store.removeNotification(id);
       Store.addNotification({
@@ -156,22 +161,24 @@ const DashPage = () => {
         },
         dismiss: {
           duration: 5000,
-          onScreen: true
-        }
-      })
-      
-      refetchPositions();
-    }catch (e){
+          onScreen: true,
+        },
+      });
+
+      void refetchPositions();
+    } catch (e) {
       Store.removeNotification(id);
-      let message = "UNKNOWN_ERROR"
-      if (e instanceof Error){
-        message = e.message
+      let message = 'UNKNOWN_ERROR';
+      if (e instanceof Error) {
+        message = e.message;
       }
-      
+
       Store.addNotification({
         title: 'New Order Failure',
-        message: `${side} ${quote_amount} USDT ${symbol}: ${message}`,
-        type:'danger',
+        message: `${side} ${quote_amount || ''} USDT ${
+          symbol || ''
+        }: ${message}`,
+        type: 'danger',
         insert: 'top',
         container: 'bottom-right',
         slidingEnter: {
@@ -186,9 +193,9 @@ const DashPage = () => {
         },
         dismiss: {
           duration: 10000,
-          onScreen: true
-        }
-      })
+          onScreen: true,
+        },
+      });
     }
   };
 
@@ -199,7 +206,10 @@ const DashPage = () => {
   ) => {
     const id = Store.addNotification({
       title: 'Closing Position',
-      message: `Close ${proportion.toLocaleString(undefined,{style: 'percent', minimumFractionDigits:0})} ${symbol}`,
+      message: `Close ${proportion.toLocaleString(undefined, {
+        style: 'percent',
+        minimumFractionDigits: 0,
+      })} ${symbol || ''}`,
       type: 'info',
       insert: 'top',
       container: 'bottom-right',
@@ -215,26 +225,35 @@ const DashPage = () => {
       },
       dismiss: {
         duration: 10000,
-      }
-    })
+      },
+    });
 
-    try{
-      if (!symbol) {throw new Error('Symbol Undefined')}
-      if (proportion < 0 || proportion > 1.05) {throw new Error('Proportion out of range')}
+    try {
+      if (!symbol) {
+        throw new Error('Symbol Undefined');
+      }
+      if (proportion < 0 || proportion > 1.05) {
+        throw new Error('Proportion out of range');
+      }
 
       const symbolInfo = symbolInfoMap.current.get(symbol);
-      if (!symbolInfo || symbolInfo.status !== 'TRADING') {throw new Error('Symbol not trading')}
+      if (!symbolInfo || symbolInfo.status !== 'TRADING') {
+        throw new Error('Symbol not trading');
+      }
 
       const position_amount = positionsMap.current.get(symbol)?.positionAmt;
-      if (!position_amount) {throw new Error('Could not find postion')};
+      if (!position_amount) {
+        throw new Error('Could not find postion');
+      }
 
       const pm = parseFloat(position_amount as string);
 
       const quant =
-        Math.round(pm * proportion * Math.pow(10, symbolInfo.quantityPrecision)) /
-        Math.pow(10, symbolInfo.quantityPrecision);
+        Math.round(
+          pm * proportion * Math.pow(10, symbolInfo.quantityPrecision),
+        ) / Math.pow(10, symbolInfo.quantityPrecision);
 
-      const res_order = await order.mutateAsync({
+      await order.mutateAsync({
         symbol: symbol,
         side: pm > 0 ? 'SELL' : 'BUY',
         quantity: quant,
@@ -243,7 +262,10 @@ const DashPage = () => {
       Store.removeNotification(id);
       Store.addNotification({
         title: 'Close Position Placed',
-        message: `Close ${proportion.toLocaleString(undefined,{style: 'percent', minimumFractionDigits:0})} ${symbol}`,
+        message: `Close ${proportion.toLocaleString(undefined, {
+          style: 'percent',
+          minimumFractionDigits: 0,
+        })} ${symbol}`,
         type: 'success',
         insert: 'top',
         container: 'bottom-right',
@@ -259,22 +281,24 @@ const DashPage = () => {
         },
         dismiss: {
           duration: 5000,
-          onScreen: true
-        }
-      })
-      refetchPositions();
-
-    }catch (e){
+          onScreen: true,
+        },
+      });
+      void refetchPositions();
+    } catch (e) {
       Store.removeNotification(id);
-      let message = "UNKNOWN_ERROR"
-      if (e instanceof Error){
-        message = e.message
+      let message = 'UNKNOWN_ERROR';
+      if (e instanceof Error) {
+        message = e.message;
       }
-      
+
       Store.addNotification({
         title: 'Close Position Failure',
-        message: `Close ${proportion.toLocaleString(undefined,{style: 'percent', minimumFractionDigits:0})} ${symbol}: ${message}`,
-        type:'danger',
+        message: `Close ${proportion.toLocaleString(undefined, {
+          style: 'percent',
+          minimumFractionDigits: 0,
+        })} ${symbol || ''}: ${message}`,
+        type: 'danger',
         insert: 'top',
         container: 'bottom-right',
         slidingEnter: {
@@ -289,9 +313,9 @@ const DashPage = () => {
         },
         dismiss: {
           duration: 10000,
-          onScreen: true
-        }
-      })
+          onScreen: true,
+        },
+      });
     }
   };
 
@@ -366,7 +390,7 @@ const DashPage = () => {
 
     // Create an inveral of 1s to refetch positions
     const interval = setInterval(() => {
-      refetchPositions();
+      void refetchPositions();
     }, 2000);
 
     if ('serviceWorker' in navigator) {
@@ -402,6 +426,7 @@ const DashPage = () => {
     return () => {
       clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // On settings change update the map
@@ -419,6 +444,7 @@ const DashPage = () => {
         setSelectedSymbol(newParsedMessage.symbols[0]);
         setPageMessage(newParsedMessage);
       }
+      count++;
     });
 
     updateParsedMessages();
@@ -438,14 +464,14 @@ const DashPage = () => {
         endTime: Date.now(),
         limit: 100,
       });
-      image_url = data ? generateChart(data, symbol) : undefined;
+      image_url = data ? generateChart(data) : undefined;
     }
 
     void pushNotification(message, settings, symbol, image_url);
   };
 
   // Called when a new message is received
-  const addMessage = async (message: Message) => {
+  const addMessage = (message: Message) => {
     if (!settings) return;
 
     console.log('Server Delta:' + (Date.now() - message.time).toString());
@@ -455,18 +481,17 @@ const DashPage = () => {
       ...checkMessage(message, settings),
     };
 
-
     // Trigger re-render
     messageMap.current.set(message._id, parsedMessage);
     updateParsedMessages();
 
     // If message doesnt pass settings do nothing
-    if (!parsedMessage.pass_settings) return 
+    if (!parsedMessage.pass_settings) return;
 
-    generateNotification(message, settings, parsedMessage.symbols[0]);
+    void generateNotification(message, settings, parsedMessage.symbols[0]);
 
     // If we are already focused on a sell page do nothing
-    if (focus) return
+    if (focus) return;
 
     setPageMessage(parsedMessage);
     setSelectedSymbol(parsedMessage.symbols[0]);
@@ -488,7 +513,7 @@ const DashPage = () => {
   useEffect(() => {
     const widgetChart = (
       <AdvancedRealTimeChart
-        symbol={selectedSymbol?.replace("1000","")}
+        symbol={selectedSymbol?.replace('1000', '')}
         theme="dark"
         autosize={true}
       />
@@ -647,7 +672,6 @@ const DashPage = () => {
                     );
                   })
                   .map((position, key, arr) => {
-              
                     return arr.length == 0 ? (
                       <div className="text-center">No active position(s)</div>
                     ) : (
@@ -657,9 +681,12 @@ const DashPage = () => {
                           setSelectedSymbol(position.symbol);
                         }}
                         className={`flex flex-row text-sm rounded-md ${
-                          !selectedSymbol &&
-                          'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
-                        } ${key % 2 === 0 && !selectedSymbol && 'bg-white/5'}`}
+                          !selectedSymbol
+                            ? 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
+                            : ''
+                        } ${
+                          key % 2 === 0 && !selectedSymbol ? 'bg-white/5' : ''
+                        }`}
                       >
                         <div className="w-28 overflow-clip text-end py-1">
                           {position.symbol}
@@ -694,15 +721,17 @@ const DashPage = () => {
                         <div className="w-24 overflow-clip text-end py-1">
                           {parseFloat(position.entryPrice as string).toFixed(
                             symbolInfoMap.current.get(position.symbol)
-                              ?.quantityPrecision || symbolInfoMap.current.get(position.symbol)
-                              ?.quotePrecision ,
+                              ?.quantityPrecision ||
+                              symbolInfoMap.current.get(position.symbol)
+                                ?.quotePrecision,
                           )}
                         </div>
                         <div className="w-24 overflow-clip text-end py-1">
                           {parseFloat(position.markPrice as string).toFixed(
                             symbolInfoMap.current.get(position.symbol)
-                              ?.quantityPrecision || symbolInfoMap.current.get(position.symbol)
-                              ?.quotePrecision ,
+                              ?.quantityPrecision ||
+                              symbolInfoMap.current.get(position.symbol)
+                                ?.quotePrecision,
                           )}
                         </div>
                         <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">

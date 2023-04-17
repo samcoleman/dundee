@@ -161,28 +161,17 @@ const IndexPage = () => {
           </div>
 
           <div className="grid-cols-2 grid gap-5">
-            <h1 className="text-2xl font-bold pl-5">Dash Settings</h1>
+
+          <h1 className="text-2xl font-bold pl-5">Dash Settings</h1>
             <div className="flex flex-col bg-white/5 rounded-md p-5 gap-2 justify-start text-lg col-span-2">
               <div className="flex flex-row gap-5 items-center flex-wrap">
                 <h1 className="font-bold w-24">Amount</h1>
-                <amountEditor_1.default action="B_1" value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.B_1} onConfirm={(amount) => {
-            setDashAction.mutate({ key: 'B_1', amount });
-        }}/>
-                <amountEditor_1.default action="B_2" value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.B_2} onConfirm={(amount) => {
-            setDashAction.mutate({ key: 'B_2', amount });
-        }}/>
-                <amountEditor_1.default action="B_3" value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.B_3} onConfirm={(amount) => {
-            setDashAction.mutate({ key: 'B_3', amount });
-        }}/>
-                <amountEditor_1.default action="S_1" value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.S_1} onConfirm={(amount) => {
-            setDashAction.mutate({ key: 'S_1', amount });
-        }}/>
-                <amountEditor_1.default action="S_2" value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.S_2} onConfirm={(amount) => {
-            setDashAction.mutate({ key: 'S_2', amount });
-        }}/>
-                <amountEditor_1.default action="S_3" value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.S_3} onConfirm={(amount) => {
-            setDashAction.mutate({ key: 'S_3', amount });
-        }}/>
+                <amountEditor_1.default action='B_1' value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.B_1} onConfirm={(amount) => { setDashAction.mutate({ key: 'B_1', amount }); }}/>
+                <amountEditor_1.default action='B_2' value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.B_2} onConfirm={(amount) => { setDashAction.mutate({ key: 'B_2', amount }); }}/>
+                <amountEditor_1.default action='B_3' value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.B_3} onConfirm={(amount) => { setDashAction.mutate({ key: 'B_3', amount }); }}/>
+                <amountEditor_1.default action='S_1' value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.S_1} onConfirm={(amount) => { setDashAction.mutate({ key: 'S_1', amount }); }}/>
+                <amountEditor_1.default action='S_2' value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.S_2} onConfirm={(amount) => { setDashAction.mutate({ key: 'S_2', amount }); }}/>
+                <amountEditor_1.default action='S_3' value={settings === null || settings === void 0 ? void 0 : settings.dash.actions.S_3} onConfirm={(amount) => { setDashAction.mutate({ key: 'S_3', amount }); }}/>
               </div>
             </div>
 
@@ -236,12 +225,8 @@ const IndexPage = () => {
 
               <div className="flex flex-row gap-5  items-center">
                 <h1 className="font-bold w-24">Amount</h1>
-                <amountEditor_1.default action="B_1" value={settings === null || settings === void 0 ? void 0 : settings.notifications.actions.B_1} onConfirm={(amount) => {
-            setNotificationAction.mutate({ key: 'B_1', amount });
-        }}/>
-                <amountEditor_1.default action="S_1" value={settings === null || settings === void 0 ? void 0 : settings.notifications.actions.S_1} onConfirm={(amount) => {
-            setNotificationAction.mutate({ key: 'S_1', amount });
-        }}/>
+                <amountEditor_1.default action='B_1' value={settings === null || settings === void 0 ? void 0 : settings.notifications.actions.B_1} onConfirm={(amount) => { setNotificationAction.mutate({ key: 'B_1', amount }); }}/>
+                <amountEditor_1.default action='S_1' value={settings === null || settings === void 0 ? void 0 : settings.notifications.actions.S_1} onConfirm={(amount) => { setNotificationAction.mutate({ key: 'S_1', amount }); }}/>
               </div>
             </div>
 
@@ -252,10 +237,8 @@ const IndexPage = () => {
                 <input value={posKeyworkInput} onChange={posKeywordUpdate} onKeyDown={(e) => {
             if (e.key === 'Enter') {
                 if (posKeyworkInput === '' ||
-                    selectedSourcePos === undefined) {
+                    selectedSourcePos === undefined)
                     return;
-                }
-                // Impossible to not be source
                 void addPosKey.mutateAsync({
                     keyword: posKeyworkInput,
                     source: selectedSourcePos,
