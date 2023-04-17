@@ -421,7 +421,16 @@ const DashPage = () => {
           action: string;
           data: Message;
         };
-        console.log(response);
+
+        if(!settings) return
+
+        if (response.action == "B_1"){
+          const amount = response.reply !== null ? parseFloat(response.reply) : settings?.notifications.actions.B_1;
+          void makeOrder("BUY", response.data.symbols[0], amount)
+        }else if (response.action == "S_1"){
+          const amount = response.reply !== null ? parseFloat(response.reply) : settings?.notifications.actions.S_1;
+          void makeOrder("BUY", response.data.symbols[0], amount)
+        }
       });
     }
 
