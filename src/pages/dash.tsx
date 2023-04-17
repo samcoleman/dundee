@@ -566,7 +566,7 @@ const DashPage = () => {
               focus ? 'outline' : ''
             }`}
           >
-            <div className="flex flex-row text-xl font-bold gap-5 items-center">
+            <div className="flex flex-row text-lg font-bold gap-5 items-center">
               <OptionPicker
                 options={settings ? Array.from(settings.symbols.keys()) : []}
                 suggestedOptions={pageMessage?.symbols}
@@ -611,7 +611,7 @@ const DashPage = () => {
             <div className="h-0.5 bg-white rounded-full" />
             <div className="flex flex-col gap-2">
               <div className="flex flex-row text-sm">
-                <div className="w-32 overflow-clip text-end">SYMBOL</div>
+                <div className="w-28 overflow-clip text-end">SYMBOL</div>
                 <div className="w-2 h-full ml-2" />
                 <div className="flex-1 overflow-clip text-end">SIZE</div>
                 <div className="flex-1 overflow-clip text-end">PNL</div>
@@ -652,7 +652,7 @@ const DashPage = () => {
                           'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
                         } ${key % 2 === 0 && !selectedSymbol && 'bg-white/5'}`}
                       >
-                        <div className="w-32 overflow-clip text-end py-1">
+                        <div className="w-28 overflow-clip text-end py-1">
                           {position.symbol}
                         </div>
                         <div

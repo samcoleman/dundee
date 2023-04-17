@@ -47,7 +47,7 @@ const OptionPicker = (
             ? 
             (
               <>
-                <div className="flex flex-row flex-wrap">
+                <div className="flex flex-row flex-wrap text-lg font-normal">
                   {props.suggestedOptions.map((option, index) => {
                     return (
                       <button
@@ -77,7 +77,7 @@ const OptionPicker = (
             : 
             null
           }
-          <div className="flex flex-row flex-wrap h-full overflow-auto justify-start items-start gap-2 bg-grey-light w-full">
+          <div className="flex flex-row flex-wrap h-full text-lg font-normal overflow-auto justify-start items-start gap-2 bg-grey-light w-full">
             {props.options ? (
               props.options
                 .filter((Option) => {
