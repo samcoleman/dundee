@@ -80,7 +80,6 @@ const IndexPage = () => {
   const setNegFilter = api.settings.setNegFilter.useMutation();
 
   const setSymbolMatch = api.settings.setSymbolMatch.useMutation();
-
   // SETTINGS END
 
   const checkSymbols = api.binance.checkSymbols.useMutation();
@@ -247,7 +246,6 @@ const IndexPage = () => {
 
               <div className="flex flex-row gap-5 items-center">
                 <h1 className="font-bold  w-24">Symbol</h1>
-
                 <button
                   onClick={() =>
                     setSymbolMatch.mutate({ sym_match: 'MATCH_LOOKUP' })

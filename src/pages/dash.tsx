@@ -18,6 +18,7 @@ import { FuturesPosition, FuturesSymbolExchangeInfo, MarkPrice } from 'binance';
 
 import { RxCross2 } from 'react-icons/rx';
 import { Store } from 'react-notifications-component';
+import { TRPCError } from '@trpc/server';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -52,6 +53,7 @@ const DashPage = () => {
   );
   const { data: positions, refetch: refetchPositions } =
     api.binance.getPositions.useQuery({});
+
   useEffect(() => {
     if (!positions) return;
     positions.forEach((pos) => {
@@ -62,13 +64,15 @@ const DashPage = () => {
   const getPriceHistory = api.binance.getPriceHistory.useMutation();
   const order = api.binance.order.useMutation();
   const price = api.binance.getSymbolPrice.useMutation();
+
+  const [orderError, setOrderError] = useState<{body: string} | undefined>(undefined);
   const makeOrder = async (
     side: 'BUY' | 'SELL',
     symbol: string | undefined,
     quote_amount: number | undefined,
   ) => {
     const id = Store.addNotification({
-      title: 'Making Order',
+      title: 'Placing Order',
       message: `${side} ${quote_amount} USDT ${symbol}`,
       type: 'info',
       insert: 'top',
@@ -84,50 +88,115 @@ const DashPage = () => {
         delay: 0,
       },
       dismiss: {
-        duration: 0,
+        duration: 10000,
       }
     })
 
-    if (!symbol || !quote_amount) return;
+    try {
+      if (!symbol) {throw new Error('Symbol Undefined')}
+      if (!quote_amount) {throw new Error('Quote Amount Undefined')}
 
-    const symbolInfo = symbolInfoMap.current.get(symbol);
-    if (!symbolInfo || symbolInfo.status !== 'TRADING') return;
+      const symbolInfo = symbolInfoMap.current.get(symbol);
+      if (!symbolInfo || symbolInfo.status !== 'TRADING') {throw new Error('Symbol not trading')}
+  
+      // ONLY WORKS IF POSITION IS OPEN
+      // const market_price = positionsMap.current.get(symbol)?.markPrice;
+      // if (!market_price) return;
 
-    // ONLY WORKS IF POSITION IS OPEN
-    //const market_price = positionsMap.current.get(symbol)?.markPrice;
-    //if (!market_price) return;
+      const market_price = await price.mutateAsync({
+        symbol: symbol,
+      });
 
-    const market_price = await price.mutateAsync({
-      symbol: symbol,
-    });
+      let market: MarkPrice | undefined;
+      if (Array.isArray(market_price)) {
+        throw new Error('Multiple Mark Prices Returned')
+      } else {
+        market = market_price;
+      }
 
-    let market: MarkPrice | undefined;
-    if (Array.isArray(market_price)) {
-      market = market_price[0];
-    } else {
-      market = market_price;
+      if (!market) {throw new Error('Could not find market_price to calc quantity')};
+
+      const mp = parseFloat(market.markPrice as string);
+      // Round to correct sf
+      const quant =
+        Math.round(
+          (quote_amount / mp + Number.EPSILON) *
+            Math.pow(10, symbolInfo.quantityPrecision),
+        ) / Math.pow(10, symbolInfo.quantityPrecision);
+
+
+
+      const res_order = await order.mutateAsync({
+        symbol: symbol,
+        side: side,
+        quantity: quant,
+      });
+     
+
+      Store.removeNotification(id);
+      Store.addNotification({
+        title: 'New Order Placed',
+        message: `${side} ${quote_amount} USDT ${symbol}`,
+        type: 'success',
+        insert: 'top',
+        container: 'bottom-right',
+        slidingEnter: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        slidingExit: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        dismiss: {
+          duration: 5000,
+          onScreen: true
+        }
+      })
+      
+      refetchPositions();
+    }catch (e){
+      Store.removeNotification(id);
+      let message = "UNKNOWN_ERROR"
+      if (e instanceof Error){
+        message = e.message
+      }
+      
+      Store.addNotification({
+        title: 'New Order Failure',
+        message: `${side} ${quote_amount} USDT ${symbol}: ${message}`,
+        type:'danger',
+        insert: 'top',
+        container: 'bottom-right',
+        slidingEnter: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        slidingExit: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        dismiss: {
+          duration: 10000,
+          onScreen: true
+        }
+      })
     }
+  };
 
-    if (!market) return;
-    const mp = parseFloat(market.markPrice as string);
-    // Round to correct sf
-    const quant =
-      Math.round(
-        (quote_amount / mp + Number.EPSILON) *
-          Math.pow(10, symbolInfo.quantityPrecision),
-      ) / Math.pow(10, symbolInfo.quantityPrecision);
-    const res_order = await order.mutateAsync({
-      symbol: symbol,
-      side: side,
-      type: 'MARKET',
-      quantity: quant,
-    });
-
-    Store.removeNotification(id);
-    Store.addNotification({
-      title: 'Order Success',
-      message: `${side} ${quote_amount} USDT ${symbol}`,
-      type: 'success',
+  // proportion is between 0 and 1
+  const closePosition = async (
+    symbol: string | undefined,
+    proportion: number,
+  ) => {
+    const id = Store.addNotification({
+      title: 'Closing Position',
+      message: `Close ${proportion.toLocaleString(undefined,{style: 'percent', minimumFractionDigits:0})} ${symbol}`,
+      type: 'info',
       insert: 'top',
       container: 'bottom-right',
       slidingEnter: {
@@ -141,42 +210,85 @@ const DashPage = () => {
         delay: 0,
       },
       dismiss: {
-        duration: 5000,
-        onScreen: true
+        duration: 10000,
       }
     })
-    refetchPositions();
 
-    console.log(res_order);
-  };
+    try{
+      if (!symbol) {throw new Error('Symbol Undefined')}
+      if (proportion < 0 || proportion > 1.05) {throw new Error('Proportion out of range')}
 
-  // proportion is between 0 and 1
-  const closePosition = async (
-    symbol: string | undefined,
-    proportion: number,
-  ) => {
-    if (!symbol || proportion < 0 || proportion > 1.05) return;
+      const symbolInfo = symbolInfoMap.current.get(symbol);
+      if (!symbolInfo || symbolInfo.status !== 'TRADING') {throw new Error('Symbol not trading')}
 
-    const symbolInfo = symbolInfoMap.current.get(symbol);
-    if (!symbolInfo || symbolInfo.status !== 'TRADING') return;
+      const position_amount = positionsMap.current.get(symbol)?.positionAmt;
+      if (!position_amount) {throw new Error('Could not find postion')};
 
-    const position_amount = positionsMap.current.get(symbol)?.positionAmt;
-    if (!position_amount) return;
+      const pm = parseFloat(position_amount as string);
 
-    const pm = parseFloat(position_amount as string);
+      const quant =
+        Math.round(pm * proportion * Math.pow(10, symbolInfo.quantityPrecision)) /
+        Math.pow(10, symbolInfo.quantityPrecision);
 
-    const quant =
-      Math.round(pm * proportion * Math.pow(10, symbolInfo.quantityPrecision)) /
-      Math.pow(10, symbolInfo.quantityPrecision);
+      const res_order = await order.mutateAsync({
+        symbol: symbol,
+        side: pm > 0 ? 'SELL' : 'BUY',
+        quantity: quant,
+      });
 
-    const res_order = await order.mutateAsync({
-      symbol: symbol,
-      side: pm > 0 ? 'SELL' : 'BUY',
-      type: 'MARKET',
-      quantity: quant,
-    });
+      Store.removeNotification(id);
+      Store.addNotification({
+        title: 'Close Position Placed',
+        message: `Close ${proportion.toLocaleString(undefined,{style: 'percent', minimumFractionDigits:0})} ${symbol}`,
+        type: 'success',
+        insert: 'top',
+        container: 'bottom-right',
+        slidingEnter: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        slidingExit: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        dismiss: {
+          duration: 5000,
+          onScreen: true
+        }
+      })
+      refetchPositions();
 
-    console.log(res_order);
+    }catch (e){
+      Store.removeNotification(id);
+      let message = "UNKNOWN_ERROR"
+      if (e instanceof Error){
+        message = e.message
+      }
+      
+      Store.addNotification({
+        title: 'Close Position Failure',
+        message: `Close ${proportion.toLocaleString(undefined,{style: 'percent', minimumFractionDigits:0})} ${symbol}: ${message}`,
+        type:'danger',
+        insert: 'top',
+        container: 'bottom-right',
+        slidingEnter: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        slidingExit: {
+          duration: 50,
+          timingFunction: 'ease-out',
+          delay: 0,
+        },
+        dismiss: {
+          duration: 10000,
+          onScreen: true
+        }
+      })
+    }
   };
 
   const [focus, setFocus] = useState<boolean>(false);
@@ -502,7 +614,7 @@ const DashPage = () => {
                 <div className="w-32 overflow-clip text-end">SYMBOL</div>
                 <div className="w-2 h-full ml-2" />
                 <div className="flex-1 overflow-clip text-end">SIZE</div>
-                <div className="flex-1 overflow-clip text-end">(MARK) PNL</div>
+                <div className="flex-1 overflow-clip text-end">PNL</div>
                 <div className="w-24 overflow-clip text-end">ENTRY PRICE</div>
                 <div className="w-24 overflow-clip text-end">MARK PRICE</div>
                 <div className="w-20 overflow-clip text-end" />

@@ -4,6 +4,7 @@ import { USDMClient } from 'binance';
 import { statusObj } from '../../../shared/types';
 
 import { loadEnvConfig } from '@next/env';
+import { TRPCError } from '@trpc/server';
 loadEnvConfig('./', process.env.NODE_ENV !== 'production');
 
 const client = new USDMClient({
@@ -53,7 +54,6 @@ export const binance = createTRPCRouter({
       z.object({
         symbol: z.string(),
         side: z.string().and(z.enum(['BUY', 'SELL'])),
-        type: z.string(),
         quantity: z.number(),
       }),
     )
@@ -66,9 +66,19 @@ export const binance = createTRPCRouter({
           type: 'MARKET',
           quantity: input.quantity,
         });
+
         return res;
       } catch (e) {
-        console.log(e);
+        let message = 'UNKNOWN_ERROR'
+
+        if (typeof e === 'object' && e && 'message' in e && typeof e.message === 'string'){
+          message = e.message
+        }
+
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: message,
+        });
       }
     }),
   getSymbolPrice: publicProcedure
@@ -78,14 +88,10 @@ export const binance = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      try {
-        const res = await client.getMarkPrice({
-          symbol: input.symbol,
-        });
-        return res;
-      } catch (e) {
-        console.log(e);
-      }
+      const res = await client.getMarkPrice({
+        symbol: input.symbol,
+      });
+      return res;
     }),
 
   getPriceHistory: publicProcedure

@@ -50,7 +50,7 @@ export const treeofalpha = createTRPCRouter({
     }
   }),
   getMessages: publicProcedure.query(async (): Promise<Message[]> => {
-    const res = await fetch('https://news.treeofalpha.com/api/news?limit=500', {
+    const res = await fetch('https://news.treeofalpha.com/api/news?limit=250', {
       headers: {
         Cookie:
           `tree_login_cookie=${process.env.TREE_COOKIE}`,
@@ -113,8 +113,8 @@ export const treeofalpha = createTRPCRouter({
         time: z.number(),
         _id: z.string(),
         symbols: z.array(z.string()),
-        icon: z.string().optional(),
-        image: z.string().optional(),
+        icon: z.string().nullish(),
+        image: z.string().nullish(),
       }),
     )
     .mutation(({ input }) => {
