@@ -467,6 +467,7 @@ const DashPage = () => {
     settings: settings,
     symbol: string | undefined,
   ) => {
+    console.log('Generating Notification');
     let image_url: string | undefined;
     if (symbol) {
       const data = await getPriceHistory.mutateAsync({
@@ -484,23 +485,27 @@ const DashPage = () => {
   // Called when a new message is received
   const addMessage = (message: Message) => {
     console.log('Server Delta:' + (Date.now() - message.time).toString());
-    if (!settings) return;
+    //if (!settings) {console.log("no settings"); return}
+    console.log("pres parse")
     const parsedMessage: parsedMessage = {
       message,
       ...checkMessage(message, settings),
     };
+
+    console.log("After parse")
     // Trigger re-render
     messageMap.current.set(message._id, parsedMessage);
     updateParsedMessages();
 
     // If message doesnt pass settings do nothing
     console.log(parsedMessage?.pass_settings);
+
     //if (!parsedMessage.pass_settings) return;
 
     void generateNotification(message, settings, parsedMessage.symbols[0]);
 
     // If we are already focused on a order section do nothing
-    if (focus) return;
+    if (focus) return
 
     setPageMessage(parsedMessage);
     setSelectedSymbol(parsedMessage.symbols[0]);

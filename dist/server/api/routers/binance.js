@@ -11,7 +11,7 @@ const server_1 = require("@trpc/server");
 const client = new binance_1.USDMClient({
     api_secret: process.env.BINANCE_SECRET,
     api_key: process.env.BINANCE_KEY,
-    baseUrl: 'https://testnet.binancefuture.com',
+    baseUrl: process.env.BINANCE_URL,
 });
 exports.binance = (0, trpc_1.createTRPCRouter)({
     status: trpc_1.publicProcedure.mutation(async () => {

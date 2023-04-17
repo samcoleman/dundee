@@ -10,7 +10,7 @@ loadEnvConfig('./', process.env.NODE_ENV !== 'production');
 const client = new USDMClient({
   api_secret: process.env.BINANCE_SECRET,
   api_key: process.env.BINANCE_KEY,
-  baseUrl: 'https://testnet.binancefuture.com',
+  baseUrl: process.env.BINANCE_URL,
 });
 
 export const binance = createTRPCRouter({
