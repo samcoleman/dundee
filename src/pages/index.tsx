@@ -732,7 +732,7 @@ const IndexPage = () => {
               </div>
               <div className="flex flex-1 flex-col h-full">
                 <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
-                  <div className="flex text-start w-24">Symbol</div>
+                  <div className="flex-1 text-start">Symbol</div>
                   <div className="flex-1 text-start">Keyword</div>
                   <div className="text-end"> Count : {symbolkeyCount}</div>
                 </div>
@@ -763,7 +763,7 @@ const IndexPage = () => {
                                   key={s_index * 50000 + k_index}
                                   className="flex flex-row w-full text-white gap-5"
                                 >
-                                  <td className="flex text-start w-24">
+                                  <td className="flex-1 text-start">
                                     {symbol}
                                   </td>
                                   <td className="flex-1 text-start ">

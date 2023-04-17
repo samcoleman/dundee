@@ -487,6 +487,8 @@ const DashPage = () => {
     messageMap.current.set(message._id, parsedMessage);
     updateParsedMessages();
 
+
+
     // If message doesnt pass settings do nothing
     if (!parsedMessage.pass_settings) return;
 
@@ -501,6 +503,7 @@ const DashPage = () => {
 
   api.tree.onMessage.useSubscription(undefined, {
     onData(message) {
+      console.log("Message Received")
       addMessage(message);
     },
     onError(err) {
@@ -530,18 +533,6 @@ const DashPage = () => {
         <title>{selectedSymbol ? selectedSymbol.toUpperCase() : 'Dash'}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <button
-        onClick={() => {
-          if (!pageMessage || !settings) return;
-          void generateNotification(
-            pageMessage.message,
-            settings,
-            pageMessage.symbols[0],
-          );
-        }}
-      >
-        Notify
-      </button>
       <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white overflow-clip">
         <div className="flex flex-row gap-5">
           <div
@@ -961,7 +952,20 @@ const DashPage = () => {
             ) : null}
           </div>
         </div>
+        
       </div>
+      <button
+        onClick={() => {
+          if (!pageMessage || !settings) return;
+          void generateNotification(
+            pageMessage.message,
+            settings,
+            pageMessage.symbols[0],
+          );
+        }}
+      >
+        Notify
+      </button>
     </>
   );
 };
