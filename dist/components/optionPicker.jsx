@@ -31,13 +31,22 @@ const OptionPicker = (props) => {
     const keywordOptionUpdate = (e) => {
         setKeywordOptionInput(e.target.value);
     };
-    return (<div onMouseEnter={() => setKeywordOptionPopup(true)} onMouseLeave={() => {
+    return (<div onMouseEnter={() => { setKeywordOptionPopup(true); }} onMouseLeave={() => {
             setKeywordOptionPopup(false);
             setKeywordOptionInput('');
         }}>
-      <button className="px-3 hover:bg-white/5 rounded-md">
-        {props.selectedOption ? props.selectedOption : 'XXXXXX'}
-      </button>
+      <div className='flex flex-row items-center gap-1'>
+        <button className="px-3 hover:bg-white/5 rounded-md">
+          {props.selectedOption ? props.selectedOption : 'XXXXXX'}
+        </button>
+        {props.selectedOption ? (<button className='flex items-center hover:bg-red-500 rounded-md' onClick={() => {
+                props.setOption(undefined);
+                setKeywordOptionPopup(false);
+            }}>
+            <go_1.GoX />
+          </button>) : null}
+      </div>
+    
       {keywordOptionPopup ? (<div className="absolute h-56 w-72 bg-[#1A2335] outline outline-2 p-3 rounded-md flex flex-col gap-2">
           <div className="flex flex-row items-center gap-3">
             <go_1.GoSearch className="text-2xl"/>

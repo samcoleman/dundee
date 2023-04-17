@@ -36,7 +36,9 @@ const messageParse_1 = require("../shared/messageParse");
 const generateChart_1 = __importDefault(require("../utils/generateChart"));
 const pushNotification_1 = __importDefault(require("../utils/pushNotification"));
 const formatNumber_1 = require("../utils/formatNumber");
+const tb_1 = require("react-icons/tb");
 const react_notifications_component_1 = require("react-notifications-component");
+const link_1 = __importDefault(require("next/link"));
 const AdvancedRealTimeChart = (0, dynamic_1.default)(() => Promise.resolve().then(() => __importStar(require('react-ts-tradingview-widgets'))).then((w) => w.AdvancedRealTimeChart), { ssr: false });
 const DashPage = () => {
     var _a;
@@ -429,6 +431,7 @@ const DashPage = () => {
     };
     api_1.api.tree.onMessage.useSubscription(undefined, {
         onData(message) {
+            console.log("Message Received");
             addMessage(message);
         },
         onError(err) {
@@ -447,19 +450,16 @@ const DashPage = () => {
         <title>{selectedSymbol ? selectedSymbol.toUpperCase() : 'Dash'}</title>
         <link rel="icon" href="/favicon.ico"/>
       </head_1.default>
-      <button onClick={() => {
-            if (!pageMessage || !settings)
-                return;
-            void generateNotification(pageMessage.message, settings, pageMessage.symbols[0]);
-        }}>
-        Notify
-      </button>
       <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white overflow-clip">
         <div className="flex flex-row gap-5">
           <div onMouseEnter={() => setFocus(false)} className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>
+              <link_1.default href="/" className='rounded-md hover:bg-white/5 flex flex-row gap-2 px-3'>
+                Settings
+                <tb_1.TbSettings className='text-2xl'/>
+              </link_1.default>
               <div className="w-1/12 flex flex-1 flex-row justify-end px-3 items-center gap-2">
                 <input checked={useSettingFilter} onChange={() => {
             setUseSettingFilter(!useSettingFilter);
@@ -518,8 +518,8 @@ const DashPage = () => {
                 <div className="w-2 h-full ml-2"/>
                 <div className="flex-1 overflow-clip text-end">SIZE</div>
                 <div className="flex-1 overflow-clip text-end">PNL</div>
-                <div className="w-24 overflow-clip text-end">ENTRY PRICE</div>
-                <div className="w-24 overflow-clip text-end">MARK PRICE</div>
+                <div className="w-20 overflow-clip text-end">ENTRY</div>
+                <div className="w-20 overflow-clip text-end">MARK</div>
                 <div className="w-20 overflow-clip text-end"/>
               </div>
               <div className="h-0.5 bg-white rounded-full"/>
@@ -535,7 +535,7 @@ const DashPage = () => {
                 Math.abs(a.notional));
         })
             .map((position, key, arr) => {
-            var _a, _b, _c, _d;
+            var _a, _b;
             return arr.length == 0 ? (<div className="text-center">No active position(s)</div>) : (<button disabled={selectedSymbol !== undefined} onClick={() => {
                     setSelectedSymbol(position.symbol);
                 }} className={`flex flex-row text-sm rounded-md ${!selectedSymbol
@@ -557,13 +557,11 @@ const DashPage = () => {
                     : 'text-green-500'}`}>
                           {parseFloat(position.unRealizedProfit).toFixed(2)}
                         </div>
-                        <div className="w-24 overflow-clip text-end py-1">
-                          {parseFloat(position.entryPrice).toFixed(((_a = symbolInfoMap.current.get(position.symbol)) === null || _a === void 0 ? void 0 : _a.quantityPrecision) ||
-                    ((_b = symbolInfoMap.current.get(position.symbol)) === null || _b === void 0 ? void 0 : _b.quotePrecision))}
+                        <div className="w-20 overflow-clip text-end py-1">
+                          {parseFloat(position.entryPrice).toFixed(Math.min(((_a = symbolInfoMap.current.get(position.symbol)) === null || _a === void 0 ? void 0 : _a.quantityPrecision) || 4, 4))}
                         </div>
-                        <div className="w-24 overflow-clip text-end py-1">
-                          {parseFloat(position.markPrice).toFixed(((_c = symbolInfoMap.current.get(position.symbol)) === null || _c === void 0 ? void 0 : _c.quantityPrecision) ||
-                    ((_d = symbolInfoMap.current.get(position.symbol)) === null || _d === void 0 ? void 0 : _d.quotePrecision))}
+                        <div className="w-20 overflow-clip text-end py-1">
+                          {parseFloat(position.markPrice).toFixed(Math.min(((_b = symbolInfoMap.current.get(position.symbol)) === null || _b === void 0 ? void 0 : _b.quantityPrecision) || 4, 4))}
                         </div>
                         <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
                           {selectedSymbol ? null : (
@@ -675,7 +673,15 @@ const DashPage = () => {
               </>) : null}
           </div>
         </div>
+        
       </div>
+      <button onClick={() => {
+            if (!pageMessage || !settings)
+                return;
+            void generateNotification(pageMessage.message, settings, pageMessage.symbols[0]);
+        }}>
+        Notify
+      </button>
     </>);
 };
 exports.default = DashPage;

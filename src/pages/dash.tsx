@@ -474,27 +474,23 @@ const DashPage = () => {
 
   // Called when a new message is received
   const addMessage = (message: Message) => {
-    if (!settings) return;
-
     console.log('Server Delta:' + (Date.now() - message.time).toString());
-
+    if (!settings) return;
     const parsedMessage: parsedMessage = {
       message,
       ...checkMessage(message, settings),
     };
-
     // Trigger re-render
     messageMap.current.set(message._id, parsedMessage);
     updateParsedMessages();
 
-
-
     // If message doesnt pass settings do nothing
-    if (!parsedMessage.pass_settings) return;
+    console.log(parsedMessage?.pass_settings);
+    //if (!parsedMessage.pass_settings) return;
 
     void generateNotification(message, settings, parsedMessage.symbols[0]);
 
-    // If we are already focused on a sell page do nothing
+    // If we are already focused on a order section do nothing
     if (focus) return;
 
     setPageMessage(parsedMessage);
@@ -503,7 +499,6 @@ const DashPage = () => {
 
   api.tree.onMessage.useSubscription(undefined, {
     onData(message) {
-      console.log("Message Received")
       addMessage(message);
     },
     onError(err) {
@@ -542,9 +537,12 @@ const DashPage = () => {
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>
-              <Link href="/" className='rounded-md hover:bg-white/5 flex flex-row gap-2 px-3'>
+              <Link
+                href="/"
+                className="rounded-md hover:bg-white/5 flex flex-row gap-2 px-3"
+              >
                 Settings
-                <TbSettings className='text-2xl' />
+                <TbSettings className="text-2xl" />
               </Link>
               <div className="w-1/12 flex flex-1 flex-row justify-end px-3 items-center gap-2">
                 <input
@@ -592,7 +590,10 @@ const DashPage = () => {
                 })}
             </div>
           </div>
+
           <div
+            onMouseEnter={() => setFocus(true)}
+            onMouseLeave={() => setFocus(false)}
             className={`w-2/5 flex flex-col bg-white/5 rounded-md p-5 gap-2 ${
               focus ? 'outline' : ''
             }`}
@@ -670,13 +671,9 @@ const DashPage = () => {
                   })
                   .map((position, key, arr) => {
                     return arr.length == 0 ? (
-                      <div className="text-center">No active position(s)</div>
+                      <div key={key} className="text-center">No active position(s)</div>
                     ) : (
-                      <button
-                        disabled={selectedSymbol !== undefined}
-                        onClick={() => {
-                          setSelectedSymbol(position.symbol);
-                        }}
+                      <div key={key}
                         className={`flex flex-row text-sm rounded-md ${
                           !selectedSymbol
                             ? 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
@@ -685,6 +682,10 @@ const DashPage = () => {
                           key % 2 === 0 && !selectedSymbol ? 'bg-white/5' : ''
                         }`}
                       >
+                        <button  className='flex flex-row flex-1'    disabled={selectedSymbol !== undefined}
+                        onClick={() => {
+                          setSelectedSymbol(position.symbol);
+                        }}>
                         <div className="w-28 overflow-clip text-end py-1">
                           {position.symbol}
                         </div>
@@ -733,6 +734,7 @@ const DashPage = () => {
                             ),
                           )}
                         </div>
+                        </button>
                         <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
                           {selectedSymbol ? null : (
                             /*<button
@@ -754,7 +756,7 @@ const DashPage = () => {
                             </button>
                           )}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
               </div>
@@ -952,7 +954,6 @@ const DashPage = () => {
             ) : null}
           </div>
         </div>
-        
       </div>
       <button
         onClick={() => {

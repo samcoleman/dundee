@@ -9,9 +9,11 @@ const api_1 = require("../utils/api");
 const gi_1 = require("react-icons/gi");
 const go_1 = require("react-icons/go");
 const fi_1 = require("react-icons/fi");
+const md_1 = require("react-icons/md");
 const optionPicker_1 = __importDefault(require("../components/optionPicker"));
 const types_1 = require("../shared/types");
 const amountEditor_1 = __importDefault(require("../components/amountEditor"));
+const link_1 = __importDefault(require("next/link"));
 const IndexPage = () => {
     var _a;
     const [toggles, setToggles] = (0, react_1.useState)([]);
@@ -158,6 +160,9 @@ const IndexPage = () => {
               <h1 className="text-lg font-bold">Binance</h1>
             </div>
             <div className="flex bg-white/[0.01] rounded-md flex-1"></div>
+            <link_1.default href="/dash" className="flex bg-white/5 p-5 items-center rounded-md justify-center h-fill aspect-square">
+              <md_1.MdOutlineArrowForwardIos title="Dash" className='text-4xl '/>
+            </link_1.default>
           </div>
 
           <div className="grid-cols-2 grid gap-5">
@@ -513,7 +518,7 @@ const IndexPage = () => {
               </div>
               <div className="flex flex-1 flex-col h-full">
                 <div className="flex flex-row w-full text-white px-3 bg-white/5 rounded-md mb-1 gap-5">
-                  <div className="flex text-start w-24">Symbol</div>
+                  <div className="flex-1 text-start">Symbol</div>
                   <div className="flex-1 text-start">Keyword</div>
                   <div className="text-end"> Count : {symbolkeyCount}</div>
                 </div>
@@ -538,7 +543,7 @@ const IndexPage = () => {
                 return (
                 //Max 50000 keywords per symbol before repeating keys - will never happen
                 <tr key={s_index * 50000 + k_index} className="flex flex-row w-full text-white gap-5">
-                                  <td className="flex text-start w-24">
+                                  <td className="flex-1 text-start">
                                     {symbol}
                                   </td>
                                   <td className="flex-1 text-start ">
