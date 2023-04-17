@@ -37,5 +37,5 @@ yarn-error.log*
 *.db-journal
 .env
 
-/socket_logs
-/settings
+/socket_logs/*
+/settings/*

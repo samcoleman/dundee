@@ -1,14 +1,17 @@
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
+
 import { GiWillowTree } from 'react-icons/gi';
 import { GoTerminal, GoSearch } from 'react-icons/go';
 import { FiRefreshCcw } from 'react-icons/fi';
+import { MdOutlineArrowForwardIos } from 'react-icons/md'
 
 import OptionPicker from '../components/optionPicker';
 import { sourceObj, type source } from '../shared/types';
 import { type settings } from '../shared/types';
 import AmountEditor from '../components/amountEditor';
+import Link from 'next/link';
 
 const IndexPage = () => {
   const [toggles, setToggles] = useState<source[]>([]);
@@ -192,6 +195,9 @@ const IndexPage = () => {
               <h1 className="text-lg font-bold">Binance</h1>
             </div>
             <div className="flex bg-white/[0.01] rounded-md flex-1"></div>
+            <Link href="/dash" className="flex bg-white/5 p-5 items-center rounded-md justify-center h-fill aspect-square">
+              <MdOutlineArrowForwardIos title="Dash" className='text-4xl ' />
+            </Link>
           </div>
 
           <div className="grid-cols-2 grid gap-5">

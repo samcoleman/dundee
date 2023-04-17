@@ -7,7 +7,7 @@
   },
   "scripts": {
     "prebuild": "prisma generate && prisma migrate deploy",
-    "build:1-next": "cross-env NODE_ENV=production next build",
+    "build:1-next": "next build",
     "build:2-server": "tsc --project tsconfig.server.json",
     "build": "run-s build:*",
     "dev:wss": "tsx watch src/server/wssServer.ts --tsconfig tsconfig.server.json ",
@@ -22,8 +22,8 @@
     "generate": "prisma generate",
     "migrate-dev": "prisma migrate dev",
     "migrate": "prisma migrate deploy",
-    "start:next": "cross-env NODE_ENV=production next start",
-    "start:wss": "cross-env NODE_ENV=production node dist/server/wssServer.js",
+    "start:next": "next start",
+    "start:wss": "node dist/server/wssServer.js",
     "start": "run-p start:*",
     "studio": "prisma studio",
     "lint": "eslint --ext \".js,.ts,.tsx\" --report-unused-disable-directives --report-unused-disable-directives src",
@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@dhaiwat10/react-link-preview": "^1.15.0",
+    "@next/env": "^12.0.7",
     "@prisma/client": "^4.10.1",
     "@tanstack/react-query": "^4.18.0",
     "@trpc/client": "^10.18.0",
@@ -56,7 +57,6 @@
     "image-charts": "^6.1.19",
     "net": "^1.0.2",
     "next": "^13.2.1",
-    "@next/env": "^12.0.7",
     "node-fetch": "^2.6.9",
     "node-localstorage": "^2.2.1",
     "node-notifier": "^10.0.1",
@@ -72,6 +72,7 @@
     "zod": "^3.0.0"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^13.3.0",
     "@playwright/test": "^1.26.1",
     "@tanstack/react-query-devtools": "^4.3.8",
     "@types/express": "^4.17.17",

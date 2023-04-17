@@ -18,7 +18,9 @@ import {
   type numberInString,
 } from 'binance';
 
+import { TbSettings } from 'react-icons/tb';
 import { Store } from 'react-notifications-component';
+import Link from 'next/link';
 
 const AdvancedRealTimeChart = dynamic(
   () =>
@@ -549,6 +551,10 @@ const DashPage = () => {
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>
+              <Link href="/" className='rounded-md hover:bg-white/5 flex flex-row gap-2 px-3'>
+                Settings
+                <TbSettings className='text-2xl' />
+              </Link>
               <div className="w-1/12 flex flex-1 flex-row justify-end px-3 items-center gap-2">
                 <input
                   checked={useSettingFilter}
@@ -649,8 +655,8 @@ const DashPage = () => {
                 <div className="w-2 h-full ml-2" />
                 <div className="flex-1 overflow-clip text-end">SIZE</div>
                 <div className="flex-1 overflow-clip text-end">PNL</div>
-                <div className="w-24 overflow-clip text-end">ENTRY PRICE</div>
-                <div className="w-24 overflow-clip text-end">MARK PRICE</div>
+                <div className="w-20 overflow-clip text-end">ENTRY</div>
+                <div className="w-20 overflow-clip text-end">MARK</div>
                 <div className="w-20 overflow-clip text-end" />
               </div>
               <div className="h-0.5 bg-white rounded-full" />
@@ -718,20 +724,22 @@ const DashPage = () => {
                             position.unRealizedProfit as string,
                           ).toFixed(2)}
                         </div>
-                        <div className="w-24 overflow-clip text-end py-1">
+                        <div className="w-20 overflow-clip text-end py-1">
                           {parseFloat(position.entryPrice as string).toFixed(
-                            symbolInfoMap.current.get(position.symbol)
-                              ?.quantityPrecision ||
+                            Math.min(
                               symbolInfoMap.current.get(position.symbol)
-                                ?.quotePrecision,
+                                ?.quantityPrecision || 4,
+                              4,
+                            ),
                           )}
                         </div>
-                        <div className="w-24 overflow-clip text-end py-1">
+                        <div className="w-20 overflow-clip text-end py-1">
                           {parseFloat(position.markPrice as string).toFixed(
-                            symbolInfoMap.current.get(position.symbol)
-                              ?.quantityPrecision ||
+                            Math.min(
                               symbolInfoMap.current.get(position.symbol)
-                                ?.quotePrecision,
+                                ?.quantityPrecision || 4,
+                              4,
+                            ),
                           )}
                         </div>
                         <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
