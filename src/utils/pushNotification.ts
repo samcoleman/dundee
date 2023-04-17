@@ -2,12 +2,13 @@ import ImageCharts from 'image-charts';
 import { checkMessage } from '../shared/messageParse';
 import { Message, settings } from '../shared/types';
 import { api } from './api';
-import formatNumber from './formatNumber';
+import {formatNumber} from './formatNumber';
 
 // Write function called push show local web notification
 const pushNotification = async (
   message: Message,
   settings: settings,
+  symbol: string | undefined,
   image_url: string | undefined,
 ) => {
   const filter = checkMessage(message, settings);
@@ -24,21 +25,26 @@ const pushNotification = async (
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg) return;
 
-    void reg.showNotification(message.title, {
-      body: message.body,
-      data: message,
-      image: image_url,
+    // symbol is attached add actions
+    const actions = symbol ? {
       actions: [
         {
           action: 'B_1',
-          title: `Buy ${formatNumber(settings.notifications.actions.B_1, 1)}}`,
+          title: `Buy ${formatNumber(settings.notifications.actions.B_1, 1)}`,
           type: 'text',
         } as NotificationAction,
         {
           action: 'S_1',
-          title: `Sell ${formatNumber(settings.notifications.actions.S_1, 1)}}`,
+          title: `Sell ${formatNumber(settings.notifications.actions.S_1, 1)}`,
         },
       ],
+    } : undefined
+
+    void reg.showNotification(`${symbol ? symbol : "NA"}:${message.title}`, {
+      body: message.body,
+      data: message,
+      image: image_url,
+      ...actions
     });
   } catch (e) {
     console.error(e);

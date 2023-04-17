@@ -14,7 +14,7 @@ import ImageCharts from 'image-charts';
 import generateChart from '../utils/generateChart';
 import pushNotification from '../utils/pushNotification';
 import { formatNumber, isNumeric } from '../utils/formatNumber';
-import { FuturesPosition, FuturesSymbolExchangeInfo, MarkPrice } from 'binance';
+import { FuturesPosition, FuturesSymbolExchangeInfo, MarkPrice, numberInString } from 'binance';
 
 import { RxCross2 } from 'react-icons/rx';
 import { Store } from 'react-notifications-component';
@@ -103,20 +103,24 @@ const DashPage = () => {
       // const market_price = positionsMap.current.get(symbol)?.markPrice;
       // if (!market_price) return;
 
-      const market_price = await price.mutateAsync({
-        symbol: symbol,
-      });
+      let market : numberInString | undefined = positionsMap.current.get(symbol)?.markPrice;
 
-      let market: MarkPrice | undefined;
-      if (Array.isArray(market_price)) {
-        throw new Error('Multiple Mark Prices Returned')
-      } else {
-        market = market_price;
+      if(!market || market == 0){
+        const market_price = await price.mutateAsync({
+          symbol: symbol,
+        });
+
+        if (Array.isArray(market_price)) {
+          throw new Error('Multiple Mark Prices Returned')
+        } else {
+          market = market_price.markPrice
+        }
+
       }
 
       if (!market) {throw new Error('Could not find market_price to calc quantity')};
 
-      const mp = parseFloat(market.markPrice as string);
+      const mp = parseFloat(market as string);
       // Round to correct sf
       const quant =
         Math.round(
@@ -437,7 +441,7 @@ const DashPage = () => {
       image_url = data ? generateChart(data, symbol) : undefined;
     }
 
-    void pushNotification(message, settings, image_url);
+    void pushNotification(message, settings, symbol, image_url);
   };
 
   // Called when a new message is received
@@ -451,16 +455,21 @@ const DashPage = () => {
       ...checkMessage(message, settings),
     };
 
-    generateNotification(message, settings, parsedMessage.symbols[0]);
-    messageMap.current.set(message._id, parsedMessage);
 
     // Trigger re-render
+    messageMap.current.set(message._id, parsedMessage);
     updateParsedMessages();
-    if (/*!focus && */ parsedMessage.pass_settings) {
-      // Set focus
-      setPageMessage(parsedMessage);
-      setSelectedSymbol(parsedMessage.symbols[0]);
-    }
+
+    // If message doesnt pass settings do nothing
+    if (!parsedMessage.pass_settings) return 
+
+    generateNotification(message, settings, parsedMessage.symbols[0]);
+
+    // If we are already focused on a sell page do nothing
+    if (focus) return
+
+    setPageMessage(parsedMessage);
+    setSelectedSymbol(parsedMessage.symbols[0]);
   };
 
   api.tree.onMessage.useSubscription(undefined, {
@@ -479,7 +488,7 @@ const DashPage = () => {
   useEffect(() => {
     const widgetChart = (
       <AdvancedRealTimeChart
-        symbol={selectedSymbol}
+        symbol={selectedSymbol?.replace("1000","")}
         theme="dark"
         autosize={true}
       />
@@ -518,7 +527,7 @@ const DashPage = () => {
               <div className="w-1/12 flex flex-1 flex-row justify-end px-3 items-center gap-2">
                 <input
                   checked={useSettingFilter}
-                  onClick={() => {
+                  onChange={() => {
                     setUseSettingFilter(!useSettingFilter);
                   }}
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded"
