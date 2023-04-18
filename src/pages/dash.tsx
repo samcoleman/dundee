@@ -13,7 +13,6 @@ import generateChart from '../utils/generateChart';
 import pushNotification from '../utils/pushNotification';
 import { formatNumber, isNumeric } from '../utils/formatNumber';
 import {
-  type FuturesPosition,
   type numberInString,
 } from 'binance';
 
@@ -343,13 +342,12 @@ const DashPage = () => {
     setParsedMessages([...messageMap.current.values()].reverse());
   };
 
-  const [settings, setSettings] = useState<settings | undefined>();
-  //subscribe to settings updates
+  const { data : settings , refetch : refetchSettings  } = api.settings.getSettingsQuery.useQuery()
+  
+
   api.settings.onUpdate.useSubscription(undefined, {
-    onData(settingsUpdate) {
-      console.log(settingsUpdate)
-      if (!settingsUpdate) return
-      setSettings(settingsUpdate);
+    onData() {
+      void refetchSettings()
     },
     onError(err) {
       console.error('Subscription error:', err);
@@ -381,23 +379,11 @@ const DashPage = () => {
     updateParsedMessages();
   }, [treeOfAlphaData, settings]);
 
-  // Load settings and service worker
-  const getSettings = api.settings.getSettings.useMutation();
-  useEffect(() => {
-    getSettings
-      .mutateAsync()
-      .then((s) => {
-        if (s){
-          setSettings(s);
-        }
-      })
-      .catch((e) => {
-        console.log(e);
-      });
 
+  useEffect(() => {
     // Create an inveral of 1s to refetch positions
     const interval = setInterval(() => {
-      void refetchPositions();
+      void refetchPositions();  
       console.log(settings)
     }, 2000);
 

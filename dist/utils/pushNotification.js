@@ -36,6 +36,7 @@ const pushNotification = async (message, settings, symbol, image_url) => {
             body: message.body,
             data: message,
             image: image_url,
+            silent: false,
             ...actions
         });
     }

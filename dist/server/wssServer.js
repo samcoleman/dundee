@@ -41,18 +41,8 @@ wss.on('connection', (ws) => {
     });
 });
 console.log('✅ WebSocket Server listening on ws://localhost:3005');
-process.on('SIGTERM', () => {
-    console.log('SIGTERM');
-    handler.broadcastReconnectNotification();
-    wss.close();
-});
 const url = 'wss://news.treeofalpha.com/ws';
 const localstorage = new node_localstorage_1.LocalStorage('./socket_logs');
-const tws = new ws_2.WebSocket(url, {
-    headers: {
-        Cookie: `tree_login_cookie=${process.env.TREE_COOKIE}`,
-    },
-});
 const logMessage = (location, obj, message) => {
     const logString = localstorage.getItem(location);
     const logHistory = logString ? JSON.parse(logString) : undefined;
@@ -122,45 +112,64 @@ const handleUnknown = (obj) => {
     console.log('Unknown message');
     return obj;
 };
-tws.on('open', () => {
-    console.log('[TreeOfAlpha] connected');
-});
-tws.on('message', (data) => {
-    try {
-        // This is as can be any shape
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const obj = JSON.parse(data.toString());
-        let message;
-        if ('source' in obj) {
-            console.log('Source message');
-            message = handleSource(obj);
+const openWebsocket = () => {
+    const tws = new ws_2.WebSocket(url, {
+        headers: {
+            Cookie: `tree_login_cookie=${process.env.TREE_COOKIE}`,
+        },
+    });
+    tws.onopen = () => {
+        console.log('[TreeOfAlpha] connected');
+    };
+    tws.on('message', (data) => {
+        try {
+            // This is as can be any shape
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const obj = JSON.parse(data.toString());
+            let message;
+            if ('source' in obj) {
+                console.log('Source message');
+                message = handleSource(obj);
+            }
+            else if ('type' in obj) {
+                console.log('Type message');
+                message = handleType(obj);
+            }
+            else {
+                console.log('Unknown message');
+                message = handleUnknown(obj);
+            }
+            console.log(message);
+            if (message) {
+                void caller.tree.message(message);
+                logMessage('handled_messages.json', obj, message);
+            }
+            else {
+                logMessage('unhandled_messages.json', obj, message);
+            }
         }
-        else if ('type' in obj) {
-            console.log('Type message');
-            message = handleType(obj);
+        catch (err) {
+            console.log(err);
         }
-        else {
-            console.log('Unknown message');
-            message = handleUnknown(obj);
-        }
-        console.log(message);
-        if (message) {
-            void caller.tree.message(message);
-            logMessage('handled_messages.json', obj, message);
-        }
-        else {
-            logMessage('unhandled_messages.json', obj, message);
-        }
-    }
-    catch (err) {
-        console.log(err);
-    }
-});
-tws.on('close', () => {
-    // Object
-    console.log('[TreeOfAlpha] disconnected');
-});
-tws.on('error', () => {
-    // Object
-    console.log('[TreeOfAlpha] error');
-});
+    });
+    tws.onclose = () => {
+        // Object
+        console.log('[TreeOfAlpha] disconnected');
+        setTimeout(() => {
+            console.log('[TreeOfAlpha] reconnecting');
+            openWebsocket();
+        }, 5000);
+    };
+    tws.onerror = (err) => {
+        // Object
+        console.log(`[TreeOfAlpha] error: ${err.message}`);
+    };
+    // THis is naff
+    process.on('SIGTERM', () => {
+        console.log('SIGTERM');
+        handler.broadcastReconnectNotification();
+        wss.close();
+        tws.close();
+    });
+};
+openWebsocket();

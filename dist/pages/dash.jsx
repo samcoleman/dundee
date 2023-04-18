@@ -49,8 +49,8 @@ const DashPage = () => {
         enabled: !treeLoaded.current,
     });
     // Create a map of symbolInfo
-    const symbolInfoMap = (0, react_1.useRef)(new Map());
     const { data: symbolInfo } = api_1.api.binance.getSymbolInfo.useQuery();
+    const symbolInfoMap = (0, react_1.useRef)(new Map());
     (0, react_1.useEffect)(() => {
         if (!symbolInfo)
             return;
@@ -58,9 +58,9 @@ const DashPage = () => {
             symbolInfoMap.current.set(info.symbol, info);
         });
     }, [symbolInfo]);
+    const { data: positions, refetch: refetchPositions } = api_1.api.binance.getPositions.useQuery({});
     // Create a map of symbolInfo
     const positionsMap = (0, react_1.useRef)(new Map());
-    const { data: positions, refetch: refetchPositions } = api_1.api.binance.getPositions.useQuery({});
     (0, react_1.useEffect)(() => {
         if (!positions)
             return;
@@ -309,6 +309,9 @@ const DashPage = () => {
     //subscribe to settings updates
     api_1.api.settings.onUpdate.useSubscription(undefined, {
         onData(settingsUpdate) {
+            console.log(settingsUpdate);
+            if (!settingsUpdate)
+                return;
             setSettings(settingsUpdate);
         },
         onError(err) {
@@ -343,7 +346,9 @@ const DashPage = () => {
         getSettings
             .mutateAsync()
             .then((s) => {
-            setSettings(s);
+            if (s) {
+                setSettings(s);
+            }
         })
             .catch((e) => {
             console.log(e);
@@ -351,6 +356,7 @@ const DashPage = () => {
         // Create an inveral of 1s to refetch positions
         const interval = setInterval(() => {
             void refetchPositions();
+            console.log(settings);
         }, 2000);
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker
@@ -374,7 +380,7 @@ const DashPage = () => {
                 }
                 else if (response.action == "S_1") {
                     const amount = response.reply !== null ? parseFloat(response.reply) : settings === null || settings === void 0 ? void 0 : settings.notifications.actions.S_1;
-                    void makeOrder("BUY", response.data.symbols[0], amount);
+                    void makeOrder("SELL", response.data.symbols[0], amount);
                 }
             });
         }
@@ -404,6 +410,7 @@ const DashPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [settings]);
     const generateNotification = async (message, settings, symbol) => {
+        console.log('Generating Notification');
         let image_url;
         if (symbol) {
             const data = await getPriceHistory.mutateAsync({
@@ -419,18 +426,24 @@ const DashPage = () => {
     // Called when a new message is received
     const addMessage = (message) => {
         console.log('Server Delta:' + (Date.now() - message.time).toString());
-        if (!settings)
+        console.log(settings);
+        if (settings === undefined) {
+            console.log("no settings");
             return;
+        }
+        console.log("pres parse");
         const parsedMessage = {
             message,
             ...(0, messageParse_1.checkMessage)(message, settings),
         };
+        console.log("After parse");
         // Trigger re-render
         messageMap.current.set(message._id, parsedMessage);
         updateParsedMessages();
         // If message doesnt pass settings do nothing
         console.log(parsedMessage === null || parsedMessage === void 0 ? void 0 : parsedMessage.pass_settings);
-        //if (!parsedMessage.pass_settings) return;
+        if (!parsedMessage.pass_settings)
+            return;
         void generateNotification(message, settings, parsedMessage.symbols[0]);
         // If we are already focused on a order section do nothing
         if (focus)

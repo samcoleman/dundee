@@ -96,11 +96,11 @@ const IndexPage = () => {
     }
   };
 
-  const [settings, setSettings] = useState<settings | undefined>();
+  const { data: settings, refetch: refetchSettings } = api.settings.getSettingsQuery.useQuery()
   //subscribe to settings updates
   api.settings.onUpdate.useSubscription(undefined, {
-    onData(settingsUpdate) {
-      setSettings(settingsUpdate);
+    onData() {
+      void refetchSettings()
     },
     onError(err) {
       console.error('Subscription error:', err);
@@ -108,7 +108,6 @@ const IndexPage = () => {
     },
   });
 
-  const getSettings = api.settings.getSettings.useMutation();
   const bStatus = api.binance.status.useMutation();
   useEffect(() => {
     console.log(process.env.NEXT_PUBLIC_TREE_COOKIE);
@@ -124,15 +123,6 @@ const IndexPage = () => {
     const interval = setInterval(() => {
       void checkStatus();
     }, 10000 * 6);
-
-    getSettings
-      .mutateAsync()
-      .then((s) => {
-        setSettings(s);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps

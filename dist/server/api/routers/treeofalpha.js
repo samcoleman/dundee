@@ -37,7 +37,7 @@ exports.treeofalpha = (0, trpc_1.createTRPCRouter)({
         }
     }),
     getMessages: trpc_1.publicProcedure.query(async () => {
-        const res = await (0, node_fetch_1.default)('https://news.treeofalpha.com/api/news?limit=250', {
+        const res = await (0, node_fetch_1.default)('https://news.treeofalpha.com/api/news?limit=100', {
             headers: {
                 Cookie: `tree_login_cookie=${process.env.TREE_COOKIE || ""}`,
             },
