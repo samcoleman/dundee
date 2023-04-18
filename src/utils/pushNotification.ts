@@ -43,6 +43,7 @@ const pushNotification = async (
       body: message.body,
       data: message,
       image: image_url,
+      silent: false,
       ...actions
     });
   } catch (e) {

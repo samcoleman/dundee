@@ -14,7 +14,6 @@ import pushNotification from '../utils/pushNotification';
 import { formatNumber, isNumeric } from '../utils/formatNumber';
 import {
   type FuturesPosition,
-  type FuturesSymbolExchangeInfo,
   type numberInString,
 } from 'binance';
 
@@ -38,10 +37,11 @@ const DashPage = () => {
   });
 
   // Create a map of symbolInfo
-  const symbolInfoMap = useRef<Map<string, FuturesSymbolExchangeInfo>>(
-    new Map<string, FuturesSymbolExchangeInfo>(),
-  );
   const { data: symbolInfo } = api.binance.getSymbolInfo.useQuery();
+  const symbolInfoMap = useRef<Map<string, NonNullable<typeof symbolInfo>[number] >>(
+    new Map<string, NonNullable<typeof symbolInfo>[number] >(),
+  );
+
   useEffect(() => {
     if (!symbolInfo) return;
     symbolInfo.forEach((info) => {
@@ -49,12 +49,13 @@ const DashPage = () => {
     });
   }, [symbolInfo]);
 
-  // Create a map of symbolInfo
-  const positionsMap = useRef<Map<string, FuturesPosition>>(
-    new Map<string, FuturesPosition>(),
-  );
   const { data: positions, refetch: refetchPositions } =
-    api.binance.getPositions.useQuery({});
+  api.binance.getPositions.useQuery({});
+  // Create a map of symbolInfo
+  const positionsMap = useRef<Map<string,  NonNullable<typeof positions>[number]>>(
+    new Map<string,  NonNullable<typeof positions>[number]>(),
+  );
+
 
   useEffect(() => {
     if (!positions) return;
@@ -346,6 +347,8 @@ const DashPage = () => {
   //subscribe to settings updates
   api.settings.onUpdate.useSubscription(undefined, {
     onData(settingsUpdate) {
+      console.log(settingsUpdate)
+      if (!settingsUpdate) return
       setSettings(settingsUpdate);
     },
     onError(err) {
@@ -384,7 +387,9 @@ const DashPage = () => {
     getSettings
       .mutateAsync()
       .then((s) => {
-        setSettings(s);
+        if (s){
+          setSettings(s);
+        }
       })
       .catch((e) => {
         console.log(e);
@@ -393,6 +398,7 @@ const DashPage = () => {
     // Create an inveral of 1s to refetch positions
     const interval = setInterval(() => {
       void refetchPositions();
+      console.log(settings)
     }, 2000);
 
     if ('serviceWorker' in navigator) {
@@ -421,7 +427,7 @@ const DashPage = () => {
           action: string;
           data: Message;
         };
-
+        
         if(!settings) return
 
         if (response.action == "B_1"){
@@ -485,7 +491,8 @@ const DashPage = () => {
   // Called when a new message is received
   const addMessage = (message: Message) => {
     console.log('Server Delta:' + (Date.now() - message.time).toString());
-    //if (!settings) {console.log("no settings"); return}
+    console.log(settings)
+    if (settings === undefined) {console.log("no settings"); return}
     console.log("pres parse")
     const parsedMessage: parsedMessage = {
       message,
@@ -500,7 +507,7 @@ const DashPage = () => {
     // If message doesnt pass settings do nothing
     console.log(parsedMessage?.pass_settings);
 
-    //if (!parsedMessage.pass_settings) return;
+    if (!parsedMessage.pass_settings) return;
 
     void generateNotification(message, settings, parsedMessage.symbols[0]);
 
