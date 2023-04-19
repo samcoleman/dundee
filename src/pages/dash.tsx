@@ -376,11 +376,44 @@ const DashPage = () => {
     updateParsedMessages();
   }, [treeOfAlphaData, settings]);
 
+  const lastNotificationMessage = useRef<Message | undefined>(undefined);
   useEffect(() => {
     // Create an inveral of 1s to refetch positions
     const interval = setInterval(() => {
       void refetchPositions();
     }, 2000);
+
+    const onMessage = (event: MessageEvent) => {
+      const response = event.data as {
+        reply: string | null;
+        action: string;
+        data: Message;
+      };
+
+      if (!settings) return;
+      // Do not act on the same notification twice
+      if (!lastNotificationMessage.current) {
+        lastNotificationMessage.current = response.data;
+      } else if (lastNotificationMessage.current._id !== response.data._id) {
+        console.log('client-notification');
+        lastNotificationMessage.current = response.data;
+
+        if (response.action == 'B_1') {
+          const amount =
+            response.reply !== null
+              ? parseFloat(response.reply)
+              : settings?.notifications.actions.B_1;
+          void makeOrder('BUY', response.data.symbols[0], amount);
+        } else if (response.action == 'S_1') {
+          const amount =
+            response.reply !== null
+              ? parseFloat(response.reply)
+              : settings?.notifications.actions.S_1;
+          void makeOrder('SELL', response.data.symbols[0], amount);
+        }
+      }
+      lastNotificationMessage.current = response.data;
+    }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
@@ -400,35 +433,13 @@ const DashPage = () => {
           console.warn('Failed to register Service Worker:\n', err);
         });
 
-      navigator.serviceWorker.addEventListener('message', function (event) {
-        console.log('client-notification');
 
-        const response = event.data as {
-          reply: string | null;
-          action: string;
-          data: Message;
-        };
-
-        if (!settings) return;
-
-        if (response.action == 'B_1') {
-          const amount =
-            response.reply !== null
-              ? parseFloat(response.reply)
-              : settings?.notifications.actions.B_1;
-          void makeOrder('BUY', response.data.symbols[0], amount);
-        } else if (response.action == 'S_1') {
-          const amount =
-            response.reply !== null
-              ? parseFloat(response.reply)
-              : settings?.notifications.actions.S_1;
-          void makeOrder('SELL', response.data.symbols[0], amount);
-        }
-      });
+      navigator.serviceWorker.addEventListener('message', onMessage);
     }
 
     return () => {
       clearInterval(interval);
+      removeEventListener('message', onMessage)
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -465,14 +476,15 @@ const DashPage = () => {
 
     // Check symbol is defined and exists in the map
     if (symbol) {
-      const timer = Date.now()
+      const timer = Date.now();
       const data = await getPriceHistory.mutateAsync({
         symbol: symbol,
         limit: 15,
       });
-      console.log('Image generation delay: ' + (Date.now() - timer).toString())
-      image_url = data && data.length !== 0 ? generateChart(symbol, data) : undefined;
-      console.log(image_url)
+      console.log('Image generation delay: ' + (Date.now() - timer).toString());
+      image_url =
+        data && data.length !== 0 ? generateChart(symbol, data) : undefined;
+      console.log(image_url);
     }
 
     void pushNotification(message, settings, symbol, image_url);
@@ -992,6 +1004,8 @@ const DashPage = () => {
       <button
         onClick={() => {
           if (!pageMessage || !settings) return;
+          // Reset this so I can test the same message again
+          lastNotificationMessage.current = undefined
           void generateNotification(
             pageMessage.message,
             settings,
