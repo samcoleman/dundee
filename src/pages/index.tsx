@@ -9,7 +9,6 @@ import { MdOutlineArrowForwardIos } from 'react-icons/md'
 
 import OptionPicker from '../components/optionPicker';
 import { sourceObj, type source } from '../shared/types';
-import { type settings } from '../shared/types';
 import AmountEditor from '../components/amountEditor';
 import Link from 'next/link';
 

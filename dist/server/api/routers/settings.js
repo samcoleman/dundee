@@ -65,9 +65,10 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
     onUpdate: trpc_1.publicProcedure.subscription(() => {
         // return an `observable` with a callback which is triggered immediately
         return (0, observable_1.observable)((emit) => {
-            const onUpdate = (data) => {
-                localstorage.setItem('settings', JSON.stringify(data, replacer));
-                emit.next(data);
+            const onUpdate = (d) => {
+                data = d;
+                localstorage.setItem('settings', JSON.stringify(d, replacer));
+                emit.next(d);
             };
             // trigger `onAdd()` when `add` is triggered in our event emitter
             ee.on('update', onUpdate);
@@ -76,6 +77,9 @@ exports.settingsManager = (0, trpc_1.createTRPCRouter)({
                 ee.off('update', onUpdate);
             };
         });
+    }),
+    getSettingsQuery: trpc_1.publicProcedure.query(() => {
+        return data;
     }),
     getSettings: trpc_1.publicProcedure.
         mutation(() => {

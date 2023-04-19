@@ -77,18 +77,17 @@ const IndexPage = () => {
             void updateSymbols.mutateAsync(updatedSymbols);
         }
     };
-    const [settings, setSettings] = (0, react_1.useState)();
+    const { data: settings, refetch: refetchSettings } = api_1.api.settings.getSettingsQuery.useQuery();
     //subscribe to settings updates
     api_1.api.settings.onUpdate.useSubscription(undefined, {
-        onData(settingsUpdate) {
-            setSettings(settingsUpdate);
+        onData() {
+            void refetchSettings();
         },
         onError(err) {
             console.error('Subscription error:', err);
             // we might have missed a message - invalidate cache
         },
     });
-    const getSettings = api_1.api.settings.getSettings.useMutation();
     const bStatus = api_1.api.binance.status.useMutation();
     (0, react_1.useEffect)(() => {
         console.log(process.env.NEXT_PUBLIC_TREE_COOKIE);
@@ -105,14 +104,6 @@ const IndexPage = () => {
         const interval = setInterval(() => {
             void checkStatus();
         }, 10000 * 6);
-        getSettings
-            .mutateAsync()
-            .then((s) => {
-            setSettings(s);
-        })
-            .catch((e) => {
-            console.log(e);
-        });
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

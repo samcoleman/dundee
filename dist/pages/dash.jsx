@@ -305,14 +305,10 @@ const DashPage = () => {
     const updateParsedMessages = () => {
         setParsedMessages([...messageMap.current.values()].reverse());
     };
-    const [settings, setSettings] = (0, react_1.useState)();
-    //subscribe to settings updates
+    const { data: settings, refetch: refetchSettings } = api_1.api.settings.getSettingsQuery.useQuery();
     api_1.api.settings.onUpdate.useSubscription(undefined, {
-        onData(settingsUpdate) {
-            console.log(settingsUpdate);
-            if (!settingsUpdate)
-                return;
-            setSettings(settingsUpdate);
+        onData() {
+            void refetchSettings();
         },
         onError(err) {
             console.error('Subscription error:', err);
@@ -340,23 +336,10 @@ const DashPage = () => {
         treeLoaded.current = true;
         updateParsedMessages();
     }, [treeOfAlphaData, settings]);
-    // Load settings and service worker
-    const getSettings = api_1.api.settings.getSettings.useMutation();
     (0, react_1.useEffect)(() => {
-        getSettings
-            .mutateAsync()
-            .then((s) => {
-            if (s) {
-                setSettings(s);
-            }
-        })
-            .catch((e) => {
-            console.log(e);
-        });
         // Create an inveral of 1s to refetch positions
         const interval = setInterval(() => {
             void refetchPositions();
-            console.log(settings);
         }, 2000);
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker
@@ -412,7 +395,8 @@ const DashPage = () => {
     const generateNotification = async (message, settings, symbol) => {
         console.log('Generating Notification');
         let image_url;
-        if (symbol) {
+        // Check symbol is defined and exists in the map
+        if (symbol && symbolInfoMap.current.has(symbol)) {
             const data = await getPriceHistory.mutateAsync({
                 symbol: symbol,
                 startTime: Date.now() - 60 * 1000,
@@ -426,22 +410,18 @@ const DashPage = () => {
     // Called when a new message is received
     const addMessage = (message) => {
         console.log('Server Delta:' + (Date.now() - message.time).toString());
-        console.log(settings);
         if (settings === undefined) {
             console.log("no settings");
             return;
         }
-        console.log("pres parse");
         const parsedMessage = {
             message,
             ...(0, messageParse_1.checkMessage)(message, settings),
         };
-        console.log("After parse");
         // Trigger re-render
         messageMap.current.set(message._id, parsedMessage);
         updateParsedMessages();
         // If message doesnt pass settings do nothing
-        console.log(parsedMessage === null || parsedMessage === void 0 ? void 0 : parsedMessage.pass_settings);
         if (!parsedMessage.pass_settings)
             return;
         void generateNotification(message, settings, parsedMessage.symbols[0]);
@@ -473,7 +453,7 @@ const DashPage = () => {
       </head_1.default>
       <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white overflow-clip">
         <div className="flex flex-row gap-5">
-          <div onMouseEnter={() => setFocus(false)} className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
+          <div className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>

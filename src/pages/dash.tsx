@@ -12,9 +12,7 @@ import { type settings } from '../shared/types';
 import generateChart from '../utils/generateChart';
 import pushNotification from '../utils/pushNotification';
 import { formatNumber, isNumeric } from '../utils/formatNumber';
-import {
-  type numberInString,
-} from 'binance';
+import { type numberInString } from 'binance';
 
 import { TbSettings } from 'react-icons/tb';
 import { Store } from 'react-notifications-component';
@@ -37,9 +35,9 @@ const DashPage = () => {
 
   // Create a map of symbolInfo
   const { data: symbolInfo } = api.binance.getSymbolInfo.useQuery();
-  const symbolInfoMap = useRef<Map<string, NonNullable<typeof symbolInfo>[number] >>(
-    new Map<string, NonNullable<typeof symbolInfo>[number] >(),
-  );
+  const symbolInfoMap = useRef<
+    Map<string, NonNullable<typeof symbolInfo>[number]>
+  >(new Map<string, NonNullable<typeof symbolInfo>[number]>());
 
   useEffect(() => {
     if (!symbolInfo) return;
@@ -49,12 +47,11 @@ const DashPage = () => {
   }, [symbolInfo]);
 
   const { data: positions, refetch: refetchPositions } =
-  api.binance.getPositions.useQuery({});
+    api.binance.getPositions.useQuery({});
   // Create a map of symbolInfo
-  const positionsMap = useRef<Map<string,  NonNullable<typeof positions>[number]>>(
-    new Map<string,  NonNullable<typeof positions>[number]>(),
-  );
-
+  const positionsMap = useRef<
+    Map<string, NonNullable<typeof positions>[number]>
+  >(new Map<string, NonNullable<typeof positions>[number]>());
 
   useEffect(() => {
     if (!positions) return;
@@ -342,12 +339,12 @@ const DashPage = () => {
     setParsedMessages([...messageMap.current.values()].reverse());
   };
 
-  const { data : settings , refetch : refetchSettings  } = api.settings.getSettingsQuery.useQuery()
-  
+  const { data: settings, refetch: refetchSettings } =
+    api.settings.getSettingsQuery.useQuery();
 
   api.settings.onUpdate.useSubscription(undefined, {
     onData() {
-      void refetchSettings()
+      void refetchSettings();
     },
     onError(err) {
       console.error('Subscription error:', err);
@@ -379,12 +376,10 @@ const DashPage = () => {
     updateParsedMessages();
   }, [treeOfAlphaData, settings]);
 
-
   useEffect(() => {
     // Create an inveral of 1s to refetch positions
     const interval = setInterval(() => {
-      void refetchPositions();  
-      console.log(settings)
+      void refetchPositions();
     }, 2000);
 
     if ('serviceWorker' in navigator) {
@@ -413,15 +408,21 @@ const DashPage = () => {
           action: string;
           data: Message;
         };
-        
-        if(!settings) return
 
-        if (response.action == "B_1"){
-          const amount = response.reply !== null ? parseFloat(response.reply) : settings?.notifications.actions.B_1;
-          void makeOrder("BUY", response.data.symbols[0], amount)
-        }else if (response.action == "S_1"){
-          const amount = response.reply !== null ? parseFloat(response.reply) : settings?.notifications.actions.S_1;
-          void makeOrder("SELL", response.data.symbols[0], amount)
+        if (!settings) return;
+
+        if (response.action == 'B_1') {
+          const amount =
+            response.reply !== null
+              ? parseFloat(response.reply)
+              : settings?.notifications.actions.B_1;
+          void makeOrder('BUY', response.data.symbols[0], amount);
+        } else if (response.action == 'S_1') {
+          const amount =
+            response.reply !== null
+              ? parseFloat(response.reply)
+              : settings?.notifications.actions.S_1;
+          void makeOrder('SELL', response.data.symbols[0], amount);
         }
       });
     }
@@ -461,7 +462,9 @@ const DashPage = () => {
   ) => {
     console.log('Generating Notification');
     let image_url: string | undefined;
-    if (symbol) {
+
+    // Check symbol is defined and exists in the map
+    if (symbol && symbolInfoMap.current.has(symbol)) {
       const data = await getPriceHistory.mutateAsync({
         symbol: symbol,
         startTime: Date.now() - 60 * 1000,
@@ -477,28 +480,28 @@ const DashPage = () => {
   // Called when a new message is received
   const addMessage = (message: Message) => {
     console.log('Server Delta:' + (Date.now() - message.time).toString());
-    console.log(settings)
-    if (settings === undefined) {console.log("no settings"); return}
-    console.log("pres parse")
+
+    if (settings === undefined) {
+      console.log('no settings');
+      return;
+    }
     const parsedMessage: parsedMessage = {
       message,
       ...checkMessage(message, settings),
     };
 
-    console.log("After parse")
     // Trigger re-render
     messageMap.current.set(message._id, parsedMessage);
     updateParsedMessages();
 
     // If message doesnt pass settings do nothing
-    console.log(parsedMessage?.pass_settings);
 
     if (!parsedMessage.pass_settings) return;
 
     void generateNotification(message, settings, parsedMessage.symbols[0]);
 
     // If we are already focused on a order section do nothing
-    if (focus) return
+    if (focus) return;
 
     setPageMessage(parsedMessage);
     setSelectedSymbol(parsedMessage.symbols[0]);
@@ -537,10 +540,7 @@ const DashPage = () => {
       </Head>
       <div className="flex flex-col h-screen max-h-full bg-slate-900 p-5 gap-5 text-white overflow-clip">
         <div className="flex flex-row gap-5">
-          <div
-            onMouseEnter={() => setFocus(false)}
-            className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1"
-          >
+          <div className="flex w-3/5 flex-col bg-white/5 rounded-md p-5 gap-1">
             <div className="flex flex-row gap-5">
               <p className="w-1/12 pl-2">Source</p>
               <p className="w-2/3">Title</p>
@@ -664,87 +664,109 @@ const DashPage = () => {
                   selectedSymbol ? '' : 'h-52 overflow-y-auto'
                 } gap-1`}
               >
-                {[...positionsMap.current.values()]
-                  .filter((position) => {
+                {
+                  //This is dumb
+                  positions &&
+                  positions?.filter((position) => {
                     return selectedSymbol
                       ? position.symbol === selectedSymbol
                       : position.notional != 0;
-                  })
-                  .sort((a, b) => {
-                    return (
-                      Math.abs(b.notional as number) -
-                      Math.abs(a.notional as number)
-                    );
-                  })
-                  .map((position, key, arr) => {
-                    return arr.length == 0 ? (
-                      <div key={key} className="text-center">No active position(s)</div>
-                    ) : (
-                      <div key={key}
-                        className={`flex flex-row text-sm rounded-md ${
-                          !selectedSymbol
-                            ? 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
-                            : ''
-                        } ${
-                          key % 2 === 0 && !selectedSymbol ? 'bg-white/5' : ''
-                        }`}
-                      >
-                        <button  className='flex flex-row flex-1'    disabled={selectedSymbol !== undefined}
-                        onClick={() => {
-                          setSelectedSymbol(position.symbol);
-                        }}>
-                        <div className="w-28 overflow-clip text-end py-1">
-                          {position.symbol}
-                        </div>
-                        <div
-                          className={`w-2 h-full ml-2 rounded-sm ${
-                            (position.notional as number) < 0
-                              ? 'bg-red-500'
-                              : 'bg-green-500'
-                          }`}
-                        />
-                        <div
-                          className={`flex-1 overflow-clip text-end py-1 ${
-                            (position.notional as number) < 0
-                              ? 'text-red-500'
-                              : 'text-green-500'
-                          }`}
-                        >
-                          {parseFloat(position.notional as string).toFixed(2)}
-                        </div>
-                        <div
-                          className={`flex-1 overflow-clip text-end py-1 ${
-                            (position.unRealizedProfit as number) < 0
-                              ? 'text-red-500'
-                              : 'text-green-500'
-                          }`}
-                        >
-                          {parseFloat(
-                            position.unRealizedProfit as string,
-                          ).toFixed(2)}
-                        </div>
-                        <div className="w-20 overflow-clip text-end py-1">
-                          {parseFloat(position.entryPrice as string).toFixed(
-                            Math.min(
-                              symbolInfoMap.current.get(position.symbol)
-                                ?.quantityPrecision || 4,
-                              4,
-                            ),
-                          )}
-                        </div>
-                        <div className="w-20 overflow-clip text-end py-1">
-                          {parseFloat(position.markPrice as string).toFixed(
-                            Math.min(
-                              symbolInfoMap.current.get(position.symbol)
-                                ?.quantityPrecision || 4,
-                              4,
-                            ),
-                          )}
-                        </div>
-                        </button>
-                        <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
-                          {selectedSymbol ? null : (
-                            /*<button
+                  }).length > 0 ? (
+                    positions
+                      ?.filter((position) => {
+                        return selectedSymbol
+                          ? position.symbol === selectedSymbol
+                          : position.notional != 0;
+                      })
+                      .sort((a, b) => {
+                        return (
+                          Math.abs(b.notional as number) -
+                          Math.abs(a.notional as number)
+                        );
+                      })
+                      .map((position, key, arr) => {
+                        return arr.length == 0 ? (
+                          <div key={key} className="text-center">
+                            No active position(s)
+                          </div>
+                        ) : (
+                          <div
+                            key={key}
+                            className={`flex flex-row text-sm rounded-md ${
+                              !selectedSymbol
+                                ? 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
+                                : ''
+                            } ${
+                              key % 2 === 0 && !selectedSymbol
+                                ? 'bg-white/5'
+                                : ''
+                            }`}
+                          >
+                            <button
+                              className="flex flex-row flex-1"
+                              disabled={selectedSymbol !== undefined}
+                              onClick={() => {
+                                setSelectedSymbol(position.symbol);
+                              }}
+                            >
+                              <div className="w-28 overflow-clip text-end py-1">
+                                {position.symbol}
+                              </div>
+                              <div
+                                className={`w-2 h-full ml-2 rounded-sm ${
+                                  (position.notional as number) < 0
+                                    ? 'bg-red-500'
+                                    : 'bg-green-500'
+                                }`}
+                              />
+                              <div
+                                className={`flex-1 overflow-clip text-end py-1 ${
+                                  (position.notional as number) < 0
+                                    ? 'text-red-500'
+                                    : 'text-green-500'
+                                }`}
+                              >
+                                {parseFloat(
+                                  position.notional as string,
+                                ).toFixed(2)}
+                              </div>
+                              <div
+                                className={`flex-1 overflow-clip text-end py-1 ${
+                                  (position.unRealizedProfit as number) < 0
+                                    ? 'text-red-500'
+                                    : 'text-green-500'
+                                }`}
+                              >
+                                {parseFloat(
+                                  position.unRealizedProfit as string,
+                                ).toFixed(2)}
+                              </div>
+                              <div className="w-20 overflow-clip text-end py-1">
+                                {parseFloat(
+                                  position.entryPrice as string,
+                                ).toFixed(
+                                  Math.min(
+                                    symbolInfoMap.current.get(position.symbol)
+                                      ?.quantityPrecision || 4,
+                                    4,
+                                  ),
+                                )}
+                              </div>
+                              <div className="w-20 overflow-clip text-end py-1">
+                                {parseFloat(
+                                  position.markPrice as string,
+                                ).toFixed(
+                                  Math.min(
+                                    symbolInfoMap.current.get(position.symbol)
+                                      ?.quantityPrecision || 4,
+                                    4,
+                                  ),
+                                )}
+                              </div>
+                            </button>
+                            <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
+                              {selectedSymbol ? null : (
+                                /*<button
                               onClick={() => {
                                 setSelectedSymbol(undefined);
                               }}
@@ -753,19 +775,23 @@ const DashPage = () => {
                               <RxCross2 />
                             </button>
                             */
-                            <button
-                              onClick={() => {
-                                void closePosition(position.symbol, 1);
-                              }}
-                              className="bg-red-500 hover:bg-red-400 py-1 rounded-md px-3"
-                            >
-                              CLOSE
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                                <button
+                                  onClick={() => {
+                                    void closePosition(position.symbol, 1);
+                                  }}
+                                  className="bg-red-500 hover:bg-red-400 py-1 rounded-md px-3"
+                                >
+                                  CLOSE
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <div className="text-center py-1">No position(s)</div>
+                  )
+                }
               </div>
             </div>
 
