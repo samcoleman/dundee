@@ -357,13 +357,17 @@ const DashPage = () => {
                 const response = event.data;
                 if (!settings)
                     return;
-                if (response.action == "B_1") {
-                    const amount = response.reply !== null ? parseFloat(response.reply) : settings === null || settings === void 0 ? void 0 : settings.notifications.actions.B_1;
-                    void makeOrder("BUY", response.data.symbols[0], amount);
+                if (response.action == 'B_1') {
+                    const amount = response.reply !== null
+                        ? parseFloat(response.reply)
+                        : settings === null || settings === void 0 ? void 0 : settings.notifications.actions.B_1;
+                    void makeOrder('BUY', response.data.symbols[0], amount);
                 }
-                else if (response.action == "S_1") {
-                    const amount = response.reply !== null ? parseFloat(response.reply) : settings === null || settings === void 0 ? void 0 : settings.notifications.actions.S_1;
-                    void makeOrder("SELL", response.data.symbols[0], amount);
+                else if (response.action == 'S_1') {
+                    const amount = response.reply !== null
+                        ? parseFloat(response.reply)
+                        : settings === null || settings === void 0 ? void 0 : settings.notifications.actions.S_1;
+                    void makeOrder('SELL', response.data.symbols[0], amount);
                 }
             });
         }
@@ -411,7 +415,7 @@ const DashPage = () => {
     const addMessage = (message) => {
         console.log('Server Delta:' + (Date.now() - message.time).toString());
         if (settings === undefined) {
-            console.log("no settings");
+            console.log('no settings');
             return;
         }
         const parsedMessage = {
@@ -526,66 +530,74 @@ const DashPage = () => {
               </div>
               <div className="h-0.5 bg-white rounded-full"/>
               <div className={`flex flex-col ${selectedSymbol ? '' : 'h-52 overflow-y-auto'} gap-1`}>
-                {[...positionsMap.current.values()]
-            .filter((position) => {
+                {
+        //This is dumb
+        positions &&
+            (positions === null || positions === void 0 ? void 0 : positions.filter((position) => {
+                return selectedSymbol
+                    ? position.symbol === selectedSymbol
+                    : position.notional != 0;
+            }).length) > 0 ? (positions === null || positions === void 0 ? void 0 : positions.filter((position) => {
             return selectedSymbol
                 ? position.symbol === selectedSymbol
                 : position.notional != 0;
-        })
-            .sort((a, b) => {
+        }).sort((a, b) => {
             return (Math.abs(b.notional) -
                 Math.abs(a.notional));
-        })
-            .map((position, key, arr) => {
+        }).map((position, key, arr) => {
             var _a, _b;
-            return arr.length == 0 ? (<div key={key} className="text-center">No active position(s)</div>) : (<div key={key} className={`flex flex-row text-sm rounded-md ${!selectedSymbol
+            return arr.length == 0 ? (<div key={key} className="text-center">
+                            No active position(s)
+                          </div>) : (<div key={key} className={`flex flex-row text-sm rounded-md ${!selectedSymbol
                     ? 'hover:outline hover:outline-2 hover:outline-offset-[-2px] hover:outline-white'
-                    : ''} ${key % 2 === 0 && !selectedSymbol ? 'bg-white/5' : ''}`}>
-                        <button className='flex flex-row flex-1' disabled={selectedSymbol !== undefined} onClick={() => {
+                    : ''} ${key % 2 === 0 && !selectedSymbol
+                    ? 'bg-white/5'
+                    : ''}`}>
+                            <button className="flex flex-row flex-1" disabled={selectedSymbol !== undefined} onClick={() => {
                     setSelectedSymbol(position.symbol);
                 }}>
-                        <div className="w-28 overflow-clip text-end py-1">
-                          {position.symbol}
-                        </div>
-                        <div className={`w-2 h-full ml-2 rounded-sm ${position.notional < 0
+                              <div className="w-28 overflow-clip text-end py-1">
+                                {position.symbol}
+                              </div>
+                              <div className={`w-2 h-full ml-2 rounded-sm ${position.notional < 0
                     ? 'bg-red-500'
                     : 'bg-green-500'}`}/>
-                        <div className={`flex-1 overflow-clip text-end py-1 ${position.notional < 0
+                              <div className={`flex-1 overflow-clip text-end py-1 ${position.notional < 0
                     ? 'text-red-500'
                     : 'text-green-500'}`}>
-                          {parseFloat(position.notional).toFixed(2)}
-                        </div>
-                        <div className={`flex-1 overflow-clip text-end py-1 ${position.unRealizedProfit < 0
+                                {parseFloat(position.notional).toFixed(2)}
+                              </div>
+                              <div className={`flex-1 overflow-clip text-end py-1 ${position.unRealizedProfit < 0
                     ? 'text-red-500'
                     : 'text-green-500'}`}>
-                          {parseFloat(position.unRealizedProfit).toFixed(2)}
-                        </div>
-                        <div className="w-20 overflow-clip text-end py-1">
-                          {parseFloat(position.entryPrice).toFixed(Math.min(((_a = symbolInfoMap.current.get(position.symbol)) === null || _a === void 0 ? void 0 : _a.quantityPrecision) || 4, 4))}
-                        </div>
-                        <div className="w-20 overflow-clip text-end py-1">
-                          {parseFloat(position.markPrice).toFixed(Math.min(((_b = symbolInfoMap.current.get(position.symbol)) === null || _b === void 0 ? void 0 : _b.quantityPrecision) || 4, 4))}
-                        </div>
-                        </button>
-                        <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
-                          {selectedSymbol ? null : (
+                                {parseFloat(position.unRealizedProfit).toFixed(2)}
+                              </div>
+                              <div className="w-20 overflow-clip text-end py-1">
+                                {parseFloat(position.entryPrice).toFixed(Math.min(((_a = symbolInfoMap.current.get(position.symbol)) === null || _a === void 0 ? void 0 : _a.quantityPrecision) || 4, 4))}
+                              </div>
+                              <div className="w-20 overflow-clip text-end py-1">
+                                {parseFloat(position.markPrice).toFixed(Math.min(((_b = symbolInfoMap.current.get(position.symbol)) === null || _b === void 0 ? void 0 : _b.quantityPrecision) || 4, 4))}
+                              </div>
+                            </button>
+                            <div className="w-20 overflow-clip text-end h-7 flex items-center justify-end ">
+                              {selectedSymbol ? null : (
                 /*<button
-                  onClick={() => {
-                    setSelectedSymbol(undefined);
-                  }}
-                  className="flex hover:bg-white/5 aspect-square  w-fit h-4 rounded-full justify-center items-center text-4xl"
-                >
-                  <RxCross2 />
-                </button>
-                */
+              onClick={() => {
+                setSelectedSymbol(undefined);
+              }}
+              className="flex hover:bg-white/5 aspect-square  w-fit h-4 rounded-full justify-center items-center text-4xl"
+            >
+              <RxCross2 />
+            </button>
+            */
                 <button onClick={() => {
                         void closePosition(position.symbol, 1);
                     }} className="bg-red-500 hover:bg-red-400 py-1 rounded-md px-3">
-                              CLOSE
-                            </button>)}
-                        </div>
-                      </div>);
-        })}
+                                  CLOSE
+                                </button>)}
+                            </div>
+                          </div>);
+        })) : (<div className="text-center py-1">No position(s)</div>)}
               </div>
             </div>
 
