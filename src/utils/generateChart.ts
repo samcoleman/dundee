@@ -1,15 +1,16 @@
-import { type AggregateFuturesTrade } from "binance";
+import { type Kline } from "binance";
 import ImageCharts from "image-charts";
 
 
-const generateChart = (data: AggregateFuturesTrade[]) => {
-  const prices = data.map((d) => d.p) as number[];
+const generateChart = (symbol: string, data: Kline[]) => {
+  const prices = data.map((d) => d[4]) as number[];
   const max = Math.max(...prices);
   const min = Math.min(...prices);
   
   const first = prices[0];
+  console.log(first)
   const last = prices[prices.length - 1];
-
+  console.log(last)
   const delta = last && first ? last - first : undefined
   const deltaPercent = delta && last ? (delta * 100) / last : undefined
 
@@ -20,9 +21,9 @@ const generateChart = (data: AggregateFuturesTrade[]) => {
     .chd('a:' + prices.join(','))
     .chxr(`0,${min - (max - min) * 0.05},${max}`)
     .chtt(
-      `BTCUSDT ${last || "???"}:" Δ ${delta?.toFixed(
-        2,
-      ) || "???"} / ${deltaPercent?.toFixed(2) || "???"}%`,
+      `${symbol} ${last || "???"}: Δ ${delta?.toPrecision(
+        5,
+      ) || "???"} / ${deltaPercent?.toFixed(2) || "???"}% | ${data.length}m`,
     )
     .chts('ffffff,20,l')
     .chf('bg,s,10172A')

@@ -109,19 +109,14 @@ export const binance = createTRPCRouter({
     .input(
       z.object({
         symbol: z.string(),
-        fromId: z.number().optional(),
-        startTime: z.number().optional(),
-        endTime: z.number().optional(),
-        limit: z.number().optional(),
+        limit: z.number()
       }),
     )
     .mutation(async ({ input }) => {
       try {
-        const res = await client.getAggregateTrades({
+        const res = await client.getKlines({
           symbol: input.symbol,
-          fromId: input.fromId,
-          startTime: input.startTime,
-          endTime: input.endTime,
+          interval: "1m",
           limit: input.limit,
         });
         return res;
