@@ -15,7 +15,7 @@ import { formatNumber, isNumeric } from '../utils/formatNumber';
 import { type numberInString } from 'binance';
 
 import { TbSettings } from 'react-icons/tb';
-import { Store } from 'react-notifications-component';
+import { Store, type iNotification } from 'react-notifications-component';
 import Link from 'next/link';
 
 const AdvancedRealTimeChart = dynamic(
@@ -23,6 +23,21 @@ const AdvancedRealTimeChart = dynamic(
     import('react-ts-tradingview-widgets').then((w) => w.AdvancedRealTimeChart),
   { ssr: false },
 );
+
+const notificationProps : iNotification = {
+  insert: 'top',
+  container: 'bottom-right',
+  slidingEnter: {
+    duration: 50,
+    timingFunction: 'ease-out',
+    delay: 0,
+  },
+  slidingExit: {
+    duration: 50,
+    timingFunction: 'ease-out',
+    delay: 0,
+  },
+}
 
 const DashPage = () => {
   //trpc query for treeofaplha
@@ -70,21 +85,10 @@ const DashPage = () => {
     quote_amount: number | undefined,
   ) => {
     const id = Store.addNotification({
+      ...notificationProps,
       title: 'Placing Order',
       message: `${side} ${quote_amount || ''} USDT ${symbol || ''}`,
       type: 'info',
-      insert: 'top',
-      container: 'bottom-right',
-      slidingEnter: {
-        duration: 50,
-        timingFunction: 'ease-out',
-        delay: 0,
-      },
-      slidingExit: {
-        duration: 50,
-        timingFunction: 'ease-out',
-        delay: 0,
-      },
       dismiss: {
         duration: 10000,
       },
@@ -102,10 +106,6 @@ const DashPage = () => {
       if (!symbolInfo || symbolInfo.status !== 'TRADING') {
         throw new Error('Symbol not trading');
       }
-
-      // ONLY WORKS IF POSITION IS OPEN
-      // const market_price = positionsMap.current.get(symbol)?.markPrice;
-      // if (!market_price) return;
 
       let market: numberInString | undefined =
         positionsMap.current.get(symbol)?.markPrice;
@@ -143,21 +143,10 @@ const DashPage = () => {
 
       Store.removeNotification(id);
       Store.addNotification({
+        ...notificationProps,
         title: 'New Order Placed',
         message: `${side} ${quote_amount} USDT ${symbol}`,
         type: 'success',
-        insert: 'top',
-        container: 'bottom-right',
-        slidingEnter: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
-        slidingExit: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
         dismiss: {
           duration: 5000,
           onScreen: true,
@@ -173,23 +162,12 @@ const DashPage = () => {
       }
 
       Store.addNotification({
+        ...notificationProps,
         title: 'New Order Failure',
         message: `${side} ${quote_amount || ''} USDT ${
           symbol || ''
         }: ${message}`,
         type: 'danger',
-        insert: 'top',
-        container: 'bottom-right',
-        slidingEnter: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
-        slidingExit: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
         dismiss: {
           duration: 10000,
           onScreen: true,
@@ -204,24 +182,13 @@ const DashPage = () => {
     proportion: number,
   ) => {
     const id = Store.addNotification({
+      ...notificationProps,
       title: 'Closing Position',
       message: `Close ${proportion.toLocaleString(undefined, {
         style: 'percent',
         minimumFractionDigits: 0,
       })} ${symbol || ''}`,
       type: 'info',
-      insert: 'top',
-      container: 'bottom-right',
-      slidingEnter: {
-        duration: 50,
-        timingFunction: 'ease-out',
-        delay: 0,
-      },
-      slidingExit: {
-        duration: 50,
-        timingFunction: 'ease-out',
-        delay: 0,
-      },
       dismiss: {
         duration: 10000,
       },
@@ -260,24 +227,13 @@ const DashPage = () => {
 
       Store.removeNotification(id);
       Store.addNotification({
+        ...notificationProps,
         title: 'Close Position Placed',
         message: `Close ${proportion.toLocaleString(undefined, {
           style: 'percent',
           minimumFractionDigits: 0,
         })} ${symbol}`,
         type: 'success',
-        insert: 'top',
-        container: 'bottom-right',
-        slidingEnter: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
-        slidingExit: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
         dismiss: {
           duration: 5000,
           onScreen: true,
@@ -292,24 +248,13 @@ const DashPage = () => {
       }
 
       Store.addNotification({
+        ...notificationProps,
         title: 'Close Position Failure',
         message: `Close ${proportion.toLocaleString(undefined, {
           style: 'percent',
           minimumFractionDigits: 0,
         })} ${symbol || ''}: ${message}`,
         type: 'danger',
-        insert: 'top',
-        container: 'bottom-right',
-        slidingEnter: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
-        slidingExit: {
-          duration: 50,
-          timingFunction: 'ease-out',
-          delay: 0,
-        },
         dismiss: {
           duration: 10000,
           onScreen: true,
