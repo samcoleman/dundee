@@ -18,6 +18,8 @@ import { TbSettings } from 'react-icons/tb';
 import { Store, type iNotification } from 'react-notifications-component';
 import Link from 'next/link';
 
+
+
 const AdvancedRealTimeChart = dynamic(
   () =>
     import('react-ts-tradingview-widgets').then((w) => w.AdvancedRealTimeChart),
