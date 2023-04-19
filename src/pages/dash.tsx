@@ -464,14 +464,15 @@ const DashPage = () => {
     let image_url: string | undefined;
 
     // Check symbol is defined and exists in the map
-    if (symbol && symbolInfoMap.current.has(symbol)) {
+    if (symbol) {
+      const timer = Date.now()
       const data = await getPriceHistory.mutateAsync({
         symbol: symbol,
-        startTime: Date.now() - 60 * 1000,
-        endTime: Date.now(),
-        limit: 100,
+        limit: 15,
       });
-      image_url = data ? generateChart(data) : undefined;
+      console.log('Image generation delay: ' + (Date.now() - timer).toString())
+      image_url = data && data.length !== 0 ? generateChart(symbol, data) : undefined;
+      console.log(image_url)
     }
 
     void pushNotification(message, settings, symbol, image_url);
