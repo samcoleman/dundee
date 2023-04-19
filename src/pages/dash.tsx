@@ -220,11 +220,11 @@ const DashPage = () => {
         Math.round(
           pm * proportion * Math.pow(10, symbolInfo.quantityPrecision),
         ) / Math.pow(10, symbolInfo.quantityPrecision);
-
+      console.log(quant)
       await order.mutateAsync({
         symbol: symbol,
         side: pm > 0 ? 'SELL' : 'BUY',
-        quantity: quant,
+        quantity: Math.abs(quant),
       });
 
       Store.removeNotification(id);
@@ -336,12 +336,10 @@ const DashPage = () => {
         action: string;
         data: Message;
       };
-
+      
       if (!settings) return;
       // Do not act on the same notification twice
-      if (!lastNotificationMessage.current) {
-        lastNotificationMessage.current = response.data;
-      } else if (lastNotificationMessage.current._id !== response.data._id) {
+      if (!lastNotificationMessage.current || lastNotificationMessage.current._id !== response.data._id) {
         console.log('client-notification');
         lastNotificationMessage.current = response.data;
 
@@ -351,12 +349,20 @@ const DashPage = () => {
               ? parseFloat(response.reply)
               : settings?.notifications.actions.B_1;
           void makeOrder('BUY', response.data.symbols[0], amount);
+
+          const parsedMessage = checkMessage(response.data, settings);
+          setPageMessage({message: response.data, ...parsedMessage})
+          setSelectedSymbol(response.data.symbols[0])
         } else if (response.action == 'S_1') {
           const amount =
             response.reply !== null
               ? parseFloat(response.reply)
               : settings?.notifications.actions.S_1;
           void makeOrder('SELL', response.data.symbols[0], amount);
+
+          const parsedMessage = checkMessage(response.data, settings);
+          setPageMessage({message: response.data, ...parsedMessage})
+          setSelectedSymbol(response.data.symbols[0])
         }
       }
       lastNotificationMessage.current = response.data;
