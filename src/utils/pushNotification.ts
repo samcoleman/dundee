@@ -12,6 +12,7 @@ const pushNotification = async (
 ) => {
   const filter = checkMessage(message, settings);
 
+  
   //If settings arent passed dont show notification
   if (!filter.pass_settings) return;
   // Wrong browser
@@ -38,6 +39,9 @@ const pushNotification = async (
         },
       ],
     } : undefined
+
+    if (symbol) { message.symbols[0] = symbol }
+   
 
     void reg.showNotification(`${symbol ? symbol+":" : ""}${message.title}`, {
       body: message.body,

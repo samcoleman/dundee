@@ -8,9 +8,8 @@ const generateChart = (symbol: string, data: Kline[]) => {
   const min = Math.min(...prices);
   
   const first = prices[0];
-  console.log(first)
   const last = prices[prices.length - 1];
-  console.log(last)
+
   const delta = last && first ? last - first : undefined
   const deltaPercent = delta && last ? (delta * 100) / last : undefined
 
