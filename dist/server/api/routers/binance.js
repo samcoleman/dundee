@@ -94,18 +94,13 @@ exports.binance = (0, trpc_1.createTRPCRouter)({
     getPriceHistory: trpc_1.publicProcedure
         .input(zod_1.z.object({
         symbol: zod_1.z.string(),
-        fromId: zod_1.z.number().optional(),
-        startTime: zod_1.z.number().optional(),
-        endTime: zod_1.z.number().optional(),
-        limit: zod_1.z.number().optional(),
+        limit: zod_1.z.number()
     }))
         .mutation(async ({ input }) => {
         try {
-            const res = await client.getAggregateTrades({
+            const res = await client.getKlines({
                 symbol: input.symbol,
-                fromId: input.fromId,
-                startTime: input.startTime,
-                endTime: input.endTime,
+                interval: "1m",
                 limit: input.limit,
             });
             return res;

@@ -40,6 +40,20 @@ const tb_1 = require("react-icons/tb");
 const react_notifications_component_1 = require("react-notifications-component");
 const link_1 = __importDefault(require("next/link"));
 const AdvancedRealTimeChart = (0, dynamic_1.default)(() => Promise.resolve().then(() => __importStar(require('react-ts-tradingview-widgets'))).then((w) => w.AdvancedRealTimeChart), { ssr: false });
+const notificationProps = {
+    insert: 'top',
+    container: 'bottom-right',
+    slidingEnter: {
+        duration: 50,
+        timingFunction: 'ease-out',
+        delay: 0,
+    },
+    slidingExit: {
+        duration: 50,
+        timingFunction: 'ease-out',
+        delay: 0,
+    },
+};
 const DashPage = () => {
     var _a;
     //trpc query for treeofaplha
@@ -74,21 +88,10 @@ const DashPage = () => {
     const makeOrder = async (side, symbol, quote_amount) => {
         var _a;
         const id = react_notifications_component_1.Store.addNotification({
+            ...notificationProps,
             title: 'Placing Order',
             message: `${side} ${quote_amount || ''} USDT ${symbol || ''}`,
             type: 'info',
-            insert: 'top',
-            container: 'bottom-right',
-            slidingEnter: {
-                duration: 50,
-                timingFunction: 'ease-out',
-                delay: 0,
-            },
-            slidingExit: {
-                duration: 50,
-                timingFunction: 'ease-out',
-                delay: 0,
-            },
             dismiss: {
                 duration: 10000,
             },
@@ -104,9 +107,6 @@ const DashPage = () => {
             if (!symbolInfo || symbolInfo.status !== 'TRADING') {
                 throw new Error('Symbol not trading');
             }
-            // ONLY WORKS IF POSITION IS OPEN
-            // const market_price = positionsMap.current.get(symbol)?.markPrice;
-            // if (!market_price) return;
             let market = (_a = positionsMap.current.get(symbol)) === null || _a === void 0 ? void 0 : _a.markPrice;
             // If current price isnt stored in positions, get it from api
             if (!market || market == 0) {
@@ -134,21 +134,10 @@ const DashPage = () => {
             });
             react_notifications_component_1.Store.removeNotification(id);
             react_notifications_component_1.Store.addNotification({
+                ...notificationProps,
                 title: 'New Order Placed',
                 message: `${side} ${quote_amount} USDT ${symbol}`,
                 type: 'success',
-                insert: 'top',
-                container: 'bottom-right',
-                slidingEnter: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
-                slidingExit: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
                 dismiss: {
                     duration: 5000,
                     onScreen: true,
@@ -163,21 +152,10 @@ const DashPage = () => {
                 message = e.message;
             }
             react_notifications_component_1.Store.addNotification({
+                ...notificationProps,
                 title: 'New Order Failure',
                 message: `${side} ${quote_amount || ''} USDT ${symbol || ''}: ${message}`,
                 type: 'danger',
-                insert: 'top',
-                container: 'bottom-right',
-                slidingEnter: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
-                slidingExit: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
                 dismiss: {
                     duration: 10000,
                     onScreen: true,
@@ -189,24 +167,13 @@ const DashPage = () => {
     const closePosition = async (symbol, proportion) => {
         var _a;
         const id = react_notifications_component_1.Store.addNotification({
+            ...notificationProps,
             title: 'Closing Position',
             message: `Close ${proportion.toLocaleString(undefined, {
                 style: 'percent',
                 minimumFractionDigits: 0,
             })} ${symbol || ''}`,
             type: 'info',
-            insert: 'top',
-            container: 'bottom-right',
-            slidingEnter: {
-                duration: 50,
-                timingFunction: 'ease-out',
-                delay: 0,
-            },
-            slidingExit: {
-                duration: 50,
-                timingFunction: 'ease-out',
-                delay: 0,
-            },
             dismiss: {
                 duration: 10000,
             },
@@ -235,24 +202,13 @@ const DashPage = () => {
             });
             react_notifications_component_1.Store.removeNotification(id);
             react_notifications_component_1.Store.addNotification({
+                ...notificationProps,
                 title: 'Close Position Placed',
                 message: `Close ${proportion.toLocaleString(undefined, {
                     style: 'percent',
                     minimumFractionDigits: 0,
                 })} ${symbol}`,
                 type: 'success',
-                insert: 'top',
-                container: 'bottom-right',
-                slidingEnter: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
-                slidingExit: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
                 dismiss: {
                     duration: 5000,
                     onScreen: true,
@@ -267,24 +223,13 @@ const DashPage = () => {
                 message = e.message;
             }
             react_notifications_component_1.Store.addNotification({
+                ...notificationProps,
                 title: 'Close Position Failure',
                 message: `Close ${proportion.toLocaleString(undefined, {
                     style: 'percent',
                     minimumFractionDigits: 0,
                 })} ${symbol || ''}: ${message}`,
                 type: 'danger',
-                insert: 'top',
-                container: 'bottom-right',
-                slidingEnter: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
-                slidingExit: {
-                    duration: 50,
-                    timingFunction: 'ease-out',
-                    delay: 0,
-                },
                 dismiss: {
                     duration: 10000,
                     onScreen: true,
@@ -336,27 +281,23 @@ const DashPage = () => {
         treeLoaded.current = true;
         updateParsedMessages();
     }, [treeOfAlphaData, settings]);
+    const lastNotificationMessage = (0, react_1.useRef)(undefined);
     (0, react_1.useEffect)(() => {
         // Create an inveral of 1s to refetch positions
         const interval = setInterval(() => {
             void refetchPositions();
         }, 2000);
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker
-                .register('./sw.js')
-                .then(function (registration) {
-                console.log('Successfully registered Service Worker (scope: %s)', registration.scope);
-            }, function (err) {
-                console.warn('Failed to register Service Worker:\n', err);
-            })
-                .catch((err) => {
-                console.warn('Failed to register Service Worker:\n', err);
-            });
-            navigator.serviceWorker.addEventListener('message', function (event) {
+        const onMessage = (event) => {
+            const response = event.data;
+            if (!settings)
+                return;
+            // Do not act on the same notification twice
+            if (!lastNotificationMessage.current) {
+                lastNotificationMessage.current = response.data;
+            }
+            else if (lastNotificationMessage.current._id !== response.data._id) {
                 console.log('client-notification');
-                const response = event.data;
-                if (!settings)
-                    return;
+                lastNotificationMessage.current = response.data;
                 if (response.action == 'B_1') {
                     const amount = response.reply !== null
                         ? parseFloat(response.reply)
@@ -369,10 +310,25 @@ const DashPage = () => {
                         : settings === null || settings === void 0 ? void 0 : settings.notifications.actions.S_1;
                     void makeOrder('SELL', response.data.symbols[0], amount);
                 }
+            }
+            lastNotificationMessage.current = response.data;
+        };
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker
+                .register('./sw.js')
+                .then(function (registration) {
+                console.log('Successfully registered Service Worker (scope: %s)', registration.scope);
+            }, function (err) {
+                console.warn('Failed to register Service Worker:\n', err);
+            })
+                .catch((err) => {
+                console.warn('Failed to register Service Worker:\n', err);
             });
+            navigator.serviceWorker.addEventListener('message', onMessage);
         }
         return () => {
             clearInterval(interval);
+            removeEventListener('message', onMessage);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -400,14 +356,16 @@ const DashPage = () => {
         console.log('Generating Notification');
         let image_url;
         // Check symbol is defined and exists in the map
-        if (symbol && symbolInfoMap.current.has(symbol)) {
+        if (symbol) {
+            const timer = Date.now();
             const data = await getPriceHistory.mutateAsync({
                 symbol: symbol,
-                startTime: Date.now() - 60 * 1000,
-                endTime: Date.now(),
-                limit: 100,
+                limit: 15,
             });
-            image_url = data ? (0, generateChart_1.default)(data) : undefined;
+            console.log('Image generation delay: ' + (Date.now() - timer).toString());
+            image_url =
+                data && data.length !== 0 ? (0, generateChart_1.default)(symbol, data) : undefined;
+            console.log(image_url);
         }
         void (0, pushNotification_1.default)(message, settings, symbol, image_url);
     };
@@ -693,6 +651,8 @@ const DashPage = () => {
       <button onClick={() => {
             if (!pageMessage || !settings)
                 return;
+            // Reset this so I can test the same message again
+            lastNotificationMessage.current = undefined;
             void generateNotification(pageMessage.message, settings, pageMessage.symbols[0]);
         }}>
         Notify
