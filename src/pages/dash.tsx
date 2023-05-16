@@ -420,7 +420,7 @@ const DashPage = () => {
     let image_url: string | undefined;
 
     // Check symbol is defined and exists in the map
-    if (symbol) {
+    if (symbol && settings.notifications.adv_notifications) {
       const timer = Date.now();
       const data = await getPriceHistory.mutateAsync({
         symbol: symbol,

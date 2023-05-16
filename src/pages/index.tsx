@@ -5,7 +5,7 @@ import { api } from '../utils/api';
 import { GiWillowTree } from 'react-icons/gi';
 import { GoTerminal, GoSearch } from 'react-icons/go';
 import { FiRefreshCcw } from 'react-icons/fi';
-import { MdOutlineArrowForwardIos } from 'react-icons/md'
+import { MdOutlineArrowForwardIos } from 'react-icons/md';
 
 import OptionPicker from '../components/optionPicker';
 import { sourceObj, type source } from '../shared/types';
@@ -82,6 +82,8 @@ const IndexPage = () => {
   const setNegFilter = api.settings.setNegFilter.useMutation();
 
   const setSymbolMatch = api.settings.setSymbolMatch.useMutation();
+
+  const setGenerateChart = api.settings.setGenerateChart.useMutation();
   // SETTINGS END
 
   const checkSymbols = api.binance.checkSymbols.useMutation();
@@ -95,11 +97,12 @@ const IndexPage = () => {
     }
   };
 
-  const { data: settings, refetch: refetchSettings } = api.settings.getSettingsQuery.useQuery()
+  const { data: settings, refetch: refetchSettings } =
+    api.settings.getSettingsQuery.useQuery();
   //subscribe to settings updates
   api.settings.onUpdate.useSubscription(undefined, {
     onData() {
-      void refetchSettings()
+      void refetchSettings();
     },
     onError(err) {
       console.error('Subscription error:', err);
@@ -184,8 +187,11 @@ const IndexPage = () => {
               <h1 className="text-lg font-bold">Binance</h1>
             </div>
             <div className="flex bg-white/[0.01] rounded-md flex-1"></div>
-            <Link href="/dash" className="flex bg-white/5 p-5 items-center rounded-md justify-center h-fill aspect-square">
-              <MdOutlineArrowForwardIos title="Dash" className='text-4xl ' />
+            <Link
+              href="/dash"
+              className="flex bg-white/5 p-5 items-center rounded-md justify-center h-fill aspect-square"
+            >
+              <MdOutlineArrowForwardIos title="Dash" className="text-4xl " />
             </Link>
           </div>
 
@@ -348,6 +354,25 @@ const IndexPage = () => {
                     setNotificationAction.mutate({ key: 'S_1', amount });
                   }}
                 />
+              </div>
+
+              <div className="flex flex-row gap-5  items-center">
+                <h1 className="font-bold w-24">Generate Chart</h1>
+                <label className="flex flex-row gap-2 items-center">
+                  <input
+                    type="checkbox"
+                    onChange={() => {
+                      if (!settings) return;
+                      void setGenerateChart.mutateAsync({
+                        state: !settings.notifications.adv_notifications,
+                      });
+                    }}
+                    checked={settings?.notifications.adv_notifications}
+                    className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded"
+                  />
+                  <p></p>
+                </label>
+                <div />
               </div>
             </div>
 

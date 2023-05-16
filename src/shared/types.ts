@@ -42,7 +42,6 @@ export type sym = {
 export type settings = {
   notifications: {
     adv_notifications: boolean;
-
     sources: source[];
     pass_pos_filter: boolean;
     pos_filter: Map<source, string[]>;

@@ -24,7 +24,6 @@ let data: settings = {
     neg_filter: new Map<source, string[]>(),
 
     symbol: 'NO_MATCH',
-
     actions: {
       B_1: 50,
       S_1: 50,
@@ -408,5 +407,16 @@ export const settingsManager = createTRPCRouter({
       data.notifications.symbol = input.sym_match;
 
       ee.emit('update', data);
-    })
+    }),
+    setGenerateChart: publicProcedure
+    .input(
+      z.object({
+        state: z.boolean(),
+      }),
+    )
+    .mutation(({ input }) => {
+      data.notifications.adv_notifications = input.state;
+
+      ee.emit('update', data);
+    }),
 });
